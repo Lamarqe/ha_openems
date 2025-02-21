@@ -9,7 +9,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import DOMAIN, OpenEMSConfigEntry
 from .helpers import device_to_state_class, unit_to_deviceclass
@@ -19,7 +19,7 @@ from .openems import OpenEMSBackend, OpenEMSEdge
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: OpenEMSConfigEntry,
-    async_add_entities: AddConfigEntryEntitiesCallback,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up an OpenEMS Backend."""
     entities: list = []
