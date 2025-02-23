@@ -4,7 +4,7 @@
   "codeowners": ["@Lamarqe"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://www.home-assistant.io/integrations/openems",
+  "documentation": "https://community.home-assistant.io/t/ha-openems-fems-and-openems-integration",
   "homekit": {},
   "integration_type": "hub",
   "iot_class": "local_push",
