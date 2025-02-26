@@ -88,6 +88,9 @@ async def async_setup_entry(
                     enum_dict = {v: k for k, v in channel["options"].items()}
                     del channel["options"]
                 else:
+                    # convert openems sum unit to something HA can deal with
+                    if channel["unit"] == "Wh_Σ":
+                        channel["unit"] = "Wh"
                     device_class = unit_to_deviceclass(channel["unit"])
                     enum_dict = {}
                 entity_description = OpenEMSEntityDescription(
