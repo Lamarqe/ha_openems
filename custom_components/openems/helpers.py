@@ -32,7 +32,7 @@ def device_to_state_class(device_class: SensorDeviceClass) -> SensorStateClass |
     """Derive SensorStateClass from SensorDeviceClass."""
     match device_class:
         case SensorDeviceClass.ENERGY:
-            return None
+            return SensorStateClass.TOTAL_INCREASING
         case SensorDeviceClass.ENUM:
             return None
         case _:
