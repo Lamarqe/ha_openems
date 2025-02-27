@@ -12,7 +12,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import DOMAIN, OpenEMSConfigEntry
-from .helpers import device_to_state_class, unit_to_deviceclass
+from .helpers import OpenEMSSensorUnitClass, unit_description
 from .openems import OpenEMSBackend, OpenEMSEdge
 
 
@@ -85,18 +85,19 @@ async def async_setup_entry(
                     enum_dict = {v: k for k, v in channel["options"].items()}
                     del channel["options"]
                 else:
-                    device_class = unit_to_deviceclass(channel["unit"])
+                    unit_desc = unit_description(channel["unit"])
+                    device_class = unit_desc.device_class
                     enum_dict = {}
                 entity_description = OpenEMSEntityDescription(
                     key=unique_id,
                     entity_registry_enabled_default=entity_enabled,
                     name=channel_address,
                     device_class=device_class,
-                    state_class=device_to_state_class(device_class),
+                    state_class=unit_desc.state_class,
                     native_unit_of_measurement=(
                         None
                         if device_class == SensorDeviceClass.ENUM
-                        else channel["unit"]
+                        else unit_desc.unit
                     ),
                 )
 

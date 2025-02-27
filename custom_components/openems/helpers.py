@@ -1,39 +1,43 @@
 """OpenEMS Helper methods eg for Entity creation."""
 
+from dataclasses import dataclass
+
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 
-def unit_to_deviceclass(unit: str) -> SensorDeviceClass | None:
-    """Derive SensorDeviceClass from unit string."""
+@dataclass
+class OpenEMSSensorUnitClass:
+    """Describe the Unit and its Nature."""
+
+    unit: str
+    device_class: SensorDeviceClass | None = None
+    state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT
+
+
+def unit_description(unit: str) -> OpenEMSSensorUnitClass:
+    """Correct unit and derive SensorDeviceClass and SensorStateClass."""
+    sensor_type: OpenEMSSensorUnitClass = OpenEMSSensorUnitClass(unit=unit)
     match unit:
         case "kWh" | "Wh":
-            return SensorDeviceClass.ENERGY
+            sensor_type.device_class = SensorDeviceClass.ENERGY
+        case "Wh_Σ":
+            sensor_type.unit = "Wh"
+            sensor_type.device_class = SensorDeviceClass.ENERGY
+            sensor_type.state_class = SensorStateClass.TOTAL_INCREASING
         case "W":
-            return SensorDeviceClass.POWER
+            sensor_type.device_class = SensorDeviceClass.POWER
         case "A" | "mA":
-            return SensorDeviceClass.CURRENT
+            sensor_type.device_class = SensorDeviceClass.CURRENT
         case "Hz" | "mHz":
-            return SensorDeviceClass.FREQUENCY
+            sensor_type.device_class = SensorDeviceClass.FREQUENCY
         case "h" | "min" | "s" | "ms":
-            return SensorDeviceClass.DURATION
+            sensor_type.device_class = SensorDeviceClass.DURATION
         case "%":
-            return SensorDeviceClass.BATTERY
+            sensor_type.device_class = SensorDeviceClass.BATTERY
         case "V" | "mV":
-            return SensorDeviceClass.VOLTAGE
+            sensor_type.device_class = SensorDeviceClass.VOLTAGE
         case "var":
-            return SensorDeviceClass.REACTIVE_POWER
+            sensor_type.device_class = SensorDeviceClass.REACTIVE_POWER
         case "VA":
-            return SensorDeviceClass.APPARENT_POWER
-        case _:
-            return None
-
-
-def device_to_state_class(device_class: SensorDeviceClass) -> SensorStateClass | None:
-    """Derive SensorStateClass from SensorDeviceClass."""
-    match device_class:
-        case SensorDeviceClass.ENERGY:
-            return None
-        case SensorDeviceClass.ENUM:
-            return None
-        case _:
-            return SensorStateClass.MEASUREMENT
+            sensor_type.device_class = SensorDeviceClass.APPARENT_POWER
+    return sensor_type
