@@ -26,22 +26,19 @@ async def async_setup_entry(
     backend: OpenEMSBackend = config_entry.runtime_data
     # for all edges
     for edge in backend.edges.values():
-        await backend.read_component_info_channels(edge.id)
-        edge_device_name = edge.config_values["_host/Hostname"]
+        edge_device_name = edge.config["_host"]["Hostname"]
         if backend.multi_edge:
             edge_device_name += " " + edge.id_str
         edge_device = DeviceInfo(
             name=edge_device_name,
             identifiers={(DOMAIN, edge_device_name)},
         )
-
-        await edge.read_components()
         # for all components
-        for component_str, channels in edge.available_channels.items():
+        for component_str in edge.config:
             if component_str.startswith(("_", "ctrl")):
                 if component_str != "_sum":
                     continue
-            alias = edge.config_values[component_str + "/_PropertyAlias"]
+            alias = edge.config[component_str]["_PropertyAlias"]
             if alias:
                 # If the component has a property alias,
                 # create the entities within a service which linked to the edge device
@@ -63,7 +60,7 @@ async def async_setup_entry(
                 continue
 
             # for all channels
-            for channel in channels:
+            for channel in edge.config[component_str]["channels"]:
                 # add an entity
                 channel_address = channel["id"]
                 entity_enabled = (
@@ -71,7 +68,7 @@ async def async_setup_entry(
                     in OpenEMSEdge.DEFAULT_CHANNELS
                 )
                 unique_id = (
-                    edge.config_values["_host/Hostname"]
+                    edge.config["_host"]["Hostname"]
                     + "/"
                     + edge.id_str
                     + "/"

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.storage import Store
 
+from .const import STORAGE_KEY, STORAGE_VERSION
 from .openems import OpenEMSBackend
 
 DOMAIN = "openems"
@@ -23,10 +27,17 @@ async def async_setup_entry(
 
     # 1. Create API instance
 
-    backend = OpenEMSBackend(hass, config_entry.data)
-    # 2. Validate the API connection (and authentication)
-    await backend.do_login()
-    await backend.read_edge_config()
+    backend = OpenEMSBackend(
+        hass, config=config_entry.data, config_entry_id=config_entry.entry_id
+    )
+    # 2. Trigger the API connection (and authentication)
+    backend.start()
+
+    store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
+    if config := await store.async_load():
+        backend.set_config(config)
+    else:
+        backend.read_config()
 
     config_entry.runtime_data = backend
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
