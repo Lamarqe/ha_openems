@@ -32,12 +32,14 @@ async def async_setup_entry(
     )
     # 2. Trigger the API connection (and authentication)
     backend.start()
+    await backend.wait_for_login()
 
     store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
-    if config := await store.async_load():
-        backend.set_config(config)
+    if config_data := await store.async_load():
+        backend.set_config(config_data)
     else:
-        backend.read_config()
+        config_data = await backend.read_config()
+        await store.async_save(config_data)
 
     config_entry.runtime_data = backend
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
