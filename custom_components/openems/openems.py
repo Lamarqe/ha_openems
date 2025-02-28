@@ -271,6 +271,7 @@ class OpenEMSBackend:
             # we lost connection
             for edge in self.edges.values():
                 edge.set_unavailable()
+            self._login_successful_event.clear()
             await asyncio.sleep(10)
 
     def start(self):
