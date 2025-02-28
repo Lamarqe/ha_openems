@@ -93,7 +93,11 @@ async def async_setup_entry(
                     entity_registry_enabled_default=entity_enabled,
                     name=channel_address,
                     device_class=device_class,
-                    state_class=unit_desc.state_class,
+                    state_class=(
+                        None
+                        if device_class == SensorDeviceClass.ENUM
+                        else unit_desc.state_class
+                    ),
                     native_unit_of_measurement=(
                         None
                         if device_class == SensorDeviceClass.ENUM

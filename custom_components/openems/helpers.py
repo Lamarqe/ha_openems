@@ -20,6 +20,7 @@ def unit_description(unit: str) -> OpenEMSSensorUnitClass:
     match unit:
         case "kWh" | "Wh":
             sensor_type.device_class = SensorDeviceClass.ENERGY
+            sensor_type.state_class = SensorStateClass.TOTAL
         case "Wh_Σ":
             sensor_type.unit = "Wh"
             sensor_type.device_class = SensorDeviceClass.ENERGY
