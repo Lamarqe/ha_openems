@@ -15,14 +15,13 @@ Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Feneco
 * Retrieves every channel from the connected system and creates according entities
 * Currently, there is a hardcoded list of ~50 channels whose entities are enabled by default. All other entities are created, but disabled by default. Every entity * can be enabled and disabled via the Home Assistant UI
 * Enabled entities will be updated in Home Assistant as soon as OpenEMS pushes updates via the WebSocket connection. There is currently no throttling, but it could easily be added to Home Assistant if needed for performance reasons.
-* There is currently no limitation how many channels can be enabled in parallel. The by default enabled 50 entities represent exactly as what also the WebUI subscribes to after the login. However, you should be careful about expanding to very large numbers. I  don't  know what amount OpenEMS can handle (or if these subscriptions have any performance relevance at all)
+* There is currently no limitation how many channels can be enabled in parallel. The by default enabled 50 entities represent exactly as what also the WebUI subscribes to after the login. However, you should be careful about expanding to very large numbers. I  don't know what amount OpenEMS can handle (or if these subscriptions have any performance relevance at all)
 
 ## Installation
 
 ### HACS
 
 1. Install HACS (https://hacs.xyz/docs/setup/download)
-2. Manually add this repository manually into HACS
-3. Restart Home Assistant
-4. Add FEMS tntegration
-6. Enter your inverters IP address and user account (Fenecons default is user/user)
+2. Manually add this repository to HACS
+4. Add FEMS Integration
+6. Enter your OpenEMS / FEMS address and user account (Fenecon standard:  x / user)
