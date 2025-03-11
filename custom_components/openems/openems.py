@@ -20,73 +20,83 @@ from . import exceptions
 # import homeassistant.components.openems.sensor.OpenEMSSensorEntity as OpenEMSSensorEntity
 
 
+class OpenEMSChannel:
+    """Class representing a sensor of an OpenEMS component."""
+
+    # Use with platform sensor
+    def __init__(self, component, channel_json) -> None:
+        name = channel_json["id"]
+        unit = channel_json["unit"]
+        if (
+            "category" in channel_json
+            and channel_json["category"] == "ENUM"
+            and "options" in channel_json
+        ):
+            options = {v: k for k, v in channel_json["options"].items()}
+        else:
+            options = {}
+
+        self.component: OpenEMSComponent = component
+        self.name: str = name
+        self.unit: str = unit
+        self.options: list | None = options
+        self.orig_json: list | None = channel_json
+
+    def unique_id(self) -> str:
+        return (
+            self.component.edge.hostname
+            + "/"
+            + self.component.edge.id_str
+            + "/"
+            + self.component.name
+            + "/"
+            + self.name
+        )
+
+
+class OpenEMSEnumProperty:
+    """Class representing a enum property of an OpenEMS component."""
+
+    # Use with platform select
+
+
+class OpenEMSNumberProperty:
+    """Class representing a number property of an OpenEMS component."""
+
+    # Use with platform Number
+
+
+class OpenEMSBooleanProperty:
+    """Class representing a boolean property of an OpenEMS component."""
+
+    # Use with platform switch
+
+
+class OpenEMSComponent:
+    """Class representing a component of an OpenEMS Edge."""
+
+    def __init__(self, edge, name, json_def) -> None:
+        """Initialize the component."""
+        self.edge: OpenEMSEdge = edge
+        self.name: str = name
+        self.alias = json_def.get("_PropertyAlias")
+        self._properties: dict = json_def["properties"]
+        self.sensors: list[OpenEMSChannel] = []
+        self.enum_properties: list[OpenEMSEnumProperty] = []
+        self.number_properties: list[OpenEMSNumberProperty] = []
+        self.boolean_properties: list[OpenEMSBooleanProperty] = []
+        for channel_json in json_def["channels"]:
+            if channel_json["id"].startswith("_Property"):
+                # TODO: scan type and convert to property, temp: use plain sensor
+                channel = OpenEMSChannel(component=self, channel_json=channel_json)
+                self.sensors.append(channel)
+            else:
+                channel = OpenEMSChannel(component=self, channel_json=channel_json)
+                self.sensors.append(channel)
+
+
 class OpenEMSEdge:
     """Class representing an OpenEMS Edge device."""
-
-    DEFAULT_CHANNELS = [
-        "_sum/State",
-        "_sum/EssSoc",
-        "_sum/EssActivePower",
-        "_sum/EssMinDischargePower",
-        "_sum/EssMaxDischargePower",
-        "_sum/GridActivePower",
-        "_sum/GridMinActivePower",
-        "_sum/GridMaxActivePower",
-        "_sum/GridMode",
-        "_sum/ProductionActivePower",
-        "_sum/ProductionDcActualPower",
-        "_sum/ProductionAcActivePower",
-        "_sum/ProductionMaxActivePower",
-        "_sum/ConsumptionActivePower",
-        "_sum/ConsumptionMaxActivePower",
-        "_sum/EssActivePowerL1",
-        "_sum/EssActivePowerL2",
-        "_sum/EssActivePowerL3",
-        "ctrlPrepareBatteryExtension0/CtrlIsBlockingEss",
-        "ctrlPrepareBatteryExtension0/CtrlIsChargingEss",
-        "ctrlPrepareBatteryExtension0/CtrlIsDischargingEss",
-        "ctrlPrepareBatteryExtension0/_PropertyIsRunning",
-        "ctrlPrepareBatteryExtension0/_PropertyTargetTimeSpecified",
-        "ctrlPrepareBatteryExtension0/_PropertyTargetTime",
-        "ctrlEmergencyCapacityReserve0/_PropertyReserveSoc",
-        "ctrlEmergencyCapacityReserve0/_PropertyIsReserveSocEnabled",
-        "charger0/ActualPower",
-        "charger1/ActualPower",
-        "ess0/Soc",
-        "ess0/Capacity",
-        "_sum/GridActivePowerL1",
-        "_sum/GridActivePowerL2",
-        "_sum/GridActivePowerL3",
-        "ctrlEssLimiter14a0/RestrictionMode",
-        "_sum/ConsumptionActivePowerL1",
-        "_sum/ConsumptionActivePowerL2",
-        "_sum/ConsumptionActivePowerL3",
-        "evcs0/ActivePower",
-        "evcs0/ActivePowerL1",
-        "evcs0/ActivePowerL2",
-        "evcs0/ActivePowerL3",
-        "meter2/ActivePower",
-        "meter2/ActivePowerL1",
-        "meter2/ActivePowerL2",
-        "meter2/ActivePowerL3",
-        "evcs0/ChargePower",
-        "evcs0/Phases",
-        "evcs0/Plug",
-        "evcs0/Status",
-        "evcs0/State",
-        "evcs0/EnergySession",
-        "evcs0/MinimumHardwarePower",
-        "evcs0/MaximumHardwarePower",
-        "evcs0/SetChargePowerLimit",
-        "ctrlEvcs0/_PropertyEnabledCharging",
-        "ctrlGridOptimizedCharge0/DelayChargeState",
-        "ctrlGridOptimizedCharge0/SellToGridLimitState",
-        "ctrlGridOptimizedCharge0/DelayChargeMaximumChargeLimit",
-        "ctrlGridOptimizedCharge0/SellToGridLimitMinimumChargeLimit",
-        "ctrlGridOptimizedCharge0/_PropertyMode",
-        "ess0/DcDischargePower",
-        "pvInverter0/ActivePower",
-    ]
 
     class OpenEmsEdgeChannelSubscriptionUpdater:
         """Allows to register callbacks methods and get notified on updates."""
@@ -129,12 +139,30 @@ class OpenEMSEdge:
         self._backend: OpenEMSBackend = backend
         self._id: int = id
         self._edge_config: dict[str, dict] | None = None
+        self.edge_component: OpenEMSComponent | None = None
+        self.components: dict[str, OpenEMSComponent] = {}
         self._data_event: asyncio.Event | None = asyncio.Event()
         self.current_channel_data: dict | None = None
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
             self
         )
+        self.hostname: str | None = None
         self._callbacks = {}
+
+    async def prepare_entities(self):
+        """Parse json config and create class structures."""
+        self.hostname = self._edge_config["_host"]["Hostname"]
+        if self._backend.multi_edge:
+            self.hostname += " " + self.id_str
+
+        for name, contents in self._edge_config.items():
+            if name != "_sum" and name.startswith(("_", "ctrl")):
+                continue
+            component: OpenEMSComponent = OpenEMSComponent(self, name, contents)
+            if name == "_sum":
+                self.edge_component = component
+            elif contents["_PropertyAlias"]:
+                self.components[name] = component
 
     def set_unavailable(self):
         """Set all active entities to unavailable and clear the subscription indicator."""
@@ -295,6 +323,10 @@ class OpenEMSBackend:
             edge.set_config(edge_config["components"])
 
             self.edges[edge_id] = edge
+
+    async def prepare_entities(self):
+        for edge in self.edges.values():
+            await edge.prepare_entities()
 
     async def subscribe_for_config_changes(self, edge_id):
         """Subscribe for edgeConfig updates."""

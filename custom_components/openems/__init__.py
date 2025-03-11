@@ -14,7 +14,7 @@ from .openems import OpenEMSBackend
 
 DOMAIN = "openems"
 
-_PLATFORMS: list[Platform] = [Platform.SENSOR]
+_PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
 
 type OpenEMSConfigEntry = ConfigEntry[OpenEMSBackend]
 
@@ -40,7 +40,7 @@ async def async_setup_entry(
     else:
         config_data = await backend.read_config()
         await store.async_save(config_data)
-
+    await backend.prepare_entities()
     config_entry.runtime_data = backend
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
     return True

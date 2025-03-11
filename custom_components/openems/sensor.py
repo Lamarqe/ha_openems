@@ -12,8 +12,9 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import DOMAIN, OpenEMSConfigEntry
+from .const import DEFAULT_EDGE_CHANNELS
 from .helpers import OpenEMSSensorUnitClass, unit_description
-from .openems import OpenEMSBackend, OpenEMSEdge
+from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSEdge
 
 
 async def async_setup_entry(
@@ -22,100 +23,31 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up an OpenEMS Backend."""
-    entities: list = []
     backend: OpenEMSBackend = config_entry.runtime_data
+    entities: list[OpenEMSSensorEntity] = []
     # for all edges
     for edge in backend.edges.values():
-        edge_device_name = edge.config["_host"]["Hostname"]
-        if backend.multi_edge:
-            edge_device_name += " " + edge.id_str
+        component: OpenEMSComponent
+        for component_name, component in edge.components.items():
+            device = DeviceInfo(
+                name=edge.hostname + " " + component_name,
+                model=component.alias,
+                identifiers={(DOMAIN, component.alias)},
+                via_device=(
+                    DOMAIN,
+                    edge.hostname,
+                ),
+                entry_type=DeviceEntryType.SERVICE,
+            )
+            component_entities = create_sensor_entities(component, device)
+            entities.extend(component_entities)
+
         edge_device = DeviceInfo(
-            name=edge_device_name,
-            identifiers={(DOMAIN, edge_device_name)},
+            name=edge.hostname,
+            identifiers={(DOMAIN, edge.hostname)},
         )
-        # for all components
-        for component_str in edge.config:
-            if component_str.startswith(("_", "ctrl")):
-                if component_str != "_sum":
-                    continue
-            alias = edge.config[component_str]["_PropertyAlias"]
-            if alias:
-                # If the component has a property alias,
-                # create the entities within a service which linked to the edge device
-                device_info = DeviceInfo(
-                    name=edge_device_name + " " + component_str,
-                    model=alias,
-                    identifiers={(DOMAIN, alias)},
-                    via_device=(
-                        DOMAIN,
-                        edge_device_name,
-                    ),
-                    entry_type=DeviceEntryType.SERVICE,
-                )
-            elif component_str == "_sum":
-                # all entities of the _sum component are created within the edge device
-                device_info = edge_device
-            else:
-                # dont create entities for components which dont define their property alias (assumed internal in openems)
-                continue
-
-            # for all channels
-            for channel in edge.config[component_str]["channels"]:
-                # add an entity
-                channel_address = channel["id"]
-                entity_enabled = (
-                    component_str + "/" + channel_address
-                    in OpenEMSEdge.DEFAULT_CHANNELS
-                )
-                unique_id = (
-                    edge.config["_host"]["Hostname"]
-                    + "/"
-                    + edge.id_str
-                    + "/"
-                    + component_str
-                    + "/"
-                    + channel_address
-                )
-                if (
-                    "category" in channel
-                    and channel["category"] == "ENUM"
-                    and "options" in channel
-                ):
-                    device_class = SensorDeviceClass.ENUM
-                    enum_dict = {v: k for k, v in channel["options"].items()}
-                    del channel["options"]
-                else:
-                    unit_desc = unit_description(channel["unit"])
-                    device_class = unit_desc.device_class
-                    enum_dict = {}
-                entity_description = OpenEMSEntityDescription(
-                    key=unique_id,
-                    entity_registry_enabled_default=entity_enabled,
-                    name=channel_address,
-                    device_class=device_class,
-                    state_class=(
-                        None
-                        if device_class == SensorDeviceClass.ENUM
-                        else unit_desc.state_class
-                    ),
-                    native_unit_of_measurement=(
-                        None
-                        if device_class == SensorDeviceClass.ENUM
-                        else unit_desc.unit
-                    ),
-                )
-
-                entities.append(
-                    OpenEMSSensorEntity(
-                        entity_description,
-                        unique_id,
-                        device_info,
-                        edge,
-                        component_str,
-                        channel,
-                        enum_dict,
-                    )
-                )
+        edge_entities = create_sensor_entities(edge.edge_component, edge_device)
+        entities.extend(edge_entities)
 
     async_add_entities(entities)
 
@@ -176,3 +108,45 @@ class OpenEMSSensorEntity(SensorEntity):
         """Entity removed."""
         self._edge.unregister_callback(self._component_name + "/" + self.name)
         await super().async_will_remove_from_hass()
+
+
+def create_sensor_entities(
+    component: OpenEMSComponent,
+    device_info: DeviceInfo,
+) -> list[OpenEMSSensorEntity]:
+    """Create Sensor Entities from channel list."""
+    entities: list[OpenEMSSensorEntity] = []
+    channel: OpenEMSChannel
+    channel_list: list[OpenEMSChannel] = component.sensors
+    for channel in channel_list:
+        if channel.options:
+            device_class = SensorDeviceClass.ENUM
+            state_class = None
+            uom = None
+        else:
+            unit_desc: OpenEMSSensorUnitClass = unit_description(channel.unit)
+            device_class = unit_desc.device_class
+            state_class = unit_desc.state_class
+            uom = unit_desc.unit
+
+        entity_enabled = component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
+        entity_description = OpenEMSEntityDescription(
+            key=channel.unique_id(),
+            entity_registry_enabled_default=entity_enabled,
+            name=channel.name,
+            device_class=device_class,
+            state_class=state_class,
+            native_unit_of_measurement=uom,
+        )
+        entities.append(
+            OpenEMSSensorEntity(
+                entity_description,
+                channel.unique_id(),
+                device_info,
+                channel.component.edge,
+                component.name,
+                channel.orig_json,
+                channel.options,
+            )
+        )
+    return entities
