@@ -6,6 +6,7 @@ import asyncio
 from collections.abc import Callable, Mapping
 import contextlib
 import json
+import logging
 from typing import Any
 import uuid
 
@@ -17,7 +18,7 @@ from homeassistant.core import HomeAssistant
 
 from . import exceptions
 
-# import homeassistant.components.openems.sensor.OpenEMSSensorEntity as OpenEMSSensorEntity
+_LOGGER = logging.getLogger(__name__)
 
 
 class OpenEMSChannel:
@@ -53,23 +54,39 @@ class OpenEMSChannel:
             + self.name
         )
 
+    def register_callback(self, callback: Callable):
+        """Register callback."""
+        self.component.edge.register_callback(
+            self.component.name + "/" + self.name, callback
+        )
 
-class OpenEMSEnumProperty:
+    def unregister_callback(self):
+        """Remove callback."""
+        self.component.edge.unregister_callback(self.component.name + "/" + self.name)
+
+
+class OpenEMSEnumProperty(OpenEMSChannel):
     """Class representing a enum property of an OpenEMS component."""
 
     # Use with platform select
 
 
-class OpenEMSNumberProperty:
+class OpenEMSNumberProperty(OpenEMSChannel):
     """Class representing a number property of an OpenEMS component."""
 
     # Use with platform Number
 
 
-class OpenEMSBooleanProperty:
+class OpenEMSBooleanProperty(OpenEMSChannel):
     """Class representing a boolean property of an OpenEMS component."""
 
     # Use with platform switch
+
+    def __init__(self, component, channel_json) -> None:
+        super().__init__(component, channel_json)
+
+    async def update_value(self, value) -> None:
+        await self.component.update_config(self.name[9:], value)
 
 
 class OpenEMSComponent:
@@ -87,12 +104,27 @@ class OpenEMSComponent:
         self.boolean_properties: list[OpenEMSBooleanProperty] = []
         for channel_json in json_def["channels"]:
             if channel_json["id"].startswith("_Property"):
-                # TODO: scan type and convert to property, temp: use plain sensor
+                # scan type and convert to property
+                match channel_json["type"]:
+                    case "BOOLEAN":
+                        prop = OpenEMSBooleanProperty(
+                            component=self, channel_json=channel_json
+                        )
+                        self.boolean_properties.append(prop)
+            elif not name.startswith("ctrl"):
+                # dont create non-Property channels of ctrl-components
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
                 self.sensors.append(channel)
-            else:
-                channel = OpenEMSChannel(component=self, channel_json=channel_json)
-                self.sensors.append(channel)
+
+    async def update_config(self, property_name, value):
+        """Send updateComponentConfig request to backend."""
+        properties = [{"name": property_name, "value": value}]
+        envelope = OpenEMSBackend.wrap_jsonrpc(
+            "updateComponentConfig", componentId=self.name, properties=properties
+        )
+        await self.edge.backend.rpc_server.edgeRpc(
+            edgeId=self.edge.id, payload=envelope
+        )
 
 
 class OpenEMSEdge:
@@ -117,7 +149,7 @@ class OpenEMSEdge:
                 await asyncio.sleep(5)
                 subscribe_in_progress_channels = list(self._edge.callbacks.keys())
                 if (
-                    self._edge._backend.rpc_server.connected
+                    self._edge.backend.rpc_server.connected
                     and subscribe_in_progress_channels != self._active_subscriptions
                 ):
                     with contextlib.suppress(
@@ -129,14 +161,14 @@ class OpenEMSEdge:
                             count=0,
                             channels=subscribe_in_progress_channels,
                         )
-                        await self._edge._backend.rpc_server.edgeRpc(
+                        await self._edge.backend.rpc_server.edgeRpc(
                             edgeId=self._edge.id_str, payload=subscribe_call
                         )
                         self._active_subscriptions = subscribe_in_progress_channels
 
     def __init__(self, backend, id) -> None:
         """Initialize the edge."""
-        self._backend: OpenEMSBackend = backend
+        self.backend: OpenEMSBackend = backend
         self._id: int = id
         self._edge_config: dict[str, dict] | None = None
         self.edge_component: OpenEMSComponent | None = None
@@ -152,16 +184,17 @@ class OpenEMSEdge:
     async def prepare_entities(self):
         """Parse json config and create class structures."""
         self.hostname = self._edge_config["_host"]["Hostname"]
-        if self._backend.multi_edge:
+        if self.backend.multi_edge:
             self.hostname += " " + self.id_str
 
         for name, contents in self._edge_config.items():
-            if name != "_sum" and name.startswith(("_", "ctrl")):
-                continue
             component: OpenEMSComponent = OpenEMSComponent(self, name, contents)
             if name == "_sum":
+                # all entities of the _sum component are created within the edge device
                 self.edge_component = component
             elif contents["_PropertyAlias"]:
+                # If the component has a property alias,
+                # create the entities within a service which linked to the edge device
                 self.components[name] = component
 
     def set_unavailable(self):
@@ -260,7 +293,7 @@ class OpenEMSBackend:
         try:
             method = getattr(edge, method_name)
         except AttributeError:
-            print("Unhandled callback method: ", method)
+            _LOGGER.error("Unhandled callback method: %s", method_name)
             return
 
         params = kwargs["payload"]["params"]
@@ -331,22 +364,6 @@ class OpenEMSBackend:
     async def subscribe_for_config_changes(self, edge_id):
         """Subscribe for edgeConfig updates."""
         return await self.rpc_server.subscribeEdges(edges=json.dumps([edge_id]))
-
-    async def update_component_config(self, edge_id, component_id, properties):
-        try:
-            await self.start()
-            envelope = OpenEMSBackend.wrap_jsonrpc(
-                "updateComponentConfig", componentId=component_id, properties=properties
-            )
-            r_edge_rpc = await self.rpc_server.edgeRpc(edgeId=edge_id, payload=envelope)
-        except jsonrpc_base.jsonrpc.ProtocolError as e:
-            if type(e.args) is tuple:
-                raise exceptions.APIError(
-                    message=f"{e.args[0]}: {e.args[1]}", code=e.args[0]
-                )
-            raise e
-        r = r_edge_rpc["payload"]["result"]
-        return r
 
     async def read_config(self):
         """Request list of all edges and their config."""

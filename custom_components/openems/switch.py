@@ -1,25 +1,18 @@
-"""Component providing support for OpenEMS sensors."""
+"""Component providing support for OpenEMS number entities."""
 
 from dataclasses import dataclass
 import logging
+from typing import Any
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorEntityDescription,
-)
+from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
 from .const import DEFAULT_EDGE_CHANNELS
-from .helpers import (
-    OpenEMSSensorUnitClass,
-    component_device,
-    edge_device,
-    unit_description,
-)
+from .helpers import component_device, edge_device
 from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSEdge
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,36 +21,40 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: OpenEMSConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up OpenEMS sensor entities."""
+    """Set up OpenEMS switch entities."""
     backend: OpenEMSBackend = config_entry.runtime_data
-    entities: list[OpenEMSSensorEntity] = []
+    entities: list[OpenEMSSwitchEntity] = []
     # for all edges
     edge: OpenEMSEdge
     for edge in backend.edges.values():
         component: OpenEMSComponent
         for component in edge.components.values():
             device = component_device(component)
-            component_entities = create_sensor_entities(component, device)
+            component_entities = create_switch_entities(component, device)
             entities.extend(component_entities)
 
         device = edge_device(edge)
-        edge_entities = create_sensor_entities(edge.edge_component, device)
+        edge_entities = create_switch_entities(edge.edge_component, device)
         entities.extend(edge_entities)
 
     async_add_entities(entities)
 
 
 @dataclass(frozen=True, kw_only=True)
-class OpenEMSSensorDescription(SensorEntityDescription):
+class OpenEMSSwitchDescription(SwitchEntityDescription):
     """Defintion of OpenEMS sensor attributes."""
 
     has_entity_name = True
 
 
-class OpenEMSSensorEntity(SensorEntity):
-    """Representation of a sensor."""
+class OpenEMSSwitchEntity(SwitchEntity):
+    """Number entity class for OpenEMS channels."""
+
+    entity_description: OpenEMSSwitchDescription
+
+    # From here: ToDo
 
     def __init__(
         self,
@@ -65,28 +62,39 @@ class OpenEMSSensorEntity(SensorEntity):
         entity_description,
         device_info,
     ) -> None:
-        """Initialize the sensor."""
+        """Initialize OpenEMS switch entity."""
         self._channel: OpenEMSChannel = channel
         self.entity_description = entity_description
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info
         self._attr_should_poll = False
         self._attr_extra_state_attributes = channel.orig_json
-        self._state: int = None
+        self._raw_value = None
 
     def handle_currentData(self, _, value) -> None:
         """Handle a state update."""
-        if value in self._channel.options:
-            value = self._channel.options[value]
-
-        if self._state != value:
-            self._state = value
-            self.async_schedule_update_ha_state()
+        if self._raw_value != value:
+            was_on = self.is_on
+            self._raw_value = value
+            if was_on != self.is_on:
+                self.async_schedule_update_ha_state()
 
     @property
-    def native_value(self) -> int | None:
-        """Return the value of the sensor."""
-        return self._state
+    def is_on(self) -> bool | None:
+        """Return true if switch is on."""
+        if isinstance(self._raw_value, int):
+            return bool(self._raw_value)
+        return None
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn the entity on."""
+        await self._channel.update_value(True)
+        self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the entity off."""
+        await self._channel.update_value(False)
+        self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
@@ -101,36 +109,25 @@ class OpenEMSSensorEntity(SensorEntity):
         await super().async_will_remove_from_hass()
 
 
-def create_sensor_entities(
+def create_switch_entities(
     component: OpenEMSComponent,
     device_info: DeviceInfo,
-) -> list[OpenEMSSensorEntity]:
+) -> list[OpenEMSSwitchEntity]:
     """Create Sensor Entities from channel list."""
-    entities: list[OpenEMSSensorEntity] = []
+    entities: list[OpenEMSSwitchEntity] = []
     channel: OpenEMSChannel
-    channel_list: list[OpenEMSChannel] = component.sensors
+    channel_list: list[OpenEMSChannel] = component.boolean_properties
     for channel in channel_list:
-        if channel.options:
-            device_class = SensorDeviceClass.ENUM
-            state_class = None
-            uom = None
-        else:
-            unit_desc: OpenEMSSensorUnitClass = unit_description(channel.unit)
-            device_class = unit_desc.device_class
-            state_class = unit_desc.state_class
-            uom = unit_desc.unit
-
-        enable_by_default = component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
-        entity_description = OpenEMSSensorDescription(
+        entity_enabled = component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
+        entity_description = OpenEMSSwitchDescription(
             key=channel.unique_id(),
-            entity_registry_enabled_default=enable_by_default,
-            name=channel.name,
-            device_class=device_class,
-            state_class=state_class,
-            native_unit_of_measurement=uom,
+            entity_category=EntityCategory.CONFIG,
+            entity_registry_enabled_default=entity_enabled,
+            # remove "_Property" prefix
+            name=channel.name[9:],
         )
         entities.append(
-            OpenEMSSensorEntity(
+            OpenEMSSwitchEntity(
                 channel,
                 entity_description,
                 device_info,

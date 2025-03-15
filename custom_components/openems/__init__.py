@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -14,7 +12,7 @@ from .openems import OpenEMSBackend
 
 DOMAIN = "openems"
 
-_PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SELECT]
+_PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH]
 
 type OpenEMSConfigEntry = ConfigEntry[OpenEMSBackend]
 

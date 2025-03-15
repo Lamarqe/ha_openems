@@ -1,9 +1,13 @@
-"""Component providing support for OpenEMS select entities."""
+"""Component providing support for OpenEMS number entities."""
 
 from dataclasses import dataclass
 import logging
 
-from homeassistant.components.select import SelectEntity, SelectEntityDescription
+from homeassistant.components.number import (
+    NumberEntity,
+    NumberEntityDescription,
+    NumberMode,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -27,16 +31,16 @@ async def async_setup_entry(
 
 
 @dataclass(frozen=True, kw_only=True)
-class OpenEMSSelectDescription(SelectEntityDescription):
+class OpenEMSNumberDescription(NumberEntityDescription):
     """Defintion of OpenEMS sensor attributes."""
 
     has_entity_name = True
 
 
-class OpenEMSSelectEntity(SelectEntity):
-    """Select entity class for OpenEMS channels."""
+class OpenEMSNumberEntity(NumberEntity):
+    """Number entity class for OpenEMS channels."""
 
-    entity_description: OpenEMSSelectDescription
+    entity_description: OpenEMSNumberDescription
 
     # From here: ToDo
 
@@ -50,16 +54,16 @@ class OpenEMSSelectEntity(SelectEntity):
         extra_attributes,
         state_map,
     ) -> None:
-        """Initialize OpenEMS select entity."""
+        """Initialize OpenEMS number entity."""
         self.entity_description = entity_description
-        self._attr_options = entity_description.get_options  # Todo
+        self._attr_mode = NumberMode.SLIDER  # Todo
 
     @property
-    def current_option(self) -> str | None:
-        """Return the current option."""
+    def native_value(self) -> float | None:
+        """Return the current value."""
         return self.entity_description.value
 
-    async def async_select_option(self, option: str) -> None:
-        """Change the selected option."""
-        await self.entity_description.method(self._host.api, self._channel, option)
+    async def async_set_native_value(self, value: float) -> None:
+        """Change the current value."""
+        await self.entity_description.method(self._host.api, self._channel, value)
         self.async_write_ha_state()
