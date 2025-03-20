@@ -1,0 +1,132 @@
+[
+    {
+        "component_regexp": ".*",
+        "channels": [
+            {
+                "id": "_PropertyCurrency",
+                "options": [
+                    "EUR",
+                    "SEK",
+                    "CHF"
+                ]
+            },
+            {
+                "id": "_PropertyFormat",
+                "options": [
+                    "GERMAN_EXCEL",
+                    "ENGLISH"
+                ]
+            },
+            {
+                "id": "_PropertyPhase",
+                "options": [
+                    "L1",
+                    "L2",
+                    "L3"
+                ]
+            },
+            {
+                "id": "_PropertyPhaseRotation",
+                "options": [
+                    "L1_L2_L3",
+                    "L2_L3_L1",
+                    "L3_L1_L2"
+                ]
+            }
+        ]
+    },
+    {
+        "component_regexp": "ctrlEvcs\\d+",
+        "channels": [
+            {
+                "id": "_PropertyChargeMode",
+                "options": [
+                    "FORCE_CHARGE",
+                    "EXCESS_POWER"
+                ]
+            },
+            {
+                "id": "_PropertyPriority",
+                "options": [
+                    "CAR",
+                    "STORAGE"
+                ]
+            }
+        ]
+    },
+    {
+        "component_regexp": "_energy",
+        "channels": [
+            {
+                "id": "_PropertyLogVerbosity",
+                "options": [
+                    "NONE",
+                    "DEBUG_LOG",
+                    "TRACE"
+                ]
+            },
+            {
+                "id": "_PropertyRiskLevel",
+                "options": [
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH"
+                ]
+            },
+            {
+                "id": "_PropertyVersion",
+                "options": [
+                    "V1_ESS_ONLY",
+                    "V2_ENERGY_SCHEDULABLE"
+                ]
+            }
+        ]
+    },
+    {
+        "component_regexp": "(datasource\\d+|ess\\d+|meter\\d+)",
+        "channels": [
+            {
+                "id": "_PropertyGridMode",
+                "options": [
+                    "UNDEFINED",
+                    "ON_GRID",
+                    "OFF_GRID"
+                ]
+            },
+            {
+                "id": "_PropertyLogVerbosity",
+                "options": [
+                    "NONE",
+                    "REQUESTED_PREDICTIONS"
+                ]
+            },
+            {
+                "id": "_PropertySource",
+                "options": [
+                    "ZERO",
+                    "H0_HOUSEHOLD_SUMMER_WEEKDAY_STANDARD_LOAD_PROFILE",
+                    "H0_HOUSEHOLD_SUMMER_WEEKDAY_PV_PRODUCTION",
+                    "H0_HOUSEHOLD_SUMMER_WEEKDAY_NON_REGULATED_CONSUMPTION",
+                    "H0_HOUSEHOLD_SUMMER_WEEKDAY_PV_PRODUCTION2"
+                ]
+            }
+        ]
+    },
+    {
+        "component_regexp": "_power",
+        "channels": [
+            {
+                "id": "_PropertyStrategy",
+                "options": [
+                    "UNDEFINED",
+                    "NONE",
+                    "ALL_CONSTRAINTS",
+                    "OPTIMIZE_BY_MOVING_TOWARDS_TARGET",
+                    "OPTIMIZE_BY_KEEPING_TARGET_DIRECTION_AND_MAXIMIZING_IN_ORDER",
+                    "OPTIMIZE_BY_KEEPING_ALL_EQUAL",
+                    "OPTIMIZE_BY_KEEPING_ALL_NEAR_EQUAL"
+                ]
+            }
+        ]
+    }
+]
