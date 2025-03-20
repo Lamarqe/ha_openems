@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import STORAGE_KEY, STORAGE_VERSION
 from .openems import OpenEMSBackend
 
-DOMAIN = "openems"
-
-_PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH]
+_PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.SELECT]
 
 type OpenEMSConfigEntry = ConfigEntry[OpenEMSBackend]
 
@@ -24,9 +22,9 @@ async def async_setup_entry(
     """Set up HA OpenEMS from a config entry."""
 
     # 1. Create API instance
-
+    config = config_entry.data
     backend = OpenEMSBackend(
-        hass, config=config_entry.data, config_entry_id=config_entry.entry_id
+        config[CONF_HOST], config[CONF_USERNAME], config[CONF_PASSWORD]
     )
     # 2. Trigger the API connection (and authentication)
     backend.start()

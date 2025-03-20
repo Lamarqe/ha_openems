@@ -3,22 +3,38 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 import contextlib
 import json
 import logging
-from typing import Any
+import os
+import re
 import uuid
 
 import jsonrpc_base
 import jsonrpc_websocket
 
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant
-
-from . import exceptions
-
 _LOGGER = logging.getLogger(__name__)
+
+
+class OpenEMSConfigEnhancer:
+    """Load additional config options from json files."""
+
+    def __init__(self) -> None:
+        """Initialize and read json files."""
+        path = os.path.dirname(__file__)
+        with open(path + "/config/enum_options.json", encoding="utf-8") as enum_file:
+            self.enum_options = json.load(enum_file)
+
+    def get_options(self, component_name, channel_name) -> list[str] | None:
+        """Return option string list for a given component/channel."""
+        for component_conf in self.enum_options:
+            comp_regex = component_conf["component_regexp"]
+            if re.fullmatch(comp_regex, component_name):
+                for channel in component_conf["channels"]:
+                    if channel["id"] == channel_name:
+                        return channel["options"]
+        return None
 
 
 class OpenEMSChannel:
@@ -26,6 +42,7 @@ class OpenEMSChannel:
 
     # Use with platform sensor
     def __init__(self, component, channel_json) -> None:
+        """Initialize the channel."""
         name = channel_json["id"]
         unit = channel_json["unit"]
         if (
@@ -44,6 +61,7 @@ class OpenEMSChannel:
         self.orig_json: list | None = channel_json
 
     def unique_id(self) -> str:
+        """Generate unique ID for the channel."""
         return (
             self.component.edge.hostname
             + "/"
@@ -69,6 +87,14 @@ class OpenEMSEnumProperty(OpenEMSChannel):
     """Class representing a enum property of an OpenEMS component."""
 
     # Use with platform select
+    def __init__(self, component, channel_json) -> None:
+        """Initialize the channel."""
+        super().__init__(component, channel_json)
+        self.options = channel_json["options"]
+
+    async def update_value(self, value) -> None:
+        """Handle value change request from Home Assisant."""
+        await self.component.update_config(self.name[9:], value)
 
 
 class OpenEMSNumberProperty(OpenEMSChannel):
@@ -82,15 +108,15 @@ class OpenEMSBooleanProperty(OpenEMSChannel):
 
     # Use with platform switch
 
-    def __init__(self, component, channel_json) -> None:
-        super().__init__(component, channel_json)
-
     async def update_value(self, value) -> None:
+        """Handle value change request from Home Assisant."""
         await self.component.update_config(self.name[9:], value)
 
 
 class OpenEMSComponent:
     """Class representing a component of an OpenEMS Edge."""
+
+    config_enhancer = OpenEMSConfigEnhancer()
 
     def __init__(self, edge, name, json_def) -> None:
         """Initialize the component."""
@@ -111,6 +137,17 @@ class OpenEMSComponent:
                             component=self, channel_json=channel_json
                         )
                         self.boolean_properties.append(prop)
+                    case "STRING":
+                        if options := OpenEMSComponent.config_enhancer.get_options(
+                            self.name, channel_json["id"]
+                        ):
+                            channel_json["options"] = options
+                        if "options" in channel_json:
+                            prop = OpenEMSEnumProperty(
+                                component=self, channel_json=channel_json
+                            )
+                            self.enum_properties.append(prop)
+
             elif not name.startswith("ctrl"):
                 # dont create non-Property channels of ctrl-components
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
@@ -260,20 +297,14 @@ class OpenEMSEdge:
 
 
 class OpenEMSBackend:
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        config: Mapping[str, Any],
-        options: Mapping[str, Any] | None = None,
-        config_entry_id: str | None = None,
-    ) -> None:
-        websocket_url = "ws://" + config[CONF_HOST] + ":80/websocket"
+    def __init__(self, host: str, username: str, password: str) -> None:
+        websocket_url = "ws://" + host + ":8085/"
         self.rpc_server = jsonrpc_websocket.Server(
             websocket_url, session=None, heartbeat=5
         )
         self.rpc_server.edgeRpc = self.edgeRpc
-        self.username: str = config[CONF_USERNAME]
-        self.password: str = config[CONF_PASSWORD]
+        self.username: str = username
+        self.password: str = password
         self.edges: dict[int, OpenEMSEdge] = {}
         self.multi_edge = True
         self._reconnect_task = None

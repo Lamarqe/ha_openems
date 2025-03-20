@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass
 
-from .openems import OpenEMSComponent, OpenEMSEdge
-from .__init__ import DOMAIN
-
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+
+from .const import DOMAIN
+from .openems import OpenEMSComponent, OpenEMSEdge
 
 
 @dataclass
@@ -49,6 +49,7 @@ def unit_description(unit: str) -> OpenEMSSensorUnitClass:
 
 
 def component_device(component: OpenEMSComponent) -> DeviceInfo:
+    """Provide the device of an OpenEMSComponent."""
     return DeviceInfo(
         name=component.edge.hostname + " " + component.name,
         model=component.alias,

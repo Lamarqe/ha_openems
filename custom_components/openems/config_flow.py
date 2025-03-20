@@ -14,8 +14,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.storage import Store
 
-from .__init__ import DOMAIN
-from .const import STORAGE_KEY, STORAGE_VERSION
+from .const import DOMAIN, STORAGE_KEY, STORAGE_VERSION
 from .openems import OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,7 +54,11 @@ class OpenEMSConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         data_schema = step_user_data_schema(user_input)
         if user_input is not None:
-            backend = OpenEMSBackend(self.hass, user_input)
+            backend = OpenEMSBackend(
+                user_input[CONF_HOST],
+                user_input[CONF_USERNAME],
+                user_input[CONF_PASSWORD],
+            )
             try:
                 # login
                 backend.start()
