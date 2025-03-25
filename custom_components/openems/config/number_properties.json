@@ -1,0 +1,41 @@
+[
+    {
+        "component_regexp": "ctrlEvcs\\d+",
+        "channels": [
+            {
+                "id": "_PropertyEnergySessionLimit",
+                "limit": {
+                    "lower": "0",
+                    "upper": "100000"
+                }
+            },
+            {
+                "id": "_PropertyForceChargeMinPower",
+                "limit": {
+                    "lower": "{$evcs.id/MinimumHardwarePower} / {$evcs.id/Phases}",
+                    "upper": "{$evcs.id/MaximumHardwarePower} / {$evcs.id/Phases}"
+                }
+            },
+            {
+                "id": "_PropertyDefaultChargeMinPower",
+                "limit": {
+                    "lower": "{$evcs.id/MinimumHardwarePower}",
+                    "upper": "{$evcs.id/MaximumHardwarePower}"
+                }
+            }
+        ]
+    },
+    {
+        "component_regexp": "ctrlEmergencyCapacityReserve\\d+",
+        "channels": [
+            {
+                "id": "_PropertyReserveSoc",
+                "limit": {
+                    "lower": "5",
+                    "upper": "100"
+
+                }
+            }
+        ]
+    }
+]
