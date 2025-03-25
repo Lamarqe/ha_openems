@@ -7,12 +7,16 @@ from collections.abc import Callable
 import contextlib
 import json
 import logging
+import math
 import os
 import re
 import uuid
 
+import aiohttp
+from jinja2 import Template
 import jsonrpc_base
 import jsonrpc_websocket
+import yarl
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,16 +29,32 @@ class OpenEMSConfigEnhancer:
         path = os.path.dirname(__file__)
         with open(path + "/config/enum_options.json", encoding="utf-8") as enum_file:
             self.enum_options = json.load(enum_file)
+        with open(
+            path + "/config/number_properties.json", encoding="utf-8"
+        ) as number_file:
+            self.number_properties = json.load(number_file)
 
-    def get_options(self, component_name, channel_name) -> list[str] | None:
-        """Return option string list for a given component/channel."""
-        for component_conf in self.enum_options:
+    def _get_config_property(self, dict, property, component_name, channel_name):
+        """Return dict property for a given component/channel."""
+        for component_conf in dict:
             comp_regex = component_conf["component_regexp"]
             if re.fullmatch(comp_regex, component_name):
                 for channel in component_conf["channels"]:
                     if channel["id"] == channel_name:
-                        return channel["options"]
+                        return channel[property]
         return None
+
+    def get_enum_options(self, component_name, channel_name) -> list[str] | None:
+        """Return option string list for a given component/channel."""
+        return self._get_config_property(
+            self.enum_options, "options", component_name, channel_name
+        )
+
+    def get_number_limit(self, component_name, channel_name) -> dict | None:
+        """Return limit definition for a given component/channel."""
+        return self._get_config_property(
+            self.number_properties, "limit", component_name, channel_name
+        )
 
 
 class OpenEMSChannel:
@@ -100,7 +120,69 @@ class OpenEMSEnumProperty(OpenEMSChannel):
 class OpenEMSNumberProperty(OpenEMSChannel):
     """Class representing a number property of an OpenEMS component."""
 
+    STEPS = 200  # Minimum number of steps
+
     # Use with platform Number
+    def __init__(
+        self,
+        component,
+        channel_json,
+    ) -> None:
+        """Initialize the number channel."""
+        super().__init__(component, channel_json)
+        self.lower_limit: float = None
+        self.upper_limit: float = None
+        self.step: float = None
+
+    async def update_value(self, value: float) -> None:
+        """Handle value change request from Home Assisant."""
+        await self.component.update_config(self.name[9:], value)
+
+    async def init_limits(self, limit_def):
+        """Initialize the limits of the number channel."""
+        lower_limit = await self._compute_expression(limit_def["lower"])
+        upper_limit = await self._compute_expression(limit_def["upper"])
+        min_step_range = (upper_limit - lower_limit) / OpenEMSNumberProperty.STEPS
+        self.step = 10 ** math.ceil(math.log10(min_step_range))
+        self.lower_limit = math.ceil(float(lower_limit) / self.step) * self.step
+        self.upper_limit = math.ceil(float(upper_limit) / self.step) * self.step
+
+    async def _compute_expression(self, expr) -> float:
+        """Resolve an expression like "{$evcs.id/MinHardwarePower} / {$evcs.id/Phases}" to a concrete number."""
+        # step 1: retrieve the values of all linked channels
+        for ref in re.findall("{(.*?)}", expr):
+            if ref not in self.component.ref_values:
+                self.component.ref_values[ref] = await self._get_ref_value(ref)
+
+        # step 2: replace all linked channels with their values
+        def lookup_ref_value(matchobj) -> str:
+            return str(self.component.ref_values[matchobj.group()[1:-1]])
+
+        value_expr = re.sub("{(.*?)}", lookup_ref_value, expr)
+
+        # step 3: calculate the expression (using jinja2)
+        return float(Template("{{" + value_expr + "}}").render())
+
+    async def _get_ref_value(self, reference_def: str):
+        """Resolve an expression like "$evcs.id/Phases" to its concrete value."""
+        component_reference, channel_reference = reference_def.split("/")
+        # if the component starts with $, treat it like a variable to be looked up in the component properties
+        if component_reference.startswith("$"):
+            component_property = component_reference[1:]
+            component_reference = self.component.properties[component_property]
+        # retrieve the value via FEMS REST API
+        url = self.component.edge.backend.rest_base_url.joinpath(
+            "channel", component_reference, channel_reference
+        )
+        auth = aiohttp.BasicAuth(
+            self.component.edge.backend.username, self.component.edge.backend.password
+        )
+        async with (
+            aiohttp.ClientSession(auth=auth) as session,
+            session.get(url) as resp,
+        ):
+            data = await resp.json()
+            return data["value"]
 
 
 class OpenEMSBooleanProperty(OpenEMSChannel):
@@ -123,12 +205,16 @@ class OpenEMSComponent:
         self.edge: OpenEMSEdge = edge
         self.name: str = name
         self.alias = json_def.get("_PropertyAlias")
-        self._properties: dict = json_def["properties"]
+        self.ref_values: dict = {}
+        self.properties: dict = json_def["properties"]
         self.sensors: list[OpenEMSChannel] = []
         self.enum_properties: list[OpenEMSEnumProperty] = []
         self.number_properties: list[OpenEMSNumberProperty] = []
         self.boolean_properties: list[OpenEMSBooleanProperty] = []
-        for channel_json in json_def["channels"]:
+
+    async def init_channels(self, channels):
+        """Parse and initialize the components channels."""
+        for channel_json in channels:
             if channel_json["id"].startswith("_Property"):
                 # scan type and convert to property
                 match channel_json["type"]:
@@ -138,7 +224,7 @@ class OpenEMSComponent:
                         )
                         self.boolean_properties.append(prop)
                     case "STRING":
-                        if options := OpenEMSComponent.config_enhancer.get_options(
+                        if options := OpenEMSComponent.config_enhancer.get_enum_options(
                             self.name, channel_json["id"]
                         ):
                             channel_json["options"] = options
@@ -147,8 +233,20 @@ class OpenEMSComponent:
                                 component=self, channel_json=channel_json
                             )
                             self.enum_properties.append(prop)
+                    case "INTEGER":
+                        if (
+                            limit_def
+                            := OpenEMSComponent.config_enhancer.get_number_limit(
+                                self.name, channel_json["id"]
+                            )
+                        ):
+                            prop = OpenEMSNumberProperty(
+                                component=self, channel_json=channel_json
+                            )
+                            await prop.init_limits(limit_def)
+                            self.number_properties.append(prop)
 
-            elif not name.startswith("ctrl"):
+            elif not self.name.startswith("ctrl"):
                 # dont create non-Property channels of ctrl-components
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
                 self.sensors.append(channel)
@@ -226,6 +324,7 @@ class OpenEMSEdge:
 
         for name, contents in self._edge_config.items():
             component: OpenEMSComponent = OpenEMSComponent(self, name, contents)
+            await component.init_channels(contents["channels"])
             if name == "_sum":
                 # all entities of the _sum component are created within the edge device
                 self.edge_component = component
@@ -302,6 +401,7 @@ class OpenEMSBackend:
         self.rpc_server = jsonrpc_websocket.Server(
             websocket_url, session=None, heartbeat=5
         )
+        self.rest_base_url: yarl.URL = yarl.URL("http://" + host + ":8084" + "/rest/")
         self.rpc_server.edgeRpc = self.edgeRpc
         self.username: str = username
         self.password: str = password

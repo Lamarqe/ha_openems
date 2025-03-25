@@ -113,41 +113,41 @@
         ]
     },
     {
-      "component_regexp": "_power",
-      "channels": [
-          {
-              "id": "_PropertyStrategy",
-              "options": [
-                  "UNDEFINED",
-                  "NONE",
-                  "ALL_CONSTRAINTS",
-                  "OPTIMIZE_BY_MOVING_TOWARDS_TARGET",
-                  "OPTIMIZE_BY_KEEPING_TARGET_DIRECTION_AND_MAXIMIZING_IN_ORDER",
-                  "OPTIMIZE_BY_KEEPING_ALL_EQUAL",
-                  "OPTIMIZE_BY_KEEPING_ALL_NEAR_EQUAL"
-              ]
-          }
-      ]
+        "component_regexp": "_power",
+        "channels": [
+            {
+                "id": "_PropertyStrategy",
+                "options": [
+                    "UNDEFINED",
+                    "NONE",
+                    "ALL_CONSTRAINTS",
+                    "OPTIMIZE_BY_MOVING_TOWARDS_TARGET",
+                    "OPTIMIZE_BY_KEEPING_TARGET_DIRECTION_AND_MAXIMIZING_IN_ORDER",
+                    "OPTIMIZE_BY_KEEPING_ALL_EQUAL",
+                    "OPTIMIZE_BY_KEEPING_ALL_NEAR_EQUAL"
+                ]
+            }
+        ]
     },
     {
-      "component_regexp": "ctrlGridOptimizedCharge\\d+",
-      "channels": [
-          {
-              "id": "_PropertyMode",
-              "options": [
-                  "OFF",
-                  "MANUAL",
-                  "AUTOMATIC"
-              ]
-          },
-          {
-            "id": "_PropertyDelayChargeRiskLevel",
-            "options": [
-                "LOW",
-                "MEDIUM",
-                "HIGH"
-            ]
-        }
-    ]
-  }
+        "component_regexp": "ctrlGridOptimizedCharge\\d+",
+        "channels": [
+            {
+                "id": "_PropertyMode",
+                "options": [
+                    "OFF",
+                    "MANUAL",
+                    "AUTOMATIC"
+                ]
+            },
+            {
+                "id": "_PropertyDelayChargeRiskLevel",
+                "options": [
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH"
+                ]
+            }
+        ]
+    }
 ]

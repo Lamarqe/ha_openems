@@ -12,13 +12,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .__init__ import OpenEMSConfigEntry
 from .const import DEFAULT_EDGE_CHANNELS
 from .helpers import component_device, edge_device
-from .openems import (
-    OpenEMSBackend,
-    OpenEMSChannel,
-    OpenEMSComponent,
-    OpenEMSEdge,
-    OpenEMSEnumProperty,
-)
+from .openems import OpenEMSBackend, OpenEMSComponent, OpenEMSEdge, OpenEMSEnumProperty
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,12 +55,12 @@ class OpenEMSSelectEntity(SelectEntity):
 
     def __init__(
         self,
-        channel: OpenEMSChannel,
+        channel: OpenEMSEnumProperty,
         entity_description,
         device_info,
     ) -> None:
         """Initialize OpenEMS switch entity."""
-        self._channel: OpenEMSChannel = channel
+        self._channel: OpenEMSEnumProperty = channel
         self.entity_description = entity_description
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info

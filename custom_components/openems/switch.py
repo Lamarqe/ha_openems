@@ -16,7 +16,6 @@ from .helpers import component_device, edge_device
 from .openems import (
     OpenEMSBackend,
     OpenEMSBooleanProperty,
-    OpenEMSChannel,
     OpenEMSComponent,
     OpenEMSEdge,
 )
@@ -62,12 +61,12 @@ class OpenEMSSwitchEntity(SwitchEntity):
 
     def __init__(
         self,
-        channel: OpenEMSChannel,
+        channel: OpenEMSBooleanProperty,
         entity_description,
         device_info,
     ) -> None:
         """Initialize OpenEMS switch entity."""
-        self._channel: OpenEMSChannel = channel
+        self._channel: OpenEMSBooleanProperty = channel
         self.entity_description = entity_description
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info
