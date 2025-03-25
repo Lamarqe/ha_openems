@@ -74,7 +74,7 @@ class OpenEMSSensorEntity(SensorEntity):
         self._attr_extra_state_attributes = channel.orig_json
         self._state: int = None
 
-    def handle_currentData(self, _, value) -> None:
+    def handle_current_value(self, value) -> None:
         """Handle a state update."""
         if value in self._channel.options:
             value = self._channel.options[value]
@@ -91,7 +91,7 @@ class OpenEMSSensorEntity(SensorEntity):
     async def async_added_to_hass(self) -> None:
         """Entity created."""
         self._channel.register_callback(
-            self.handle_currentData,
+            self.handle_current_value,
         )
         await super().async_added_to_hass()
 

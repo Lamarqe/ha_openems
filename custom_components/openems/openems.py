@@ -41,7 +41,7 @@ class OpenEMSConfigEnhancer:
             if re.fullmatch(comp_regex, component_name):
                 for channel in component_conf["channels"]:
                     if channel["id"] == channel_name:
-                        return channel[property]
+                        return channel.get(property)
         return None
 
     def get_enum_options(self, component_name, channel_name) -> list[str] | None:
@@ -54,6 +54,12 @@ class OpenEMSConfigEnhancer:
         """Return limit definition for a given component/channel."""
         return self._get_config_property(
             self.number_properties, "limit", component_name, channel_name
+        )
+
+    def get_number_multiplier(self, component_name, channel_name) -> dict | None:
+        """Return multiplier for a given component/channel."""
+        return self._get_config_property(
+            self.number_properties, "multiplier", component_name, channel_name
         )
 
 
@@ -79,6 +85,12 @@ class OpenEMSChannel:
         self.unit: str = unit
         self.options: list | None = options
         self.orig_json: list | None = channel_json
+        self.callback: callable | None = None
+
+    def handle_current_value(self, value):
+        """Handle a value update from the backend."""
+        if self.callback:
+            self.callback(value)
 
     def unique_id(self) -> str:
         """Generate unique ID for the channel."""
@@ -94,13 +106,13 @@ class OpenEMSChannel:
 
     def register_callback(self, callback: Callable):
         """Register callback."""
-        self.component.edge.register_callback(
-            self.component.name + "/" + self.name, callback
-        )
+        self.callback = callback
+        self.component.edge.register_channel(self)
 
     def unregister_callback(self):
         """Remove callback."""
-        self.component.edge.unregister_callback(self.component.name + "/" + self.name)
+        self.callback = None
+        self.component.edge.unregister_channel(self)
 
 
 class OpenEMSEnumProperty(OpenEMSChannel):
@@ -130,22 +142,34 @@ class OpenEMSNumberProperty(OpenEMSChannel):
     ) -> None:
         """Initialize the number channel."""
         super().__init__(component, channel_json)
+        self.multiplier: float = 1.0
         self.lower_limit: float = None
         self.upper_limit: float = None
         self.step: float = None
 
+    def handle_current_value(self, value):
+        """Handle a value update from the backend."""
+        value = None if value is None else self.multiplier * value
+        super().handle_current_value(value)
+
     async def update_value(self, value: float) -> None:
         """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value)
+        await self.component.update_config(self.name[9:], value / self.multiplier)
+
+    async def init_multiplier(self, multiplier):
+        """Initialize the multiplier of the number channel."""
+        self.multiplier = await self._compute_expression(multiplier)
 
     async def init_limits(self, limit_def):
         """Initialize the limits of the number channel."""
         lower_limit = await self._compute_expression(limit_def["lower"])
         upper_limit = await self._compute_expression(limit_def["upper"])
-        min_step_range = (upper_limit - lower_limit) / OpenEMSNumberProperty.STEPS
+        lower_scaled = lower_limit * self.multiplier
+        upper_scaled = upper_limit * self.multiplier
+        min_step_range = (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
         self.step = 10 ** math.ceil(math.log10(min_step_range))
-        self.lower_limit = math.ceil(float(lower_limit) / self.step) * self.step
-        self.upper_limit = math.ceil(float(upper_limit) / self.step) * self.step
+        self.lower_limit = math.ceil(float(lower_scaled) / self.step) * self.step
+        self.upper_limit = math.ceil(float(upper_scaled) / self.step) * self.step
 
     async def _compute_expression(self, expr) -> float:
         """Resolve an expression like "{$evcs.id/MinHardwarePower} / {$evcs.id/Phases}" to a concrete number."""
@@ -240,9 +264,16 @@ class OpenEMSComponent:
                                 self.name, channel_json["id"]
                             )
                         ):
+                            multiplier = (
+                                OpenEMSComponent.config_enhancer.get_number_multiplier(
+                                    self.name, channel_json["id"]
+                                )
+                            )
                             prop = OpenEMSNumberProperty(
                                 component=self, channel_json=channel_json
                             )
+                            if multiplier is not None:
+                                await prop.init_multiplier(multiplier)
                             await prop.init_limits(limit_def)
                             self.number_properties.append(prop)
 
@@ -314,7 +345,7 @@ class OpenEMSEdge:
             self
         )
         self.hostname: str | None = None
-        self._callbacks = {}
+        self._registered_channels: dict = {}
 
     async def prepare_entities(self):
         """Parse json config and create class structures."""
@@ -336,9 +367,9 @@ class OpenEMSEdge:
     def set_unavailable(self):
         """Set all active entities to unavailable and clear the subscription indicator."""
         for key in self.current_channel_data:
-            callback = self._callbacks.get(key)
-            if callback:
-                callback(key, None)
+            channel: OpenEMSChannel = self._registered_channels.get(key)
+            if channel:
+                channel.handle_current_value(None)
         self._channel_subscription_updater._active_subscriptions = []
         self._data_event.set()
         self._data_event.clear()
@@ -364,19 +395,20 @@ class OpenEMSEdge:
         """Jsonrpc callback to receive channel subscription updates."""
         self.current_channel_data = params
         for key in self.current_channel_data:
-            callback = self._callbacks.get(key)
-            if callback:
-                callback(key, self.current_channel_data[key])
+            if channel := self._registered_channels.get(key):
+                channel.handle_current_value(self.current_channel_data[key])
         self._data_event.set()
         self._data_event.clear()
 
-    def register_callback(self, key: str, callback: Callable):
-        """Register callback for one channel."""
-        self._callbacks[key] = callback
+    def register_channel(self, channel: OpenEMSChannel):
+        """Register one channel for updates."""
+        key = channel.component.name + "/" + channel.name
+        self._registered_channels[key] = channel
 
-    def unregister_callback(self, key: str):
-        """Remove callback for one channel."""
-        del self._callbacks[key]
+    def unregister_channel(self, channel: OpenEMSChannel):
+        """Remove one channel from updates."""
+        key = channel.component.name + "/" + channel.name
+        del self._registered_channels[key]
 
     @property
     def id(self):
@@ -392,7 +424,7 @@ class OpenEMSEdge:
 
     @property
     def callbacks(self):
-        return self._callbacks
+        return self._registered_channels
 
 
 class OpenEMSBackend:

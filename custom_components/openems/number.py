@@ -81,7 +81,7 @@ class OpenEMSNumberEntity(NumberEntity):
         self._attr_should_poll = False
         self._value = None
 
-    def handle_currentData(self, _, new_value) -> None:
+    def handle_current_value(self, new_value) -> None:
         """Handle a number update."""
         if self._value != new_value:
             self._value = new_value
@@ -100,7 +100,7 @@ class OpenEMSNumberEntity(NumberEntity):
     async def async_added_to_hass(self) -> None:
         """Entity created."""
         self._channel.register_callback(
-            self.handle_currentData,
+            self.handle_current_value,
         )
         await super().async_added_to_hass()
 

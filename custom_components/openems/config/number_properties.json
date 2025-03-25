@@ -11,6 +11,7 @@
             },
             {
                 "id": "_PropertyForceChargeMinPower",
+                "multiplier": "{$evcs.id/Phases}",
                 "limit": {
                     "lower": "{$evcs.id/MinimumHardwarePower} / {$evcs.id/Phases}",
                     "upper": "{$evcs.id/MaximumHardwarePower} / {$evcs.id/Phases}"
