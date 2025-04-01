@@ -9,18 +9,38 @@ from typing import Any
 import jsonrpc_base
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.components.otp.config_flow import (
+    BooleanSelector,
+    BooleanSelectorConfig,
+)
+from homeassistant.config_entries import (
+    ConfigFlow,
+    ConfigFlowResult,
+    ConfigSubentryFlow,
+    OptionsFlow,
+    SubentryFlowResult,
+)
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PROTOCOL, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import selector
 from homeassistant.helpers.storage import Store
 
-from .const import DOMAIN, STORAGE_KEY, STORAGE_VERSION
-from .openems import OpenEMSBackend
+from .__init__ import OpenEMSConfigEntry
+from .const import (
+    DEFAULT_EDGE_CHANNELS,
+    DOMAIN,
+    STORAGE_KEY_BACKEND_CONFIG,
+    STORAGE_KEY_HA_OPTIONS,
+    STORAGE_VERSION,
+)
+from .openems import OpenEMSBackend, OpenEMSComponent, OpenEMSEdge
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def step_user_data_schema(user_input=None):
+    """Define the config flow input options."""
     default_host = user_input[CONF_HOST] if user_input else ""
     default_user = user_input[CONF_USERNAME] if user_input else "x"
     default_pass = user_input[CONF_PASSWORD] if user_input else ""
@@ -36,7 +56,7 @@ def step_user_data_schema(user_input=None):
 STEP_USER_DATA_SCHEMA = step_user_data_schema()
 
 
-class OpenEMSConfigFlowHandler(ConfigFlow, domain=DOMAIN):
+class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
     VERSION = 1
@@ -66,8 +86,19 @@ class OpenEMSConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 # read config
                 config_data = await asyncio.wait_for(backend.read_config(), timeout=5)
                 # store config in HA
-                store: Store = Store(self.hass, STORAGE_VERSION, STORAGE_KEY)
+                store: Store = Store(
+                    self.hass, STORAGE_VERSION, STORAGE_KEY_BACKEND_CONFIG
+                )
                 await store.async_save(config_data)
+                # initialize options
+                options: dict[str:bool] = {}
+                for channel_name in DEFAULT_EDGE_CHANNELS:
+                    comp_name = channel_name.split("/")[0]
+                    options[comp_name] = True
+                options_key = STORAGE_KEY_HA_OPTIONS + "_" + backend.host
+                store_options: Store = Store(self.hass, STORAGE_VERSION, options_key)
+                await store_options.async_save(options)
+
                 # stop
                 await backend.stop()
             except jsonrpc_base.TransportError:
@@ -82,6 +113,55 @@ class OpenEMSConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         # show errors in form
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: OpenEMSConfigEntry,
+    ) -> OpenEMSOptionsFlow:
+        """Options callback for Reolink."""
+        return OpenEMSOptionsFlow()
+
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: OpenEMSConfigEntry
+    ) -> dict[str, type[ConfigSubentryFlow]]:
+        """Return subentries supported by this integration."""
+        return {"location": OpenEMSComponentFlowHandler}
+
+
+class OpenEMSComponentFlowHandler(ConfigSubentryFlow):
+    """Handle subentry flow for adding and modifying a component."""
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """User flow to add a new location."""
+        ...
+
+
+class OpenEMSOptionsFlow(OptionsFlow):
+    """Handle OpenEMS options."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the OpenEMS options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        backend: OpenEMSBackend = self.config_entry.runtime_data.backend
+        schema: vol.Schema = vol.Schema({})
+        for comp_name, comp in next(iter(backend.edges.values())).components.items():
+            bool_selector = BooleanSelector(BooleanSelectorConfig())
+            schema_entry = vol.Required(comp_name, default=comp.create_entities)
+            schema = schema.extend({schema_entry: bool_selector})
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=schema,
         )
 
 

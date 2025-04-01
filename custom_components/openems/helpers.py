@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .const import DOMAIN
@@ -53,18 +55,7 @@ def component_device(component: OpenEMSComponent) -> DeviceInfo:
     return DeviceInfo(
         name=component.edge.hostname + " " + component.name,
         model=component.alias,
-        identifiers={(DOMAIN, component.alias)},
-        via_device=(
-            DOMAIN,
-            component.edge.hostname,
-        ),
+        identifiers={(DOMAIN, component.name)},
+        via_device=(DOMAIN, component.edge.hostname),
         entry_type=DeviceEntryType.SERVICE,
-    )
-
-
-def edge_device(edge: OpenEMSEdge) -> DeviceInfo:
-    """Provide the device of an OpenEMSEdge."""
-    return DeviceInfo(
-        name=edge.hostname,
-        identifiers={(DOMAIN, edge.hostname)},
     )

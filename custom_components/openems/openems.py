@@ -235,6 +235,7 @@ class OpenEMSComponent:
         self.enum_properties: list[OpenEMSEnumProperty] = []
         self.number_properties: list[OpenEMSNumberProperty] = []
         self.boolean_properties: list[OpenEMSBooleanProperty] = []
+        self.create_entities: bool = False
 
     async def init_channels(self, channels):
         """Parse and initialize the components channels."""
@@ -277,8 +278,7 @@ class OpenEMSComponent:
                             await prop.init_limits(limit_def)
                             self.number_properties.append(prop)
 
-            elif not self.name.startswith("ctrl"):
-                # dont create non-Property channels of ctrl-components
+            else:
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
                 self.sensors.append(channel)
 
@@ -291,6 +291,15 @@ class OpenEMSComponent:
         await self.edge.backend.rpc_server.edgeRpc(
             edgeId=self.edge.id, payload=envelope
         )
+
+    @property
+    def channels(self) -> list[OpenEMSChannel]:
+        return [
+            *self.sensors,
+            *self.enum_properties,
+            *self.number_properties,
+            *self.boolean_properties,
+        ]
 
 
 class OpenEMSEdge:
@@ -313,7 +322,9 @@ class OpenEMSEdge:
         async def _update_subscriptions_forever(self):
             while True:
                 await asyncio.sleep(5)
-                subscribe_in_progress_channels = list(self._edge.callbacks.keys())
+                subscribe_in_progress_channels = list(
+                    self._edge.registered_channels.keys()
+                )
                 if (
                     self._edge.backend.rpc_server.connected
                     and subscribe_in_progress_channels != self._active_subscriptions
@@ -356,13 +367,8 @@ class OpenEMSEdge:
         for name, contents in self._edge_config.items():
             component: OpenEMSComponent = OpenEMSComponent(self, name, contents)
             await component.init_channels(contents["channels"])
-            if name == "_sum":
-                # all entities of the _sum component are created within the edge device
-                self.edge_component = component
-            elif contents["_PropertyAlias"]:
-                # If the component has a property alias,
-                # create the entities within a service which linked to the edge device
-                self.components[name] = component
+            # create the entities within a service which linked to the edge device
+            self.components[name] = component
 
     def set_unavailable(self):
         """Set all active entities to unavailable and clear the subscription indicator."""
@@ -423,20 +429,21 @@ class OpenEMSEdge:
         return self._edge_config
 
     @property
-    def callbacks(self):
+    def registered_channels(self):
         return self._registered_channels
 
 
 class OpenEMSBackend:
     def __init__(self, host: str, username: str, password: str) -> None:
+        self.username: str = username
+        self.password: str = password
+        self.host: str = host
         websocket_url = "ws://" + host + ":8085/"
         self.rpc_server = jsonrpc_websocket.Server(
             websocket_url, session=None, heartbeat=5
         )
         self.rest_base_url: yarl.URL = yarl.URL("http://" + host + ":8084" + "/rest/")
         self.rpc_server.edgeRpc = self.edgeRpc
-        self.username: str = username
-        self.password: str = password
         self.edges: dict[int, OpenEMSEdge] = {}
         self.multi_edge = True
         self._reconnect_task = None
