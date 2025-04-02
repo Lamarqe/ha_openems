@@ -128,6 +128,3 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     options_key = STORAGE_KEY_HA_OPTIONS + "_" + backend.host
     store_options: Store = Store(hass, STORAGE_VERSION, options_key)
     await store_options.async_save(entry.options.copy())
-
-
-#    await hass.config_entries.async_reload(entry.entry_id)
