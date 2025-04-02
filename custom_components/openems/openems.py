@@ -348,7 +348,6 @@ class OpenEMSEdge:
         self.backend: OpenEMSBackend = backend
         self._id: int = id
         self._edge_config: dict[str, dict] | None = None
-        self.edge_component: OpenEMSComponent | None = None
         self.components: dict[str, OpenEMSComponent] = {}
         self._data_event: asyncio.Event | None = asyncio.Event()
         self.current_channel_data: dict | None = None

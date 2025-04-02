@@ -18,9 +18,9 @@ from .openems import OpenEMSBackend, OpenEMSEdge
 
 _PLATFORMS: list[Platform] = [
     Platform.SENSOR,
-    # Platform.SWITCH,
-    # Platform.SELECT,
-    # Platform.NUMBER,
+    Platform.SWITCH,
+    Platform.SELECT,
+    Platform.NUMBER,
 ]
 
 type OpenEMSConfigEntry = ConfigEntry[RuntimeData]
@@ -84,11 +84,6 @@ async def async_unload_entry(
     backend: OpenEMSBackend = config_entry.runtime_data.backend
     await backend.stop()
     return await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
-
-
-async def update_listener3(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
-    """Handle options update."""
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_migrate_entry(

@@ -123,24 +123,6 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         """Options callback for Reolink."""
         return OpenEMSOptionsFlow()
 
-    @classmethod
-    @callback
-    def async_get_supported_subentry_types(
-        cls, config_entry: OpenEMSConfigEntry
-    ) -> dict[str, type[ConfigSubentryFlow]]:
-        """Return subentries supported by this integration."""
-        return {"location": OpenEMSComponentFlowHandler}
-
-
-class OpenEMSComponentFlowHandler(ConfigSubentryFlow):
-    """Handle subentry flow for adding and modifying a component."""
-
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """User flow to add a new location."""
-        ...
-
 
 class OpenEMSOptionsFlow(OptionsFlow):
     """Handle OpenEMS options."""
