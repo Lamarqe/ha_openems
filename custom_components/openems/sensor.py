@@ -8,18 +8,15 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
-from .const import DEFAULT_EDGE_CHANNELS
-from .helpers import (
-    OpenEMSSensorUnitClass,
-    component_device,
-    edge_device,
-    unit_description,
-)
+from .const import DEFAULT_EDGE_CHANNELS, DOMAIN
+from .helpers import OpenEMSSensorUnitClass, component_device, unit_description
 from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSEdge
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,26 +24,74 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: OpenEMSConfigEntry,
+    entry: OpenEMSConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up OpenEMS sensor entities."""
-    backend: OpenEMSBackend = config_entry.runtime_data
-    entities: list[OpenEMSSensorEntity] = []
+
+    def _create_sensor_entities(component: OpenEMSComponent) -> None:
+        """Create Sensor Entities from channel list."""
+        device = component_device(component)
+        # create empty device explicitly, in case their are no entities
+        device_registry = dr.async_get(hass)
+        device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
+
+        entities: list[OpenEMSSensorEntity] = []
+        channel: OpenEMSChannel
+        channel_list: list[OpenEMSChannel] = component.sensors
+        for channel in channel_list:
+            if channel.options:
+                device_class = SensorDeviceClass.ENUM
+                state_class = None
+                uom = None
+            else:
+                unit_desc: OpenEMSSensorUnitClass = unit_description(channel.unit)
+                device_class = unit_desc.device_class
+                state_class = unit_desc.state_class
+                uom = unit_desc.unit
+
+            enable_by_default = (
+                component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
+            )
+            entity_description = OpenEMSSensorDescription(
+                key=channel.unique_id(),
+                entity_registry_enabled_default=enable_by_default,
+                name=channel.name,
+                device_class=device_class,
+                state_class=state_class,
+                native_unit_of_measurement=uom,
+            )
+            entities.append(
+                OpenEMSSensorEntity(
+                    channel,
+                    entity_description,
+                    device,
+                )
+            )
+        async_add_entities(entities)
+
+    ############ END MARKER _create_sensor_entities ##############
+
+    backend: OpenEMSBackend = entry.runtime_data.backend
+    device_registry = dr.async_get(hass)
     # for all edges
     edge: OpenEMSEdge
     for edge in backend.edges.values():
+        # Create the edge device
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            name=edge.hostname,
+            identifiers={(DOMAIN, edge.hostname)},
+        )
         component: OpenEMSComponent
         for component in edge.components.values():
-            device = component_device(component)
-            component_entities = create_sensor_entities(component, device)
-            entities.extend(component_entities)
+            if component.create_entities:
+                _create_sensor_entities(component)
 
-        device = edge_device(edge)
-        edge_entities = create_sensor_entities(edge.edge_component, device)
-        entities.extend(edge_entities)
-
-    async_add_entities(entities)
+    # prepare callback for creating in new entities during options config flow
+    entry.runtime_data.add_component_callbacks[Platform.SENSOR.value] = (
+        _create_sensor_entities
+    )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -59,11 +104,13 @@ class OpenEMSSensorDescription(SensorEntityDescription):
 class OpenEMSSensorEntity(SensorEntity):
     """Representation of a sensor."""
 
+    entity_description: OpenEMSSensorDescription
+
     def __init__(
         self,
         channel: OpenEMSChannel,
         entity_description,
-        device_info,
+        device_info: DeviceInfo,
     ) -> None:
         """Initialize the sensor."""
         self._channel: OpenEMSChannel = channel
@@ -99,41 +146,3 @@ class OpenEMSSensorEntity(SensorEntity):
         """Entity removed."""
         self._channel.unregister_callback()
         await super().async_will_remove_from_hass()
-
-
-def create_sensor_entities(
-    component: OpenEMSComponent,
-    device_info: DeviceInfo,
-) -> list[OpenEMSSensorEntity]:
-    """Create Sensor Entities from channel list."""
-    entities: list[OpenEMSSensorEntity] = []
-    channel: OpenEMSChannel
-    channel_list: list[OpenEMSChannel] = component.sensors
-    for channel in channel_list:
-        if channel.options:
-            device_class = SensorDeviceClass.ENUM
-            state_class = None
-            uom = None
-        else:
-            unit_desc: OpenEMSSensorUnitClass = unit_description(channel.unit)
-            device_class = unit_desc.device_class
-            state_class = unit_desc.state_class
-            uom = unit_desc.unit
-
-        enable_by_default = component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
-        entity_description = OpenEMSSensorDescription(
-            key=channel.unique_id(),
-            entity_registry_enabled_default=enable_by_default,
-            name=channel.name,
-            device_class=device_class,
-            state_class=state_class,
-            native_unit_of_measurement=uom,
-        )
-        entities.append(
-            OpenEMSSensorEntity(
-                channel,
-                entity_description,
-                device_info,
-            )
-        )
-    return entities

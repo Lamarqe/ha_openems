@@ -5,14 +5,15 @@ import logging
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
 from .const import DEFAULT_EDGE_CHANNELS
-from .helpers import component_device, edge_device
+from .helpers import component_device
 from .openems import (
     OpenEMSBackend,
     OpenEMSBooleanProperty,
@@ -25,26 +26,56 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: OpenEMSConfigEntry,
+    entry: OpenEMSConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up OpenEMS switch entities."""
-    backend: OpenEMSBackend = config_entry.runtime_data
-    entities: list[OpenEMSSwitchEntity] = []
+
+    def _create_switch_entities(component: OpenEMSComponent) -> None:
+        """Create Sensor Entities from channel list."""
+        device = component_device(component)
+        # create empty device explicitly, in case their are no entities
+        device_registry = dr.async_get(hass)
+        device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
+
+        entities: list[OpenEMSSwitchEntity] = []
+        channel: OpenEMSBooleanProperty
+        channel_list: list[OpenEMSBooleanProperty] = component.boolean_properties
+        for channel in channel_list:
+            entity_enabled = (
+                component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
+            )
+            entity_description = OpenEMSSwitchDescription(
+                key=channel.unique_id(),
+                entity_category=EntityCategory.CONFIG,
+                entity_registry_enabled_default=entity_enabled,
+                # remove "_Property" prefix
+                name=channel.name[9:],
+            )
+            entities.append(
+                OpenEMSSwitchEntity(
+                    channel,
+                    entity_description,
+                    device,
+                )
+            )
+        async_add_entities(entities)
+
+    ############ END MARKER _create_switch_entities ##############
+
+    backend: OpenEMSBackend = entry.runtime_data.backend
     # for all edges
     edge: OpenEMSEdge
     for edge in backend.edges.values():
         component: OpenEMSComponent
         for component in edge.components.values():
-            device = component_device(component)
-            component_entities = create_switch_entities(component, device)
-            entities.extend(component_entities)
+            if component.create_entities:
+                _create_switch_entities(component)
 
-        device = edge_device(edge)
-        edge_entities = create_switch_entities(edge.edge_component, device)
-        entities.extend(edge_entities)
-
-    async_add_entities(entities)
+    # prepare callback for creating in new entities during options config flow
+    entry.runtime_data.add_component_callbacks[Platform.SWITCH.value] = (
+        _create_switch_entities
+    )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -63,7 +94,7 @@ class OpenEMSSwitchEntity(SwitchEntity):
         self,
         channel: OpenEMSBooleanProperty,
         entity_description,
-        device_info,
+        device_info: DeviceInfo,
     ) -> None:
         """Initialize OpenEMS switch entity."""
         self._channel: OpenEMSBooleanProperty = channel
@@ -110,30 +141,3 @@ class OpenEMSSwitchEntity(SwitchEntity):
         """Entity removed."""
         self._channel.unregister_callback()
         await super().async_will_remove_from_hass()
-
-
-def create_switch_entities(
-    component: OpenEMSComponent,
-    device_info: DeviceInfo,
-) -> list[OpenEMSSwitchEntity]:
-    """Create Sensor Entities from channel list."""
-    entities: list[OpenEMSSwitchEntity] = []
-    channel: OpenEMSBooleanProperty
-    channel_list: list[OpenEMSBooleanProperty] = component.boolean_properties
-    for channel in channel_list:
-        entity_enabled = component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
-        entity_description = OpenEMSSwitchDescription(
-            key=channel.unique_id(),
-            entity_category=EntityCategory.CONFIG,
-            entity_registry_enabled_default=entity_enabled,
-            # remove "_Property" prefix
-            name=channel.name[9:],
-        )
-        entities.append(
-            OpenEMSSwitchEntity(
-                channel,
-                entity_description,
-                device_info,
-            )
-        )
-    return entities

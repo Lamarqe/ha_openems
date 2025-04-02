@@ -4,14 +4,15 @@ from dataclasses import dataclass
 import logging
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
 from .const import DEFAULT_EDGE_CHANNELS
-from .helpers import component_device, edge_device
+from .helpers import component_device
 from .openems import OpenEMSBackend, OpenEMSComponent, OpenEMSEdge, OpenEMSEnumProperty
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,26 +20,57 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: OpenEMSConfigEntry,
+    entry: OpenEMSConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up OpenEMS select entities."""
-    backend: OpenEMSBackend = config_entry.runtime_data
-    entities: list[OpenEMSSelectEntity] = []
+
+    def _create_select_entities(component: OpenEMSComponent) -> None:
+        """Create Sensor Entities from channel list."""
+        device = component_device(component)
+        # create empty device explicitly, in case their are no entities
+        device_registry = dr.async_get(hass)
+        device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
+
+        entities: list[OpenEMSSelectEntity] = []
+        channel: OpenEMSEnumProperty
+        channel_list: list[OpenEMSEnumProperty] = component.enum_properties
+        for channel in channel_list:
+            entity_enabled = (
+                component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
+            )
+            entity_description = OpenEMSSelectDescription(
+                key=channel.unique_id(),
+                entity_category=EntityCategory.CONFIG,
+                entity_registry_enabled_default=entity_enabled,
+                options=channel.options,
+                # remove "_Property" prefix
+                name=channel.name[9:],
+            )
+            entities.append(
+                OpenEMSSelectEntity(
+                    channel,
+                    entity_description,
+                    device,
+                )
+            )
+        async_add_entities(entities)
+
+    ############ END MARKER _create_select_entities ##############
+
+    backend: OpenEMSBackend = entry.runtime_data.backend
     # for all edges
     edge: OpenEMSEdge
     for edge in backend.edges.values():
         component: OpenEMSComponent
         for component in edge.components.values():
-            device = component_device(component)
-            component_entities = create_select_entities(component, device)
-            entities.extend(component_entities)
+            if component.create_entities:
+                _create_select_entities(component)
 
-        device = edge_device(edge)
-        edge_entities = create_select_entities(edge.edge_component, device)
-        entities.extend(edge_entities)
-
-    async_add_entities(entities)
+    # prepare callback for creating in new entities during options config flow
+    entry.runtime_data.add_component_callbacks[Platform.SELECT.value] = (
+        _create_select_entities
+    )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -57,7 +89,7 @@ class OpenEMSSelectEntity(SelectEntity):
         self,
         channel: OpenEMSEnumProperty,
         entity_description,
-        device_info,
+        device_info: DeviceInfo,
     ) -> None:
         """Initialize OpenEMS switch entity."""
         self._channel: OpenEMSEnumProperty = channel
@@ -102,31 +134,3 @@ class OpenEMSSelectEntity(SelectEntity):
         """Entity removed."""
         self._channel.unregister_callback()
         await super().async_will_remove_from_hass()
-
-
-def create_select_entities(
-    component: OpenEMSComponent,
-    device_info: DeviceInfo,
-) -> list[OpenEMSSelectEntity]:
-    """Create Sensor Entities from channel list."""
-    entities: list[OpenEMSSelectEntity] = []
-    channel: OpenEMSEnumProperty
-    channel_list: list[OpenEMSEnumProperty] = component.enum_properties
-    for channel in channel_list:
-        entity_enabled = component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
-        entity_description = OpenEMSSelectDescription(
-            key=channel.unique_id(),
-            entity_category=EntityCategory.CONFIG,
-            entity_registry_enabled_default=entity_enabled,
-            options=channel.options,
-            # remove "_Property" prefix
-            name=channel.name[9:],
-        )
-        entities.append(
-            OpenEMSSelectEntity(
-                channel,
-                entity_description,
-                device_info,
-            )
-        )
-    return entities
