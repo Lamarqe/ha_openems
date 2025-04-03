@@ -55,7 +55,7 @@ def component_device(component: OpenEMSComponent) -> DeviceInfo:
     return DeviceInfo(
         name=component.edge.hostname + " " + component.name,
         model=component.alias,
-        identifiers={(DOMAIN, component.name)},
+        identifiers={(DOMAIN, component.edge.hostname, component.name)},
         via_device=(DOMAIN, component.edge.hostname),
         entry_type=DeviceEntryType.SERVICE,
     )
