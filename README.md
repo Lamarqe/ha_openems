@@ -32,6 +32,7 @@ After installation most devices and entities are disabled. You can enable them l
 
 <img src="https://github.com/user-attachments/assets/3c4619fa-41a7-4b20-a4f5-46b1fd692cfc" width="750">
 
+
 Some devices to watch for:
 
 1. ctrlIoHeatPump0
