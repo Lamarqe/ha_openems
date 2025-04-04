@@ -51,7 +51,7 @@ Some devices to watch for:
 ## Entites
 
 ### _ssum
-The most relevant entite (for most people) are in the _sum device:
+The most relevant entities (for most people) are in the _sum device:
 
 <img src="https://github.com/user-attachments/assets/95507715-3e03-43f3-ae13-e46cf0ffc5e2" width="200">
 
@@ -84,8 +84,8 @@ Here you find the grids frequency.
 
 ### Energy Dashboard 
 For the energy dashboard you need to enable these entities:
-* _sum GridBuyActiveEnergy
-* _sum GridSellActiveEnergy
+* _sum_GridBuyActiveEnergy
+* _sum_GridSellActiveEnergy
 * _sum_productionactiveenergy
 * _batteryinverter0_dcchargeenergy
 * _batteryinverter0_dcdischargeenergy
