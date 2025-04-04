@@ -25,3 +25,47 @@ Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Feneco
 2. Manually add this repository to HACS
 4. Add FEMS Integration
 6. Enter your OpenEMS / FEMS address and user account (Fenecon standard:  x / user)
+
+## Installation
+
+After installation most devices and entities are disabled. You can enable them like this:
+
+![Bildschirmfoto 2025-04-04 um 18 57 36](https://github.com/user-attachments/assets/7e74abd1-b330-4594-a1c9-25d149a1e2fb)
+
+Some devices to watch for:
+
+1. ctrlIoHeatPump0
+2. meter0
+3. timeOfUseTariff0
+4. batteryInverter0
+5. charger0 and charger1 (these are inverter strings)
+
+## Entites
+
+### _ssum
+The most relevant entite (for most people) are in the _sum device:
+![Bildschirmfoto 2025-04-04 um 19 17 40](https://github.com/user-attachments/assets/95507715-3e03-43f3-ae13-e46cf0ffc5e2)
+Here you can find your power production, consumption, battery charge and many more.
+
+### Charger0 and 1
+Here you can find voltage, current and power for both of your strings.
+
+### BatteryInverter
+Has the temperatures for radiator, air, ...
+![Bildschirmfoto 2025-04-04 um 19 33 24](https://github.com/user-attachments/assets/d8e0df40-8a91-41d9-b04f-3b9e1d402193)
+
+### ctrlIoHeatPump0
+Here you will find the current state of your SG ready connected heatpump.
+
+![Bildschirmfoto 2025-04-04 um 19 32 56](https://github.com/user-attachments/assets/c4f8944f-7262-4b35-8d5c-00d4e9eb61ba)
+
+### Wallbox
+Here you find the configuration and the energy statistics for your connected wallbox:
+
+![Bildschirmfoto 2025-04-04 um 19 30 37](https://github.com/user-attachments/assets/e7097dee-fb33-421b-8aa3-2d5d5ecd9148)
+
+### meter0
+Here you find the grids frequency.
+
+![Bildschirmfoto 2025-04-04 um 19 34 00](https://github.com/user-attachments/assets/093c8a62-87ab-4a92-bcc2-b2ee67163512)
+
