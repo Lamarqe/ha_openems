@@ -30,7 +30,8 @@ Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Feneco
 
 After installation most devices and entities are disabled. You can enable them like this:
 
-![Bildschirmfoto 2025-04-04 um 18 57 36](https://github.com/user-attachments/assets/7e74abd1-b330-4594-a1c9-25d149a1e2fb)
+<img src="https://github.com/user-attachments/assets/3c4619fa-41a7-4b20-a4f5-46b1fd692cfc" width="500">
+
 
 Some devices to watch for:
 
@@ -44,7 +45,9 @@ Some devices to watch for:
 
 ### _ssum
 The most relevant entite (for most people) are in the _sum device:
-![Bildschirmfoto 2025-04-04 um 19 17 40](https://github.com/user-attachments/assets/95507715-3e03-43f3-ae13-e46cf0ffc5e2)
+
+<img src="https://github.com/user-attachments/assets/95507715-3e03-43f3-ae13-e46cf0ffc5e2" width="200">
+
 Here you can find your power production, consumption, battery charge and many more.
 
 ### Charger0 and 1
@@ -52,7 +55,8 @@ Here you can find voltage, current and power for both of your strings.
 
 ### BatteryInverter
 Has the temperatures for radiator, air, ...
-![Bildschirmfoto 2025-04-04 um 19 33 24](https://github.com/user-attachments/assets/d8e0df40-8a91-41d9-b04f-3b9e1d402193)
+
+<img src="https://github.com/user-attachments/assets/d8e0df40-8a91-41d9-b04f-3b9e1d402193" width="200">
 
 ### ctrlIoHeatPump0
 Here you will find the current state of your SG ready connected heatpump.
