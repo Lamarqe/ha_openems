@@ -20,6 +20,7 @@ class OpenEMSSensorUnitClass:
 
 def unit_description(unit: str) -> OpenEMSSensorUnitClass:
     """Correct unit and derive SensorDeviceClass and SensorStateClass."""
+    # reference:  openems/io.openems.common/src/io/openems/common/channel/Unit.java
     sensor_type: OpenEMSSensorUnitClass = OpenEMSSensorUnitClass(unit=unit)
     match unit:
         case "kWh" | "Wh":
@@ -29,7 +30,7 @@ def unit_description(unit: str) -> OpenEMSSensorUnitClass:
             sensor_type.unit = "Wh"
             sensor_type.device_class = SensorDeviceClass.ENERGY
             sensor_type.state_class = SensorStateClass.TOTAL_INCREASING
-        case "W":
+        case "W" | "mW" | "kW":
             sensor_type.device_class = SensorDeviceClass.POWER
         case "A" | "mA":
             sensor_type.device_class = SensorDeviceClass.CURRENT
@@ -40,14 +41,22 @@ def unit_description(unit: str) -> OpenEMSSensorUnitClass:
             sensor_type.device_class = SensorDeviceClass.DURATION
         case "h" | "min" | "s" | "ms":
             sensor_type.device_class = SensorDeviceClass.DURATION
+        case "sec":
+            sensor_type.unit = "s"
+            sensor_type.device_class = SensorDeviceClass.DURATION
         case "%":
             sensor_type.device_class = SensorDeviceClass.BATTERY
         case "V" | "mV":
             sensor_type.device_class = SensorDeviceClass.VOLTAGE
+        case "bar" | "mbar":
+            sensor_type.device_class = SensorDeviceClass.PRESSURE
         case "var":
             sensor_type.device_class = SensorDeviceClass.REACTIVE_POWER
         case "VA":
             sensor_type.device_class = SensorDeviceClass.APPARENT_POWER
+        case "C":
+            sensor_type.unit = "°C"
+            sensor_type.device_class = SensorDeviceClass.TEMPERATURE
     return sensor_type
 
 
