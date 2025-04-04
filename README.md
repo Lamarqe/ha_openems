@@ -52,6 +52,8 @@ Here you can find your power production, consumption, battery charge and many mo
 ### Charger0 and 1
 Here you can find voltage, current and power for both of your strings.
 
+<img src="https://github.com/user-attachments/assets/27b8199a-aa42-467d-8cb5-33e8af7289ac" width="200">
+
 ### BatteryInverter
 Has the temperatures for radiator, air, ...
 
