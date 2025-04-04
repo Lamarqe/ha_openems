@@ -1,5 +1,5 @@
 # ha_openems
-Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Fenecon inverters,
+Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Fenecon inverters.
 
 > [!WARNING] 
 > This integration is not affiliated with Fenecon, the developers take no responsibility for anything that happens to your equipment due to this integration.
@@ -17,6 +17,11 @@ Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Feneco
 * Enabled entities will be updated in Home Assistant as soon as OpenEMS pushes updates via the WebSocket connection. There is currently no throttling, but it could easily be added to Home Assistant if needed for performance reasons.
 * There is currently no limitation how many channels can be enabled in parallel. The by default enabled 50 entities represent exactly as what also the WebUI subscribes to after the login. However, you should be careful about expanding to very large numbers. I  don't know what amount OpenEMS can handle (or if these subscriptions have any performance relevance at all)
 
+## Remarks
+
+* The integration just transparently publishes structures as they are existing in the backend. In result, there is a _sum device and all its channels below it.
+* This implementation allows to configure calculations for number properties in number_properties.json. So starting with v0.6, _PropertyForceChargeMinPower shows and consumes total numbers which get converted to phase based values before showing/sending them back to the backend, same as it is also in the regular UI.
+
 ## Installation
 
 ### HACS
@@ -25,6 +30,8 @@ Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Feneco
 2. Manually add this repository to HACS
 4. Add FEMS Integration
 6. Enter your OpenEMS / FEMS address and user account (Fenecon standard:  x / user)
+
+The Fenecon password (user or owner) controls your access rights. If you just want to monitor (read-only access), "user" is fine. If you want to change settings, you need to use "owner".
 
 ## Installation
 
