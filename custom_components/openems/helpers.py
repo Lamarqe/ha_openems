@@ -3,12 +3,10 @@
 from dataclasses import dataclass
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .const import DOMAIN
-from .openems import OpenEMSComponent, OpenEMSEdge
+from .openems import OpenEMSComponent
 
 
 @dataclass
@@ -37,6 +35,9 @@ def unit_description(unit: str) -> OpenEMSSensorUnitClass:
             sensor_type.device_class = SensorDeviceClass.CURRENT
         case "Hz" | "mHz":
             sensor_type.device_class = SensorDeviceClass.FREQUENCY
+        case "sec_Σ":
+            sensor_type.unit = "s"
+            sensor_type.device_class = SensorDeviceClass.DURATION
         case "h" | "min" | "s" | "ms":
             sensor_type.device_class = SensorDeviceClass.DURATION
         case "%":
