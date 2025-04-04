@@ -81,3 +81,13 @@ Here you find the configuration and the energy statistics for your connected wal
 Here you find the grids frequency.
 
 <img src="https://github.com/user-attachments/assets/093c8a62-87ab-4a92-bcc2-b2ee67163512" width="200">
+
+### Energy Dashboard 
+For the energy dashboard you need to enable these entities:
+* _sum GridBuyActiveEnergy
+* _sum GridSellActiveEnergy
+* _sum_productionactiveenergy
+* _batteryinverter0_dcchargeenergy
+* _batteryinverter0_dcdischargeenergy
+
+<img src="https://github.com/user-attachments/assets/196cd51d-f0d6-466f-81f3-7c4a3ed0f383" width="250">
