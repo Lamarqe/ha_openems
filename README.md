@@ -30,8 +30,7 @@ Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Feneco
 
 After installation most devices and entities are disabled. You can enable them like this:
 
-<img src="https://github.com/user-attachments/assets/3c4619fa-41a7-4b20-a4f5-46b1fd692cfc" width="500">
-
+<img src="https://github.com/user-attachments/assets/3c4619fa-41a7-4b20-a4f5-46b1fd692cfc" width="750">
 
 Some devices to watch for:
 
@@ -61,15 +60,14 @@ Has the temperatures for radiator, air, ...
 ### ctrlIoHeatPump0
 Here you will find the current state of your SG ready connected heatpump.
 
-![Bildschirmfoto 2025-04-04 um 19 32 56](https://github.com/user-attachments/assets/c4f8944f-7262-4b35-8d5c-00d4e9eb61ba)
+<img src="https://github.com/user-attachments/assets/c4f8944f-7262-4b35-8d5c-00d4e9eb61ba" width="200">
 
 ### Wallbox
 Here you find the configuration and the energy statistics for your connected wallbox:
 
-![Bildschirmfoto 2025-04-04 um 19 30 37](https://github.com/user-attachments/assets/e7097dee-fb33-421b-8aa3-2d5d5ecd9148)
+<img src="https://github.com/user-attachments/assets/e7097dee-fb33-421b-8aa3-2d5d5ecd9148" width="200">
 
 ### meter0
 Here you find the grids frequency.
 
-![Bildschirmfoto 2025-04-04 um 19 34 00](https://github.com/user-attachments/assets/093c8a62-87ab-4a92-bcc2-b2ee67163512)
-
+<img src="https://github.com/user-attachments/assets/093c8a62-87ab-4a92-bcc2-b2ee67163512" width="200">
