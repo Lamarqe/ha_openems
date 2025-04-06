@@ -87,7 +87,7 @@ Here you find the configuration and the energy statistics for your connected wal
 ### meter0
 Here you find the grids frequency.
 
-<img src="https://github.com/user-attachments/assets/093c8a62-87ab-4a92-bcc2-b2ee67163512" width="200">
+<img src="https://github.com/user-attachments/assets/6c04020a-ec77-4215-b505-a80f466f887d" width="200">
 
 ### ctrlGridOptimizedCharge0 (Netzdienliche Beladung)
 
