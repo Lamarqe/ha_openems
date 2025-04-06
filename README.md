@@ -65,6 +65,13 @@ Here you can find voltage, current and power for both of your strings.
 ### BatteryInverter
 Has the temperatures for radiator, air, ...
 
+* _batteryinverter0_bmspacktemperature
+* _batteryinverter0_airtemperature
+* _batteryinverter0_radiatortemperature
+
+And the state of health
+* sensor.fems63566_batteryinverter0_bmssoh
+
 <img src="https://github.com/user-attachments/assets/d8e0df40-8a91-41d9-b04f-3b9e1d402193" width="200">
 
 ### ctrlIoHeatPump0
