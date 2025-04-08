@@ -42,11 +42,20 @@ After installation most devices and entities are disabled. You can enable them l
 
 Some devices to watch for:
 
-1. ctrlIoHeatPump0
-2. meter0
-3. timeOfUseTariff0
-4. batteryInverter0
-5. charger0 and charger1 (these are inverter strings)
+1. ctrlIoHeatPumpX
+2. meterX
+3. timeOfUseTariffX
+4. batteryInverterX
+5. chargerX (these are inverter strings)
+
+The numbers (X) can vary from instalation to installation and model to model. E.g. a Fenecon Home 10 Gen 10 has two inverters, so you would get 0 and 1, if you use both of them. Other models might have different numbers if strings, or maybe you don't use them all. Or you have to battery-towers connected, ...
+
+Some devices are only active, if you have the corresponding app installed:
+* ctrlIoHeatPumpX = FEMS App Power-to-Heat
+* timeOfUseTariffX = FEMS App Dynamischer Stromtarif
+* evcsX = FEMS App AC-Ladestation
+
+Some Apps bring two devices into the integration: the wallbox (AC-Ladestation) enbales evcsX and ctrlEvcs0. One is for configuration and one for monitoring.
 
 ## Entites
 
@@ -57,12 +66,12 @@ The most relevant entities (for most people) are in the _sum device:
 
 Here you can find your power production, consumption, battery charge and many more.
 
-### Charger0 and 1
+### ChargerX
 Here you can find voltage, current and power for both of your strings.
 
 <img src="https://github.com/user-attachments/assets/9d09b670-0d72-44dc-b905-f1b5cb0097f3" width="200">
 
-### BatteryInverter
+### BatteryInverterX
 Has the temperatures for radiator, air, ...
 
 * _batteryinverter0_bmspacktemperature
@@ -70,26 +79,26 @@ Has the temperatures for radiator, air, ...
 * _batteryinverter0_radiatortemperature
 
 And the state of health
-* sensor.fems63566_batteryinverter0_bmssoh
+* _batteryinverter0_bmssoh
 
 <img src="https://github.com/user-attachments/assets/d8e0df40-8a91-41d9-b04f-3b9e1d402193" width="200">
 
-### ctrlIoHeatPump0
+### ctrlIoHeatPumpX
 Here you will find the current state of your SG ready connected heatpump.
 
 <img src="https://github.com/user-attachments/assets/c4f8944f-7262-4b35-8d5c-00d4e9eb61ba" width="200">
 
-### Wallbox
+### evcsX and ctrlEvcs0 (Wallbox)
 Here you find the configuration and the energy statistics for your connected wallbox:
 
 <img src="https://github.com/user-attachments/assets/e7097dee-fb33-421b-8aa3-2d5d5ecd9148" width="200">
 
-### meter0
+### meterX
 Here you find the grids frequency.
 
 <img src="https://github.com/user-attachments/assets/6c04020a-ec77-4215-b505-a80f466f887d" width="200">
 
-### ctrlGridOptimizedCharge0 (Netzdienliche Beladung)
+### ctrlGridOptimizedChargeX (Netzdienliche Beladung)
 
 Here you can enable or disable the delayed battery charging.
 
