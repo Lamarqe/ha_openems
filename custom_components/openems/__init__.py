@@ -21,6 +21,7 @@ _PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.SELECT,
     Platform.NUMBER,
+    Platform.TIME,
 ]
 
 type OpenEMSConfigEntry = ConfigEntry[RuntimeData]

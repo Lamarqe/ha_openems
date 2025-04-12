@@ -9,21 +9,11 @@ from typing import Any
 import jsonrpc_base
 import voluptuous as vol
 
-from homeassistant.components.otp.config_flow import (
-    BooleanSelector,
-    BooleanSelectorConfig,
-)
-from homeassistant.config_entries import (
-    ConfigFlow,
-    ConfigFlowResult,
-    ConfigSubentryFlow,
-    OptionsFlow,
-    SubentryFlowResult,
-)
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PROTOCOL, CONF_USERNAME
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import selector
+from homeassistant.helpers.selector import BooleanSelector, BooleanSelectorConfig
 from homeassistant.helpers.storage import Store
 
 from .__init__ import OpenEMSConfigEntry
@@ -34,7 +24,7 @@ from .const import (
     STORAGE_KEY_HA_OPTIONS,
     STORAGE_VERSION,
 )
-from .openems import OpenEMSBackend, OpenEMSComponent, OpenEMSEdge
+from .openems import OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
 

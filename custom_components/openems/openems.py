@@ -29,6 +29,8 @@ class OpenEMSConfigEnhancer:
         path = os.path.dirname(__file__)
         with open(path + "/config/enum_options.json", encoding="utf-8") as enum_file:
             self.enum_options = json.load(enum_file)
+        with open(path + "/config/time_options.json", encoding="utf-8") as time_file:
+            self.time_options = json.load(time_file)
         with open(
             path + "/config/number_properties.json", encoding="utf-8"
         ) as number_file:
@@ -48,6 +50,12 @@ class OpenEMSConfigEnhancer:
         """Return option string list for a given component/channel."""
         return self._get_config_property(
             self.enum_options, "options", component_name, channel_name
+        )
+
+    def is_time_property(self, component_name, channel_name) -> list[str] | None:
+        """Return True if given component/channel is marked as time."""
+        return self._get_config_property(
+            self.time_options, "is_time", component_name, channel_name
         )
 
     def get_number_limit(self, component_name, channel_name) -> dict | None:
@@ -123,6 +131,14 @@ class OpenEMSEnumProperty(OpenEMSChannel):
         """Initialize the channel."""
         super().__init__(component, channel_json)
         self.options = channel_json["options"]
+
+    async def update_value(self, value) -> None:
+        """Handle value change request from Home Assisant."""
+        await self.component.update_config(self.name[9:], value)
+
+
+class OpenEMSTimeProperty(OpenEMSChannel):
+    """Class representing a enum property of an OpenEMS component."""
 
     async def update_value(self, value) -> None:
         """Handle value change request from Home Assisant."""
@@ -235,6 +251,7 @@ class OpenEMSComponent:
         self.enum_properties: list[OpenEMSEnumProperty] = []
         self.number_properties: list[OpenEMSNumberProperty] = []
         self.boolean_properties: list[OpenEMSBooleanProperty] = []
+        self.time_properties: list[OpenEMSTimeProperty] = []
         self.create_entities: bool = False
 
     async def init_channels(self, channels):
@@ -258,6 +275,13 @@ class OpenEMSComponent:
                                 component=self, channel_json=channel_json
                             )
                             self.enum_properties.append(prop)
+                        elif OpenEMSComponent.config_enhancer.is_time_property(
+                            self.name, channel_json["id"]
+                        ):
+                            prop = OpenEMSTimeProperty(
+                                component=self, channel_json=channel_json
+                            )
+                            self.time_properties.append(prop)
                     case "INTEGER":
                         if (
                             limit_def

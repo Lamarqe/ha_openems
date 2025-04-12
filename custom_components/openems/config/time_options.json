@@ -1,0 +1,11 @@
+[
+    {
+        "component_regexp": "ctrlGridOptimizedCharge\\d+",
+        "channels": [
+            {
+                "id": "_PropertyManualTargetTime",
+                "is_time": true
+            }
+        ]
+    }
+]
