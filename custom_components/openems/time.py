@@ -119,7 +119,7 @@ class OpenEMSTimeEntity(TimeEntity):
 
     async def async_set_value(self, value: time) -> None:
         """Update the selected time."""
-        time_str = str(value.hour) + ":" + str(value.minute)
+        time_str = value.strftime("%H:%M")
         await self._channel.update_value(time_str)
         self.async_write_ha_state()
 
