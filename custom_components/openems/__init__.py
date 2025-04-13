@@ -4,17 +4,38 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import logging
 from typing import ClassVar
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, Platform
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.helpers.storage import Store
+import voluptuous as vol
 
-from .const import STORAGE_KEY_BACKEND_CONFIG, STORAGE_KEY_HA_OPTIONS, STORAGE_VERSION
-from .helpers import component_device
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    Platform,
+)
+from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.helpers import (
+    config_validation as cv,
+    device_registry as dr,
+    entity_registry as er,
+)
+from homeassistant.helpers.storage import Store
+from homeassistant.helpers.typing import ConfigType
+
+from .const import (
+    DOMAIN,
+    STORAGE_KEY_BACKEND_CONFIG,
+    STORAGE_KEY_HA_OPTIONS,
+    STORAGE_VERSION,
+)
+from .helpers import component_device, find_channel_in_backend
 from .openems import OpenEMSBackend, OpenEMSEdge
+
+_LOGGER = logging.getLogger(__name__)
 
 _PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -25,6 +46,43 @@ _PLATFORMS: list[Platform] = [
 ]
 
 type OpenEMSConfigEntry = ConfigEntry[RuntimeData]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up services."""
+
+    async def service_update_component_config(service_call: ServiceCall) -> None:
+        entity_reg = er.async_get(hass)
+        entity_id = service_call.data.get(ATTR_ENTITY_ID)
+        value = service_call.data.get("value")
+        entry: er.RegistryEntry = entity_reg.async_get(entity_id)
+        if entry.platform != DOMAIN:
+            _LOGGER.error(
+                "Update_component_config was called for entity %s. Must be called with openems entity, not %s",
+                entity_id,
+                entry.platform,
+            )
+            return
+        config_entry = hass.config_entries.async_get_entry(entry.config_entry_id)
+        backend: OpenEMSBackend = config_entry.runtime_data.backend
+        channel = find_channel_in_backend(backend, entry.unique_id)
+        try:
+            await channel.update_value(value)
+        except AttributeError:
+            _LOGGER.error(
+                "Entity %s is not a property and cannot be updated",
+                entity_id,
+            )
+
+    hass.services.async_register(
+        DOMAIN,
+        "update_component_config",
+        service_update_component_config,
+        schema=vol.Schema(
+            {vol.Required(ATTR_ENTITY_ID): cv.entity_id, vol.Required("value"): object}
+        ),
+    )
+    return True
 
 
 @dataclass

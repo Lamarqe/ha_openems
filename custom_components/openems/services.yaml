@@ -1,0 +1,11 @@
+update_component_config:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: openems
+    value:
+      required: true
+      selector:
+        object:

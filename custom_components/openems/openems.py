@@ -10,6 +10,7 @@ import logging
 import math
 import os
 import re
+from typing import Any
 import uuid
 
 import aiohttp
@@ -123,7 +124,15 @@ class OpenEMSChannel:
         self.component.edge.unregister_channel(self)
 
 
-class OpenEMSEnumProperty(OpenEMSChannel):
+class OpenEMSProperty(OpenEMSChannel):
+    """Class representing a property of an OpenEMS component."""
+
+    async def update_value(self, value: Any) -> None:
+        """Handle value change request from Home Assisant."""
+        await self.component.update_config(self.name[9:], value)
+
+
+class OpenEMSEnumProperty(OpenEMSProperty):
     """Class representing a enum property of an OpenEMS component."""
 
     # Use with platform select
@@ -132,20 +141,12 @@ class OpenEMSEnumProperty(OpenEMSChannel):
         super().__init__(component, channel_json)
         self.options = channel_json["options"]
 
-    async def update_value(self, value) -> None:
-        """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value)
 
-
-class OpenEMSTimeProperty(OpenEMSChannel):
+class OpenEMSTimeProperty(OpenEMSProperty):
     """Class representing a enum property of an OpenEMS component."""
 
-    async def update_value(self, value) -> None:
-        """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value)
 
-
-class OpenEMSNumberProperty(OpenEMSChannel):
+class OpenEMSNumberProperty(OpenEMSProperty):
     """Class representing a number property of an OpenEMS component."""
 
     STEPS = 200  # Minimum number of steps
@@ -170,7 +171,7 @@ class OpenEMSNumberProperty(OpenEMSChannel):
 
     async def update_value(self, value: float) -> None:
         """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value / self.multiplier)
+        await super().update_value(value / self.multiplier)
 
     async def init_multiplier(self, multiplier):
         """Initialize the multiplier of the number channel."""
@@ -225,14 +226,10 @@ class OpenEMSNumberProperty(OpenEMSChannel):
             return data["value"]
 
 
-class OpenEMSBooleanProperty(OpenEMSChannel):
+class OpenEMSBooleanProperty(OpenEMSProperty):
     """Class representing a boolean property of an OpenEMS component."""
 
     # Use with platform switch
-
-    async def update_value(self, value) -> None:
-        """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value)
 
 
 class OpenEMSComponent:
@@ -306,7 +303,7 @@ class OpenEMSComponent:
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
                 self.sensors.append(channel)
 
-    async def update_config(self, property_name, value):
+    async def update_config(self, property_name, value: Any):
         """Send updateComponentConfig request to backend."""
         properties = [{"name": property_name, "value": value}]
         envelope = OpenEMSBackend.wrap_jsonrpc(
@@ -318,11 +315,13 @@ class OpenEMSComponent:
 
     @property
     def channels(self) -> list[OpenEMSChannel]:
+        """Return all channels of the component (all platforms)."""
         return [
             *self.sensors,
             *self.enum_properties,
             *self.number_properties,
             *self.boolean_properties,
+            *self.time_properties,
         ]
 
 

@@ -6,7 +6,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .const import DOMAIN
-from .openems import OpenEMSComponent
+from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSEdge
 
 
 @dataclass
@@ -69,3 +69,20 @@ def component_device(component: OpenEMSComponent) -> DeviceInfo:
         via_device=(DOMAIN, component.edge.hostname),
         entry_type=DeviceEntryType.SERVICE,
     )
+
+
+def find_channel_in_backend(
+    backend: OpenEMSBackend, unique_id: str
+) -> OpenEMSChannel | None:
+    """Search for a unique ID in a backend and return the channel when found."""
+    edge: OpenEMSEdge
+    for edge in backend.edges.values():
+        component: OpenEMSComponent
+        for component in edge.components.values():
+            channel: OpenEMSChannel
+            for channel in component.channels:
+                if channel.unique_id() == unique_id:
+                    # found it, return it.
+                    return channel
+    # not found.
+    return None
