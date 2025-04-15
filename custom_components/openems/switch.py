@@ -12,9 +12,9 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
-from .const import DEFAULT_EDGE_CHANNELS
 from .helpers import component_device
 from .openems import (
+    CONFIG,
     OpenEMSBackend,
     OpenEMSBooleanProperty,
     OpenEMSComponent,
@@ -42,9 +42,7 @@ async def async_setup_entry(
         channel: OpenEMSBooleanProperty
         channel_list: list[OpenEMSBooleanProperty] = component.boolean_properties
         for channel in channel_list:
-            entity_enabled = (
-                component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
-            )
+            entity_enabled = CONFIG.is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMSSwitchDescription(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,

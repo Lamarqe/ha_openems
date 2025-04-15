@@ -22,12 +22,16 @@ import yarl
 _LOGGER = logging.getLogger(__name__)
 
 
-class OpenEMSConfigEnhancer:
+class OpenEMSConfig:
     """Load additional config options from json files."""
 
     def __init__(self) -> None:
         """Initialize and read json files."""
         path = os.path.dirname(__file__)
+        with open(
+            path + "/config/default_channels.json", encoding="utf-8"
+        ) as channel_file:
+            self.default_channels = json.load(channel_file)
         with open(path + "/config/enum_options.json", encoding="utf-8") as enum_file:
             self.enum_options = json.load(enum_file)
         with open(path + "/config/time_options.json", encoding="utf-8") as time_file:
@@ -70,6 +74,26 @@ class OpenEMSConfigEnhancer:
         return self._get_config_property(
             self.number_properties, "multiplier", component_name, channel_name
         )
+
+    def is_component_enabled(self, comp_name: str) -> bool:
+        """Return if there is at least one channel enabled by default."""
+        for entry in self.default_channels:
+            if re.fullmatch(entry["component_regexp"], comp_name):
+                return True
+
+        return False
+
+    def is_channel_enabled(self, comp_name, chan_name) -> bool:
+        """Return True if the channel is enabled by default."""
+        for entry in self.default_channels:
+            if re.fullmatch(entry["component_regexp"], comp_name):
+                if chan_name in entry["channels"]:
+                    return True
+
+        return False
+
+
+CONFIG: OpenEMSConfig = OpenEMSConfig()
 
 
 class OpenEMSChannel:
@@ -235,8 +259,6 @@ class OpenEMSBooleanProperty(OpenEMSProperty):
 class OpenEMSComponent:
     """Class representing a component of an OpenEMS Edge."""
 
-    config_enhancer = OpenEMSConfigEnhancer()
-
     def __init__(self, edge, name, json_def) -> None:
         """Initialize the component."""
         self.edge: OpenEMSEdge = edge
@@ -263,7 +285,7 @@ class OpenEMSComponent:
                         )
                         self.boolean_properties.append(prop)
                     case "STRING":
-                        if options := OpenEMSComponent.config_enhancer.get_enum_options(
+                        if options := CONFIG.get_enum_options(
                             self.name, channel_json["id"]
                         ):
                             channel_json["options"] = options
@@ -272,24 +294,17 @@ class OpenEMSComponent:
                                 component=self, channel_json=channel_json
                             )
                             self.enum_properties.append(prop)
-                        elif OpenEMSComponent.config_enhancer.is_time_property(
-                            self.name, channel_json["id"]
-                        ):
+                        elif CONFIG.is_time_property(self.name, channel_json["id"]):
                             prop = OpenEMSTimeProperty(
                                 component=self, channel_json=channel_json
                             )
                             self.time_properties.append(prop)
                     case "INTEGER":
-                        if (
-                            limit_def
-                            := OpenEMSComponent.config_enhancer.get_number_limit(
-                                self.name, channel_json["id"]
-                            )
+                        if limit_def := CONFIG.get_number_limit(
+                            self.name, channel_json["id"]
                         ):
-                            multiplier = (
-                                OpenEMSComponent.config_enhancer.get_number_multiplier(
-                                    self.name, channel_json["id"]
-                                )
+                            multiplier = CONFIG.get_number_multiplier(
+                                self.name, channel_json["id"]
                             )
                             prop = OpenEMSNumberProperty(
                                 component=self, channel_json=channel_json
