@@ -1,0 +1,475 @@
+decluttering_templates:
+  ess_template:
+    default:
+      - ctrlemergencycapacityreserve_id: 0
+    card:
+      type: vertical-stack
+      cards:
+        - type: heading
+          icon: mdi:fridge
+          heading_style: title
+          heading: Notstromreserve
+        - type: entities
+          entities:
+            - entity: >-
+                switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
+              name: aktiviert
+              secondary_info: none
+              icon: mdi:battery-lock
+          show_header_toggle: false
+        - type: entities
+          entities:
+            - entity: >-
+                number.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_reservesoc
+              name: Reserve
+            - entity: switch.[[system]]_meta_isesschargefromgridallowed
+              name: Erhalt aus dem Netz
+          show_header_toggle: false
+          visibility:
+            - condition: state
+              entity: >-
+                switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
+              state: 'on'
+  evcs_template:
+    default:
+      - evcs_id: 0
+      - ctrlevcs_id: 0
+    card:
+      type: vertical-stack
+      cards:
+        - type: heading
+          icon: mdi:fridge
+          heading_style: title
+          heading: Wallbox
+        - type: entities
+          entities:
+            - entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
+              name: aktiviert
+              secondary_info: none
+              icon: mdi:ev-station
+          show_header_toggle: false
+        - type: vertical-stack
+          cards:
+            - type: entities
+              entities:
+                - entity: sensor.[[system]]_evcs[[evcs_id]]_status
+                  name: Status
+                - entity: sensor.[[system]]_evcs[[evcs_id]]_setchargepowerlimit
+                  name: Ladevorgabe
+                - entity: sensor.[[system]]_evcs[[evcs_id]]_chargepower
+                  name: Ladeleistung
+                - entity: sensor.[[system]]_evcs[[evcs_id]]_energysession
+                  name: Energie seit Ladebeginn
+              show_header_toggle: false
+            - type: horizontal-stack
+              cards:
+                - type: custom:button-card
+                  show_name: true
+                  show_icon: true
+                  entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
+                  name: 'Modus: Fix'
+                  icon: mdi:target
+                  styles:
+                    card:
+                      - height: 80px
+                  state:
+                    - value: FORCE_CHARGE
+                      color: red
+                      styles:
+                        card:
+                          - background-color: var(--paper-item-icon-active-color)
+                    - value: FORCE_CHARGE
+                      operator: '!='
+                      styles:
+                        name:
+                          - filter: opacity(70%)
+                        icon:
+                          - filter: opacity(70%)
+                  tap_action:
+                    action: call-service
+                    service: select.select_option
+                    data:
+                      option: FORCE_CHARGE
+                      entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
+                - type: custom:button-card
+                  show_name: true
+                  show_icon: true
+                  entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
+                  name: 'Modus: Überschuss'
+                  icon: mdi:auto-mode
+                  styles:
+                    card:
+                      - height: 80px
+                  state:
+                    - value: EXCESS_POWER
+                      color: green
+                      styles:
+                        card:
+                          - background-color: var(--paper-item-icon-active-color)
+                    - value: EXCESS_POWER
+                      operator: '!='
+                      styles:
+                        name:
+                          - filter: opacity(70%)
+                        icon:
+                          - filter: opacity(70%)
+                  tap_action:
+                    action: call-service
+                    service: select.select_option
+                    data:
+                      option: EXCESS_POWER
+                      entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
+            - type: entities
+              entities:
+                - entity: >-
+                    number.[[system]]_ctrlevcs[[ctrlevcs_id]]_forcechargeminpower
+                  name: Maximale Leistung
+                  icon: mdi:arrow-collapse-up
+              show_header_toggle: false
+              visibility:
+                - condition: state
+                  entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
+                  state: FORCE_CHARGE
+            - type: horizontal-stack
+              cards:
+                - type: entities
+                  entities:
+                    - entity: >-
+                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
+                      name: Minimale Leistung
+                      icon: mdi:arrow-collapse-down
+                  show_header_toggle: false
+                - type: custom:button-card
+                  show_name: true
+                  show_icon: true
+                  entity: >-
+                    number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
+                  name: Disable
+                  icon: mdi:lock-reset
+                  styles:
+                    card:
+                      - width: 50px
+                      - font-size: 10px
+                  state:
+                    - value: 0
+                      styles:
+                        card:
+                          - filter: opacity(30%)
+                  tap_action:
+                    action: call-service
+                    service: openems.update_component_config
+                    data:
+                      entity_id: >-
+                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
+                      value: 0
+              visibility:
+                - condition: state
+                  entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
+                  state: EXCESS_POWER
+            - type: horizontal-stack
+              cards:
+                - type: custom:button-card
+                  show_name: true
+                  show_icon: true
+                  entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
+                  name: E-Auto
+                  icon: mdi:car-electric
+                  styles:
+                    card:
+                      - height: 80px
+                  state:
+                    - value: CAR
+                      color: green
+                      styles:
+                        card:
+                          - background-color: var(--paper-item-icon-active-color)
+                    - value: CAR
+                      operator: '!='
+                      styles:
+                        name:
+                          - filter: opacity(70%)
+                        icon:
+                          - filter: opacity(70%)
+                  tap_action:
+                    action: call-service
+                    service: select.select_option
+                    data:
+                      option: CAR
+                      entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
+                - type: custom:button-card
+                  show_name: true
+                  show_icon: true
+                  entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
+                  name: Speicher
+                  icon: mdi:battery-medium
+                  styles:
+                    card:
+                      - height: 80px
+                  state:
+                    - value: STORAGE
+                      color: green
+                      styles:
+                        card:
+                          - background-color: var(--paper-item-icon-active-color)
+                    - value: STORAGE
+                      operator: '!='
+                      styles:
+                        name:
+                          - filter: opacity(70%)
+                        icon:
+                          - filter: opacity(70%)
+                  tap_action:
+                    action: call-service
+                    service: select.select_option
+                    data:
+                      option: STORAGE
+                      entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
+              visibility:
+                - condition: state
+                  entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
+                  state: EXCESS_POWER
+            - type: horizontal-stack
+              cards:
+                - type: entities
+                  entities:
+                    - entity: >-
+                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
+                      name: Limit pro Session
+                      icon: mdi:arrow-collapse-up
+                  show_header_toggle: false
+                - type: custom:button-card
+                  show_name: true
+                  show_icon: true
+                  entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
+                  name: Disable
+                  icon: mdi:lock-reset
+                  styles:
+                    card:
+                      - width: 50px
+                      - font-size: 10px
+                  state:
+                    - value: 0
+                      styles:
+                        card:
+                          - filter: opacity(30%)
+                  tap_action:
+                    action: call-service
+                    service: number.set_value
+                    data:
+                      value: 0
+                    target:
+                      entity_id: >-
+                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
+          visibility:
+            - condition: state
+              entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
+              state: 'on'
+  optchrg_template:
+    default:
+      - ctrlgridoptimizedcharge_id: 0
+    card:
+      type: vertical-stack
+      cards:
+        - type: heading
+          icon: mdi:transmission-tower-import
+          heading_style: title
+          heading: Netzdienliche Beladung
+        - type: entities
+          entities:
+            - entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargestate
+              name: Status
+            - entity: >-
+                sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargemaximumchargelimit
+              name: Maximale Beladung
+            - type: custom:template-entity-row
+              icon: mdi:clock
+              name: Endzeitpunkt
+              state: >-
+                {% set x =
+                as_timedelta(states.sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute.state)
+                | string %} {{ x[2:] }}
+          show_header_toggle: false
+        - type: horizontal-stack
+          cards:
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+              name: Aus
+              icon: mdi:power-standby
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: "OFF"
+                  color: red
+                  styles:
+                    card:
+                      - background-color: var(--paper-item-icon-active-color)
+                - value: "OFF"
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: "OFF"
+                  entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+              name: Auto
+              icon: mdi:auto-mode
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: AUTOMATIC
+                  color: green
+                  styles:
+                    card:
+                      - background-color: var(--paper-item-icon-active-color)
+                - value: AUTOMATIC
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: AUTOMATIC
+                  entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+              name: Manuell
+              icon: mdi:timeline-clock-outline
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: MANUAL
+                  color: green
+                  styles:
+                    card:
+                      - background-color: var(--paper-item-icon-active-color)
+                - value: MANUAL
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: MANUAL
+                  entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+        - type: horizontal-stack
+          cards:
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
+              name: Früh
+              icon: mdi:speedometer-slow
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: LOW
+                  color: green
+                  styles:
+                    card:
+                      - background-color: var(--paper-item-icon-active-color)
+                - value: LOW
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: LOW
+                  entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
+              name: Mittel
+              icon: mdi:speedometer-medium
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: MEDIUM
+                  color: black
+                  styles:
+                    card:
+                      - background-color: var(--paper-item-icon-active-color)
+                - value: MEDIUM
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: MEDIUM
+                  entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
+              name: Spät
+              icon: mdi:speedometer
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: HIGH
+                  color: red
+                  styles:
+                    card:
+                      - background-color: var(--paper-item-icon-active-color)
+                - value: HIGH
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: HIGH
+                  entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
+          visibility:
+            - condition: state
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+              state: AUTOMATIC
+        - type: entities
+          entities:
+            - entity: time.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_manualtargettime
+              name: Endzeit
+          visibility:
+            - condition: state
+              entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
+              state: MANUAL
