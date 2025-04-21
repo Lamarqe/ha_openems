@@ -10,6 +10,7 @@ import logging
 import math
 import os
 import re
+from typing import Any
 import uuid
 
 import aiohttp
@@ -21,14 +22,20 @@ import yarl
 _LOGGER = logging.getLogger(__name__)
 
 
-class OpenEMSConfigEnhancer:
+class OpenEMSConfig:
     """Load additional config options from json files."""
 
     def __init__(self) -> None:
         """Initialize and read json files."""
         path = os.path.dirname(__file__)
+        with open(
+            path + "/config/default_channels.json", encoding="utf-8"
+        ) as channel_file:
+            self.default_channels = json.load(channel_file)
         with open(path + "/config/enum_options.json", encoding="utf-8") as enum_file:
             self.enum_options = json.load(enum_file)
+        with open(path + "/config/time_options.json", encoding="utf-8") as time_file:
+            self.time_options = json.load(time_file)
         with open(
             path + "/config/number_properties.json", encoding="utf-8"
         ) as number_file:
@@ -50,6 +57,12 @@ class OpenEMSConfigEnhancer:
             self.enum_options, "options", component_name, channel_name
         )
 
+    def is_time_property(self, component_name, channel_name) -> list[str] | None:
+        """Return True if given component/channel is marked as time."""
+        return self._get_config_property(
+            self.time_options, "is_time", component_name, channel_name
+        )
+
     def get_number_limit(self, component_name, channel_name) -> dict | None:
         """Return limit definition for a given component/channel."""
         return self._get_config_property(
@@ -61,6 +74,26 @@ class OpenEMSConfigEnhancer:
         return self._get_config_property(
             self.number_properties, "multiplier", component_name, channel_name
         )
+
+    def is_component_enabled(self, comp_name: str) -> bool:
+        """Return if there is at least one channel enabled by default."""
+        for entry in self.default_channels:
+            if re.fullmatch(entry["component_regexp"], comp_name):
+                return True
+
+        return False
+
+    def is_channel_enabled(self, comp_name, chan_name) -> bool:
+        """Return True if the channel is enabled by default."""
+        for entry in self.default_channels:
+            if re.fullmatch(entry["component_regexp"], comp_name):
+                if chan_name in entry["channels"]:
+                    return True
+
+        return False
+
+
+CONFIG: OpenEMSConfig = OpenEMSConfig()
 
 
 class OpenEMSChannel:
@@ -115,7 +148,15 @@ class OpenEMSChannel:
         self.component.edge.unregister_channel(self)
 
 
-class OpenEMSEnumProperty(OpenEMSChannel):
+class OpenEMSProperty(OpenEMSChannel):
+    """Class representing a property of an OpenEMS component."""
+
+    async def update_value(self, value: Any) -> None:
+        """Handle value change request from Home Assisant."""
+        await self.component.update_config(self.name[9:], value)
+
+
+class OpenEMSEnumProperty(OpenEMSProperty):
     """Class representing a enum property of an OpenEMS component."""
 
     # Use with platform select
@@ -124,12 +165,12 @@ class OpenEMSEnumProperty(OpenEMSChannel):
         super().__init__(component, channel_json)
         self.options = channel_json["options"]
 
-    async def update_value(self, value) -> None:
-        """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value)
+
+class OpenEMSTimeProperty(OpenEMSProperty):
+    """Class representing a enum property of an OpenEMS component."""
 
 
-class OpenEMSNumberProperty(OpenEMSChannel):
+class OpenEMSNumberProperty(OpenEMSProperty):
     """Class representing a number property of an OpenEMS component."""
 
     STEPS = 200  # Minimum number of steps
@@ -154,7 +195,7 @@ class OpenEMSNumberProperty(OpenEMSChannel):
 
     async def update_value(self, value: float) -> None:
         """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value / self.multiplier)
+        await super().update_value(value / self.multiplier)
 
     async def init_multiplier(self, multiplier):
         """Initialize the multiplier of the number channel."""
@@ -209,20 +250,14 @@ class OpenEMSNumberProperty(OpenEMSChannel):
             return data["value"]
 
 
-class OpenEMSBooleanProperty(OpenEMSChannel):
+class OpenEMSBooleanProperty(OpenEMSProperty):
     """Class representing a boolean property of an OpenEMS component."""
 
     # Use with platform switch
 
-    async def update_value(self, value) -> None:
-        """Handle value change request from Home Assisant."""
-        await self.component.update_config(self.name[9:], value)
-
 
 class OpenEMSComponent:
     """Class representing a component of an OpenEMS Edge."""
-
-    config_enhancer = OpenEMSConfigEnhancer()
 
     def __init__(self, edge, name, json_def) -> None:
         """Initialize the component."""
@@ -235,6 +270,7 @@ class OpenEMSComponent:
         self.enum_properties: list[OpenEMSEnumProperty] = []
         self.number_properties: list[OpenEMSNumberProperty] = []
         self.boolean_properties: list[OpenEMSBooleanProperty] = []
+        self.time_properties: list[OpenEMSTimeProperty] = []
         self.create_entities: bool = False
 
     async def init_channels(self, channels):
@@ -249,7 +285,7 @@ class OpenEMSComponent:
                         )
                         self.boolean_properties.append(prop)
                     case "STRING":
-                        if options := OpenEMSComponent.config_enhancer.get_enum_options(
+                        if options := CONFIG.get_enum_options(
                             self.name, channel_json["id"]
                         ):
                             channel_json["options"] = options
@@ -258,17 +294,17 @@ class OpenEMSComponent:
                                 component=self, channel_json=channel_json
                             )
                             self.enum_properties.append(prop)
-                    case "INTEGER":
-                        if (
-                            limit_def
-                            := OpenEMSComponent.config_enhancer.get_number_limit(
-                                self.name, channel_json["id"]
+                        elif CONFIG.is_time_property(self.name, channel_json["id"]):
+                            prop = OpenEMSTimeProperty(
+                                component=self, channel_json=channel_json
                             )
+                            self.time_properties.append(prop)
+                    case "INTEGER":
+                        if limit_def := CONFIG.get_number_limit(
+                            self.name, channel_json["id"]
                         ):
-                            multiplier = (
-                                OpenEMSComponent.config_enhancer.get_number_multiplier(
-                                    self.name, channel_json["id"]
-                                )
+                            multiplier = CONFIG.get_number_multiplier(
+                                self.name, channel_json["id"]
                             )
                             prop = OpenEMSNumberProperty(
                                 component=self, channel_json=channel_json
@@ -282,7 +318,7 @@ class OpenEMSComponent:
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
                 self.sensors.append(channel)
 
-    async def update_config(self, property_name, value):
+    async def update_config(self, property_name, value: Any):
         """Send updateComponentConfig request to backend."""
         properties = [{"name": property_name, "value": value}]
         envelope = OpenEMSBackend.wrap_jsonrpc(
@@ -294,11 +330,13 @@ class OpenEMSComponent:
 
     @property
     def channels(self) -> list[OpenEMSChannel]:
+        """Return all channels of the component (all platforms)."""
         return [
             *self.sensors,
             *self.enum_properties,
             *self.number_properties,
             *self.boolean_properties,
+            *self.time_properties,
         ]
 
 

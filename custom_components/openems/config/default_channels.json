@@ -1,0 +1,126 @@
+[
+    {
+        "component_regexp": "_meta",
+        "channels": [
+            "_PropertyIsEssChargeFromGridAllowed"
+        ]
+    },
+    {
+        "component_regexp": "_sum",
+        "channels": [
+            "ConsumptionActivePower",
+            "ConsumptionMaxActivePower",
+            "EssActivePower",
+            "EssDcChargeEnergy",
+            "EssDcDischargeEnergy",
+            "EssDischargePower",
+            "EssMaxDischargePower",
+            "EssMinDischargePower",
+            "EssSoc",
+            "GridActivePower",
+            "GridBuyActiveEnergy",
+            "GridMaxActivePower",
+            "GridMinActivePower",
+            "GridMode",
+            "GridSellActiveEnergy",
+            "ProductionAcActivePower",
+            "ProductionActiveEnergy",
+            "ProductionActivePower",
+            "ProductionDcActualPower",
+            "ProductionMaxActivePower",
+            "State"
+        ]
+    },
+    {
+        "component_regexp": "charger\\d+",
+        "channels": [
+            "ActualEnergy",
+            "ActualPower"
+        ]
+    },
+    {
+        "component_regexp": "ctrlEmergencyCapacityReserve\\d+",
+        "channels": [
+            "_PropertyIsReserveSocEnabled",
+            "_PropertyReserveSoc"
+        ]
+    },
+    {
+        "component_regexp": "ctrlEvcs\\d+",
+        "channels": [
+            "_PropertyChargeMode",
+            "_PropertyDefaultChargeMinPower",
+            "_PropertyEnabledCharging",
+            "_PropertyEnergySessionLimit",
+            "_PropertyForceChargeMinPower",
+            "_PropertyPriority"
+        ]
+    },
+    {
+        "component_regexp": "ctrlEssLimiter14a\\d+",
+        "channels": [
+            "RestrictionMode"
+        ]
+    },
+    {
+        "component_regexp": "ctrlGridOptimizedCharge\\d+",
+        "channels": [
+            "_PropertyMode",
+            "_PropertyDelayChargeRiskLevel",
+            "_PropertyManualTargetTime",
+            "DelayChargeMaximumChargeLimit",
+            "DelayChargeState",
+            "SellToGridLimitMinimumChargeLimit",
+            "SellToGridLimitState",
+            "TargetMinute"
+        ]
+    },
+    {
+        "component_regexp": "ctrlPrepareBatteryExtension\\d+",
+        "channels": [
+            "_PropertyIsRunning",
+            "_PropertyTargetTime",
+            "_PropertyTargetTimeSpecified",
+            "CtrlIsBlockingEss",
+            "CtrlIsChargingEss",
+            "CtrlIsDischargingEss"
+        ]
+    },
+    {
+        "component_regexp": "ess\\d+",
+        "channels": [
+            "Capacity",
+            "DcChargeEnergy",
+            "DcDischargeEnergy",
+            "DcDischargePower",
+            "Soc"
+        ]
+    },
+    {
+        "component_regexp": "evcs\\d+",
+        "channels": [
+            "ActivePower",
+            "ChargePower",
+            "EnergySession",
+            "MaximumHardwarePower",
+            "MinimumHardwarePower",
+            "Phases",
+            "SetChargePowerLimit",
+            "State",
+            "Status"
+        ]
+    },
+    {
+        "component_regexp": "meter\\d+",
+        "channels": [
+            "ActivePower"
+        ]
+    },
+    {
+        "component_regexp": "pvInverter\\d+",
+        "channels": [
+            "ActivePower",
+            "ActiveProductionEnergy"
+        ]
+    }
+]

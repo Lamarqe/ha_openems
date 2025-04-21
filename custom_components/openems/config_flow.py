@@ -9,32 +9,21 @@ from typing import Any
 import jsonrpc_base
 import voluptuous as vol
 
-from homeassistant.components.otp.config_flow import (
-    BooleanSelector,
-    BooleanSelectorConfig,
-)
-from homeassistant.config_entries import (
-    ConfigFlow,
-    ConfigFlowResult,
-    ConfigSubentryFlow,
-    OptionsFlow,
-    SubentryFlowResult,
-)
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PROTOCOL, CONF_USERNAME
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import selector
+from homeassistant.helpers.selector import BooleanSelector, BooleanSelectorConfig
 from homeassistant.helpers.storage import Store
 
 from .__init__ import OpenEMSConfigEntry
 from .const import (
-    DEFAULT_EDGE_CHANNELS,
     DOMAIN,
     STORAGE_KEY_BACKEND_CONFIG,
     STORAGE_KEY_HA_OPTIONS,
     STORAGE_VERSION,
 )
-from .openems import OpenEMSBackend, OpenEMSComponent, OpenEMSEdge
+from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,9 +81,11 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 await store.async_save(config_data)
                 # initialize options
                 options: dict[str:bool] = {}
-                for channel_name in DEFAULT_EDGE_CHANNELS:
-                    comp_name = channel_name.split("/")[0]
-                    options[comp_name] = True
+
+                for edge in config_data.values():
+                    for component in edge["components"]:
+                        options[component] = CONFIG.is_component_enabled(component)
+
                 options_key = STORAGE_KEY_HA_OPTIONS + "_" + backend.host
                 store_options: Store = Store(self.hass, STORAGE_VERSION, options_key)
                 await store_options.async_save(options)

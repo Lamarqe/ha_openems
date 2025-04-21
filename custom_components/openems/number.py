@@ -14,7 +14,6 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
-from .const import DEFAULT_EDGE_CHANNELS
 from .helpers import (
     DeviceInfo,
     OpenEMSSensorUnitClass,
@@ -22,6 +21,7 @@ from .helpers import (
     unit_description,
 )
 from .openems import (
+    CONFIG,
     OpenEMSBackend,
     OpenEMSComponent,
     OpenEMSEdge,
@@ -49,9 +49,7 @@ async def async_setup_entry(
         channel: OpenEMSNumberProperty
         channel_list: list[OpenEMSNumberProperty] = component.number_properties
         for channel in channel_list:
-            entity_enabled = (
-                component.name + "/" + channel.name in DEFAULT_EDGE_CHANNELS
-            )
+            entity_enabled = CONFIG.is_channel_enabled(component.name, channel.name)
             unit_desc: OpenEMSSensorUnitClass = unit_description(channel.unit)
             entity_description = OpenEMSNumberDescription(
                 key=channel.unique_id(),
