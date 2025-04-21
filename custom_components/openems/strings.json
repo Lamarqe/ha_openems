@@ -17,5 +17,75 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
+  },
+  "entity": {
+    "sensor": {
+      "ctrlGridOptimizedCharge/DelayChargeState": {
+        "name": "Status Verzögerung",
+        "state": {
+          "Undefined": "Nicht definiert",
+          "Active limit": "Begrenzung aktiv",
+          "No remaining time": "Keine Zeit verbleibend",
+          "No remaining capacity": "Keine Kapazität verbleibend",
+          "Target minute not calculated": "Zielzeitpunkt nicht berechet",
+          "Limit cannot be adapted because of other constraints with higher priority": "Begrenzung wegen anderer Beschränkungen nicht angepasst",
+          "No active limitation": "Keine Begrenzung aktiv",
+          "Delay charge part is disabled": "Verzögerte Ladung deaktiviert",
+          "Delay charge was not started because there is no production or to less production": "Verzögerte Ladung wegen zu geringer Erzeugung nicht gestartet",
+          "Avoid charging with low power for more efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden"
+        }
+      },
+      "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
+        "name": "Status Verzögerung",
+        "state": {
+          "LOW": "Niedrig",
+          "MEDIUM": "Mittel",
+          "HIGH": "Hoch"
+        }
+      },
+      "ctrlGridOptimizedCharge/IsReserveSocEnabled": {
+        "name": "Reserve aktiviert"
+      },
+      "ctrlGridOptimizedCharge/ReserveSoc": {
+        "name": "Reserve"
+      },
+      "_meta/IsEssChargeFromGridAllowed": {
+        "name": "Erhalt aus dem Netz"
+      },
+      "ctrlEvcs/EnabledCharging": {
+        "name": "Laden aktiviert"
+      },
+      "ctrlEvcs/Status": {
+        "name": "Status",
+        "state": {
+          "Undefined": "Nicht definiert",
+          "Starting": "Starte...",
+          "Not ready for Charging": "Nicht bereit zum Laden",
+          "Ready for Charging": "Bereit zum Laden",
+          "Charging": "Ladevorgang aktiv",
+          "Error": "Fehler",
+          "Charging rejected": "Laden verweigert",
+          "The charging limit reached": "Ladelimit erreicht"
+        }
+      },
+      "evcs/SetChargePowerLimit": {
+        "name": "Ladevorgabe"
+      },
+      "evcs/ChargePower": {
+        "name": "Ladeleistung"
+      },
+      "evcs/EnergySession": {
+        "name": "Energie seit Ladebeginn"
+      },
+      "ctrlEvcs/ForceChargeMinPower": {
+        "name": "Maximale Leistung"
+      },
+      "ctrlEvcs/DefaultChargeMinPower": {
+        "name": "Minimale Leistung"
+      },
+      "ctrlEvcs/EnergySessionLimit": {
+        "name": "Limit pro Session"
+      }
+    }
   }
 }

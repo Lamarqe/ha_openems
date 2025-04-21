@@ -18,6 +18,7 @@ from .helpers import (
     DeviceInfo,
     OpenEMSSensorUnitClass,
     component_device,
+    translation_key,
     unit_description,
 )
 from .openems import (
@@ -64,6 +65,7 @@ async def async_setup_entry(
                 device_class=unit_desc.device_class,
                 # state_class=unit_desc.state_class,
                 native_unit_of_measurement=unit_desc.unit,
+                translation_key=translation_key(channel),
             )
             entities.append(
                 OpenEMSNumberEntity(
