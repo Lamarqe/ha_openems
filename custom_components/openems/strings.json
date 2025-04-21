@@ -35,14 +35,6 @@
           "Avoid charging with low power for more efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden"
         }
       },
-      "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
-        "name": "Status Verzögerung",
-        "state": {
-          "LOW": "Niedrig",
-          "MEDIUM": "Mittel",
-          "HIGH": "Hoch"
-        }
-      },
       "ctrlGridOptimizedCharge/IsReserveSocEnabled": {
         "name": "Reserve aktiviert"
       },
@@ -85,6 +77,16 @@
       },
       "ctrlEvcs/EnergySessionLimit": {
         "name": "Limit pro Session"
+      }
+    },
+    "select": {
+      "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
+        "name": "Status Verzögerung",
+        "state": {
+          "LOW": "Niedrig",
+          "MEDIUM": "Mittel",
+          "HIGH": "Hoch"
+        }
       }
     }
   }
