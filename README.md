@@ -31,7 +31,7 @@ Home Assistant component that interfaces FEMS and OpenEMS, mainly used in Feneco
 4. Add FEMS Integration
 6. Enter your OpenEMS / FEMS address and user account (Fenecon standard:  x / user)
 
-The Fenecon password (user or owner) controls your access rights. If you just want to monitor (read-only access), "user" is fine. If you want to change settings, you need to use "owner".
+The Fenecon password (user or owner) controls your access rights. If you just want to monitor (read-only access), "user" is fine. If you want to change settings, you need to use "owner". The Owner permissions work even without REST/API Write App.
 
 ## Installation
 
