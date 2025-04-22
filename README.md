@@ -81,12 +81,13 @@ Has the temperatures for radiator, air, ...
 And the state of health
 * _batteryinverter0_bmssoh
 
-<img src="https://github.com/user-attachments/assets/d8e0df40-8a91-41d9-b04f-3b9e1d402193" width="200">
+![Bildschirmfoto 2025-04-22 um 14 51 28](https://github.com/user-attachments/assets/963ef819-9a25-4512-9452-5a81ed598a66)
 
 ### ctrlIoHeatPumpX
 Here you will find the current state of your SG ready connected heatpump.
 
-<img src="https://github.com/user-attachments/assets/c4f8944f-7262-4b35-8d5c-00d4e9eb61ba" width="200">
+![Bildschirmfoto 2025-04-22 um 15 38 51](https://github.com/user-attachments/assets/c72105a4-1b37-405c-9122-823ce809e59a)
+
 
 ### evcsX and ctrlEvcs0 (Wallbox)
 Here you find the configuration and the energy statistics for your connected wallbox:
