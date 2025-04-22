@@ -1,6 +1,7 @@
 """OpenEMS Helper methods eg for Entity creation."""
 
 from dataclasses import dataclass
+import re
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
@@ -86,3 +87,8 @@ def find_channel_in_backend(
                     return channel
     # not found.
     return None
+
+
+def translation_key(channel: OpenEMSChannel) -> str:
+    """Generate translation key for given channel."""
+    return re.sub(r"\d+$", "", channel.component.name) + "/" + channel.name

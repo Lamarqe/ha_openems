@@ -11,7 +11,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
-from .helpers import component_device
+from .helpers import component_device, translation_key
 from .openems import (
     CONFIG,
     OpenEMSBackend,
@@ -49,6 +49,7 @@ async def async_setup_entry(
                 options=channel.options,
                 # remove "_Property" prefix
                 name=channel.name[9:],
+                translation_key=translation_key(channel),
             )
             entities.append(
                 OpenEMSSelectEntity(
