@@ -67,7 +67,7 @@ The most relevant entities (for most people) are in the _sum device:
 Here you can find your power production, consumption, battery charge and many more.
 
 ### ChargerX
-Here you can find voltage, current and power for both of your strings.
+Here you can find voltage, current and power for your strings.
 
 <img src="https://github.com/user-attachments/assets/9d09b670-0d72-44dc-b905-f1b5cb0097f3" width="200">
 
@@ -87,6 +87,10 @@ And the state of health
 Here you will find the current state of your SG ready connected heatpump.
 
 <img src="https://github.com/user-attachments/assets/c72105a4-1b37-405c-9122-823ce809e59a" width="200">
+
+You can also manually set the SD Ready modes:
+
+<img src="https://github.com/user-attachments/assets/ca2c73f7-65e3-4481-8aa6-782733fcdfc8" width="200">
 
 ### evcsX and ctrlEvcs0 (Wallbox)
 Here you find the configuration and the energy statistics for your connected wallbox:
