@@ -48,7 +48,7 @@ Some devices to watch for:
 4. batteryInverterX
 5. chargerX (these are inverter strings)
 
-The numbers (X) can vary from instalation to installation and model to model. E.g. a Fenecon Home 10 Gen 10 has two inverters, so you would get 0 and 1, if you use both of them. Other models might have different numbers if strings, or maybe you don't use them all. Or you have to battery-towers connected, ...
+The numbers (X) can vary from instalation to installation and model to model. E.g. a Fenecon Home 10 Gen 10 has two inverters, so you would get 0 and 1, if you use both of them. Other models might have different numbers of strings, or maybe you don't use them all. Or you have two battery-towers connected, ...
 
 Some devices are only active, if you have the corresponding app installed:
 * ctrlIoHeatPumpX = FEMS App Power-to-Heat
@@ -81,13 +81,12 @@ Has the temperatures for radiator, air, ...
 And the state of health
 * _batteryinverter0_bmssoh
 
-![Bildschirmfoto 2025-04-22 um 14 51 28](https://github.com/user-attachments/assets/963ef819-9a25-4512-9452-5a81ed598a66)
+<img src="https://github.com/user-attachments/assets/963ef819-9a25-4512-9452-5a81ed598a66" width="200">
 
 ### ctrlIoHeatPumpX
 Here you will find the current state of your SG ready connected heatpump.
 
-![Bildschirmfoto 2025-04-22 um 15 38 51](https://github.com/user-attachments/assets/c72105a4-1b37-405c-9122-823ce809e59a)
-
+<img src="https://github.com/user-attachments/assets/c72105a4-1b37-405c-9122-823ce809e59a" width="200">
 
 ### evcsX and ctrlEvcs0 (Wallbox)
 Here you find the configuration and the energy statistics for your connected wallbox:
