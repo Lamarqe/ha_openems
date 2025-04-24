@@ -20,6 +20,9 @@
   },
   "entity": {
     "number": {
+      "ctrlEmergencyCapacityReserve/ReserveSoc": {
+        "name": "Reserve"
+      },
       "ctrlEvcs/DefaultChargeMinPower": {
         "name": "Minimale Leistung"
       },
@@ -28,9 +31,6 @@
       },
       "ctrlEvcs/EnergySessionLimit": {
         "name": "Limit pro Session"
-      },
-      "ctrlGridOptimizedCharge/ReserveSoc": {
-        "name": "Reserve"
       }
     },
     "sensor": {
@@ -114,11 +114,11 @@
       "_meta/IsEssChargeFromGridAllowed": {
         "name": "Erhalt aus dem Netz"
       },
+      "ctrlEmergencyCapacityReserve/IsReserveSocEnabled": {
+        "name": "Reserve aktiviert"
+      },
       "ctrlEvcs/EnabledCharging": {
         "name": "Laden aktiviert"
-      },
-      "ctrlGridOptimizedCharge/IsReserveSocEnabled": {
-        "name": "Reserve aktiviert"
       }
     },
     "time": {

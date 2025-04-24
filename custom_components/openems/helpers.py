@@ -7,7 +7,13 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .const import DOMAIN
-from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSEdge
+from .openems import (
+    OpenEMSBackend,
+    OpenEMSChannel,
+    OpenEMSComponent,
+    OpenEMSEdge,
+    OpenEMSProperty,
+)
 
 
 @dataclass
@@ -91,4 +97,8 @@ def find_channel_in_backend(
 
 def translation_key(channel: OpenEMSChannel) -> str:
     """Generate translation key for given channel."""
-    return re.sub(r"\d+$", "", channel.component.name) + "/" + channel.name
+    if isinstance(channel, OpenEMSProperty):
+        channel_name = channel.name[9:]
+    else:
+        channel_name = channel.name
+    return re.sub(r"\d+$", "", channel.component.name) + "/" + channel_name
