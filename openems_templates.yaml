@@ -5,31 +5,37 @@ decluttering_templates:
     card:
       type: vertical-stack
       cards:
-        - type: heading
-          icon: mdi:fridge
-          heading_style: title
-          heading: Notstromreserve
+        - type: custom:config-template-card
+          variables:
+            device_id: |
+              temp => {return this.hass.entities[temp].device_id}
+            device_model: |
+              temp => {return this.hass.devices[temp].model}
+          entities:
+            - switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
+          card:
+            type: heading
+            icon: mdi:battery-lock
+            heading_style: title
+            heading: >-
+              ${
+              device_model(device_id('switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled'))
+              }
         - type: entities
           entities:
-            - entity: >-
-                switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
-              name: aktiviert
+            - entity: switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
               secondary_info: none
               icon: mdi:battery-lock
           show_header_toggle: false
         - type: entities
           entities:
-            - entity: >-
-                number.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_reservesoc
-              name: Reserve
+            - entity: number.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_reservesoc
             - entity: switch.[[system]]_meta_isesschargefromgridallowed
-              name: Erhalt aus dem Netz
           show_header_toggle: false
           visibility:
             - condition: state
-              entity: >-
-                switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
-              state: 'on'
+              entity: switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
+              state: "on"
   evcs_template:
     default:
       - evcs_id: 0
@@ -37,14 +43,22 @@ decluttering_templates:
     card:
       type: vertical-stack
       cards:
-        - type: heading
-          icon: mdi:fridge
-          heading_style: title
-          heading: Wallbox
+        - type: custom:config-template-card
+          variables:
+            device_id: |
+              temp => {return this.hass.entities[temp].device_id}
+            device_model: |
+              temp => {return this.hass.devices[temp].model}
+          entities:
+            - sensor.[[system]]_evcs[[evcs_id]]_state
+          card:
+            type: heading
+            icon: mdi:ev-station
+            heading_style: title
+            heading: ${ device_model(device_id('sensor.[[system]]_evcs[[evcs_id]]_state')) }
         - type: entities
           entities:
             - entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
-              name: aktiviert
               secondary_info: none
               icon: mdi:ev-station
           show_header_toggle: false
@@ -53,13 +67,9 @@ decluttering_templates:
             - type: entities
               entities:
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_status
-                  name: Status
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_setchargepowerlimit
-                  name: Ladevorgabe
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_chargepower
-                  name: Ladeleistung
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_energysession
-                  name: Energie seit Ladebeginn
               show_header_toggle: false
             - type: horizontal-stack
               cards:
@@ -67,7 +77,10 @@ decluttering_templates:
                   show_name: true
                   show_icon: true
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
-                  name: 'Modus: Fix'
+                  name: >-
+                    [[[ return
+                    hass.localize("component.openems.entity.select.ctrlEvcs/ChargeMode.state.FORCE_CHARGE")
+                    ]]]
                   icon: mdi:target
                   styles:
                     card:
@@ -79,7 +92,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: FORCE_CHARGE
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -95,7 +108,10 @@ decluttering_templates:
                   show_name: true
                   show_icon: true
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
-                  name: 'Modus: Überschuss'
+                  name: >-
+                    [[[ return
+                    hass.localize("component.openems.entity.select.ctrlEvcs/ChargeMode.state.EXCESS_POWER")
+                    ]]]
                   icon: mdi:auto-mode
                   styles:
                     card:
@@ -107,7 +123,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: EXCESS_POWER
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -121,9 +137,7 @@ decluttering_templates:
                       entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
             - type: entities
               entities:
-                - entity: >-
-                    number.[[system]]_ctrlevcs[[ctrlevcs_id]]_forcechargeminpower
-                  name: Maximale Leistung
+                - entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_forcechargeminpower
                   icon: mdi:arrow-collapse-up
               show_header_toggle: false
               visibility:
@@ -134,17 +148,14 @@ decluttering_templates:
               cards:
                 - type: entities
                   entities:
-                    - entity: >-
-                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
-                      name: Minimale Leistung
+                    - entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
                       icon: mdi:arrow-collapse-down
                   show_header_toggle: false
                 - type: custom:button-card
                   show_name: true
                   show_icon: true
-                  entity: >-
-                    number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
-                  name: Disable
+                  entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
+                  name: "[[[ return hass.localize(\"ui.common.disable\") ]]]"
                   icon: mdi:lock-reset
                   styles:
                     card:
@@ -159,8 +170,7 @@ decluttering_templates:
                     action: call-service
                     service: openems.update_component_config
                     data:
-                      entity_id: >-
-                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
+                      entity_id: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
                       value: 0
               visibility:
                 - condition: state
@@ -172,7 +182,10 @@ decluttering_templates:
                   show_name: true
                   show_icon: true
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
-                  name: E-Auto
+                  name: >-
+                    [[[ return
+                    hass.localize("component.openems.entity.select.ctrlEvcs/Priority.state.CAR")
+                    ]]]
                   icon: mdi:car-electric
                   styles:
                     card:
@@ -184,7 +197,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: CAR
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -200,7 +213,10 @@ decluttering_templates:
                   show_name: true
                   show_icon: true
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
-                  name: Speicher
+                  name: >-
+                    [[[ return
+                    hass.localize("component.openems.entity.select.ctrlEvcs/Priority.state.STORAGE")
+                    ]]]
                   icon: mdi:battery-medium
                   styles:
                     card:
@@ -212,7 +228,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: STORAGE
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -232,16 +248,14 @@ decluttering_templates:
               cards:
                 - type: entities
                   entities:
-                    - entity: >-
-                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
-                      name: Limit pro Session
+                    - entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
                       icon: mdi:arrow-collapse-up
                   show_header_toggle: false
                 - type: custom:button-card
                   show_name: true
                   show_icon: true
                   entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
-                  name: Disable
+                  name: "[[[ return hass.localize(\"ui.common.disable\") ]]]"
                   icon: mdi:lock-reset
                   styles:
                     card:
@@ -258,32 +272,41 @@ decluttering_templates:
                     data:
                       value: 0
                     target:
-                      entity_id: >-
-                        number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
+                      entity_id: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
           visibility:
             - condition: state
               entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
-              state: 'on'
+              state: "on"
   optchrg_template:
     default:
       - ctrlgridoptimizedcharge_id: 0
     card:
       type: vertical-stack
       cards:
-        - type: heading
-          icon: mdi:transmission-tower-import
-          heading_style: title
-          heading: Netzdienliche Beladung
+        - type: custom:config-template-card
+          variables:
+            device_id: |
+              temp => {return this.hass.entities[temp].device_id}
+            device_model: |
+              temp => {return this.hass.devices[temp].model}
+          entities:
+            - sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute
+          card:
+            type: heading
+            icon: mdi:transmission-tower-import
+            heading_style: title
+            heading: >-
+              ${
+              device_model(device_id('sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute'))
+              }
         - type: entities
           entities:
             - entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargestate
-              name: Status
             - entity: >-
                 sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargemaximumchargelimit
-              name: Maximale Beladung
             - type: custom:template-entity-row
               icon: mdi:clock
-              name: Endzeitpunkt
+              entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute
               state: >-
                 {% set x =
                 as_timedelta(states.sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute.state)
@@ -295,7 +318,10 @@ decluttering_templates:
               show_name: true
               show_icon: true
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
-              name: Aus
+              name: >-
+                [[[ return
+                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/Mode.state.OFF")
+                ]]]
               icon: mdi:power-standby
               styles:
                 card:
@@ -323,7 +349,10 @@ decluttering_templates:
               show_name: true
               show_icon: true
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
-              name: Auto
+              name: >-
+                [[[ return
+                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/Mode.state.AUTOMATIC")
+                ]]]
               icon: mdi:auto-mode
               styles:
                 card:
@@ -351,7 +380,10 @@ decluttering_templates:
               show_name: true
               show_icon: true
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
-              name: Manuell
+              name: >-
+                [[[ return
+                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/Mode.state.MANUAL")
+                ]]]
               icon: mdi:timeline-clock-outline
               styles:
                 card:
@@ -381,7 +413,10 @@ decluttering_templates:
               show_name: true
               show_icon: true
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
-              name: Früh
+              name: >-
+                [[[ return
+                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/DelayChargeRiskLevel.state.LOW")
+                ]]]
               icon: mdi:speedometer-slow
               styles:
                 card:
@@ -409,7 +444,10 @@ decluttering_templates:
               show_name: true
               show_icon: true
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
-              name: Mittel
+              name: >-
+                [[[ return
+                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/DelayChargeRiskLevel.state.MEDIUM")
+                ]]]
               icon: mdi:speedometer-medium
               styles:
                 card:
@@ -437,7 +475,10 @@ decluttering_templates:
               show_name: true
               show_icon: true
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
-              name: Spät
+              name: >-
+                [[[ return
+                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/DelayChargeRiskLevel.state.HIGH")
+                ]]]
               icon: mdi:speedometer
               styles:
                 card:
@@ -468,8 +509,8 @@ decluttering_templates:
         - type: entities
           entities:
             - entity: time.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_manualtargettime
-              name: Endzeit
           visibility:
             - condition: state
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
               state: MANUAL
+
