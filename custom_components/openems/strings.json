@@ -19,6 +19,20 @@
     }
   },
   "entity": {
+    "number": {
+      "ctrlEvcs/DefaultChargeMinPower": {
+        "name": "Minimale Leistung"
+      },
+      "ctrlEvcs/ForceChargeMinPower": {
+        "name": "Maximale Leistung"
+      },
+      "ctrlEvcs/EnergySessionLimit": {
+        "name": "Limit pro Session"
+      },
+      "ctrlGridOptimizedCharge/ReserveSoc": {
+        "name": "Reserve"
+      }
+    },
     "sensor": {
       "ctrlGridOptimizedCharge/DelayChargeState": {
         "name": "Status Verzögerung",
@@ -38,25 +52,10 @@
       "ctrlGridOptimizedCharge/DelayChargeMaximumChargeLimit": {
         "name": "Maximale Beladung"
       },
-      "ctrlGridOptimizedCharge/IsReserveSocEnabled": {
-        "name": "Reserve aktiviert"
-      },
-      "ctrlGridOptimizedCharge/ReserveSoc": {
-        "name": "Reserve"
-      },
       "ctrlGridOptimizedCharge/TargetMinute": {
         "name": "Endzeitpunkt der beschränkten Beladung"
       },
-      "ctrlGridOptimizedCharge/ManualTargetTime": {
-        "name": "Endzeit"
-      },
-      "_meta/IsEssChargeFromGridAllowed": {
-        "name": "Erhalt aus dem Netz"
-      },
-      "ctrlEvcs/EnabledCharging": {
-        "name": "Laden aktiviert"
-      },
-      "ctrlEvcs/Status": {
+      "evcs/Status": {
         "name": "Status",
         "state": {
           "Undefined": "Nicht definiert",
@@ -77,15 +76,6 @@
       },
       "evcs/EnergySession": {
         "name": "Energie seit Ladebeginn"
-      },
-      "ctrlEvcs/ForceChargeMinPower": {
-        "name": "Maximale Leistung"
-      },
-      "ctrlEvcs/DefaultChargeMinPower": {
-        "name": "Minimale Leistung"
-      },
-      "ctrlEvcs/EnergySessionLimit": {
-        "name": "Limit pro Session"
       }
     },
     "select": {
@@ -118,6 +108,22 @@
           "AUTOMATIC": "Automatisch",
           "MANUAL": "Manuell"
         }
+      }
+    },
+    "switch": {
+      "_meta/IsEssChargeFromGridAllowed": {
+        "name": "Erhalt aus dem Netz"
+      },
+      "ctrlEvcs/EnabledCharging": {
+        "name": "Laden aktiviert"
+      },
+      "ctrlGridOptimizedCharge/IsReserveSocEnabled": {
+        "name": "Reserve aktiviert"
+      }
+    },
+    "time": {
+      "ctrlGridOptimizedCharge/ManualTargetTime": {
+        "name": "Endzeit"
       }
     }
   }
