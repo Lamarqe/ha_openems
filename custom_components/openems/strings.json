@@ -35,11 +35,20 @@
           "Avoid charging with low power for more efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden"
         }
       },
+      "ctrlGridOptimizedCharge/DelayChargeMaximumChargeLimit": {
+        "name": "Maximale Beladung"
+      },
       "ctrlGridOptimizedCharge/IsReserveSocEnabled": {
         "name": "Reserve aktiviert"
       },
       "ctrlGridOptimizedCharge/ReserveSoc": {
         "name": "Reserve"
+      },
+      "ctrlGridOptimizedCharge/TargetMinute": {
+        "name": "Endzeitpunkt der beschränkten Beladung"
+      },
+      "ctrlGridOptimizedCharge/ManualTargetTime": {
+        "name": "Endzeit"
       },
       "_meta/IsEssChargeFromGridAllowed": {
         "name": "Erhalt aus dem Netz"
@@ -81,11 +90,33 @@
     },
     "select": {
       "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
-        "name": "Status Verzögerung",
+        "name": "Risikobereitschaft",
         "state": {
-          "LOW": "Niedrig",
+          "LOW": "Gering",
           "MEDIUM": "Mittel",
           "HIGH": "Hoch"
+        }
+      },
+      "ctrlEvcs/ChargeMode": {
+        "name": "Lademodus",
+        "state": {
+          "FORCE_CHARGE": "Zielwert",
+          "EXCESS_POWER": "Überschuss"
+        }
+      },
+      "ctrlEvcs/Priority": {
+        "name": "Priorität",
+        "state": {
+          "CAR": "Auto",
+          "STORAGE": "Speicher"
+        }
+      },
+      "ctrlGridOptimizedCharge/Mode": {
+        "name": "Modus",
+        "state": {
+          "OFF": "Aus",
+          "AUTOMATIC": "Automatisch",
+          "MANUAL": "Manuell"
         }
       }
     }

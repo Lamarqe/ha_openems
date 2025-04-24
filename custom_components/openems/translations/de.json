@@ -19,6 +19,38 @@
         }
     },
     "entity": {
+        "select": {
+            "ctrlEvcs/ChargeMode": {
+                "name": "Lademodus",
+                "state": {
+                    "EXCESS_POWER": "\u00dcberschuss",
+                    "FORCE_CHARGE": "Zielwert"
+                }
+            },
+            "ctrlEvcs/Priority": {
+                "name": "Priorit\u00e4t",
+                "state": {
+                    "CAR": "Auto",
+                    "STORAGE": "Speicher"
+                }
+            },
+            "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
+                "name": "Risikobereitschaft",
+                "state": {
+                    "HIGH": "Hoch",
+                    "LOW": "Gering",
+                    "MEDIUM": "Mittel"
+                }
+            },
+            "ctrlGridOptimizedCharge/Mode": {
+                "name": "Modus",
+                "state": {
+                    "AUTOMATIC": "Automatisch",
+                    "MANUAL": "Manuell",
+                    "OFF": "Aus"
+                }
+            }
+        },
         "sensor": {
             "_meta/IsEssChargeFromGridAllowed": {
                 "name": "Erhalt aus dem Netz"
@@ -48,13 +80,8 @@
                     "Undefined": "Nicht definiert"
                 }
             },
-            "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
-                "name": "Status Verz\u00f6gerung",
-                "state": {
-                    "HIGH": "Hoch",
-                    "LOW": "Niedrig",
-                    "MEDIUM": "Mittel"
-                }
+            "ctrlGridOptimizedCharge/DelayChargeMaximumChargeLimit": {
+                "name": "Maximale Beladung"
             },
             "ctrlGridOptimizedCharge/DelayChargeState": {
                 "name": "Status Verz\u00f6gerung",
@@ -74,8 +101,14 @@
             "ctrlGridOptimizedCharge/IsReserveSocEnabled": {
                 "name": "Reserve aktiviert"
             },
+            "ctrlGridOptimizedCharge/ManualTargetTime": {
+                "name": "Endzeit"
+            },
             "ctrlGridOptimizedCharge/ReserveSoc": {
                 "name": "Reserve"
+            },
+            "ctrlGridOptimizedCharge/TargetMinute": {
+                "name": "Endzeitpunkt der beschr\u00e4nkten Beladung"
             },
             "evcs/ChargePower": {
                 "name": "Ladeleistung"
