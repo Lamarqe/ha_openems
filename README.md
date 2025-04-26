@@ -119,14 +119,15 @@ Contains entities for inverter properties like:
   - `airtemperature`
   - `radiatortemperature`
 - The state of health: `bmssoh`
+<img src="screenshots/batteryinverter.png" width="250"/>
 
 #### CtrlIoHeatPump*
-Here you will find the current state of your SG ready connected heatpump.
+Here you will find the current state of your SG ready connected heatpump.\
+<img src="screenshots/heatpump.jpg" width="250"/>
 
 #### meter*
-Here you find the grids frequency.
-
-
+Here you find the grids frequency.\
+<img src="screenshots/meter.jpg" width="400"/>
 
 ## Installation
 
