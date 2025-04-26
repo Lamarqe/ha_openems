@@ -28,8 +28,55 @@ Use the following entities to configure the Energy Dashboard:
   <tr><td>ess*</td><td>DcDischargeEnergy</td></tr>
 </table>
 
-### Power Flow card (plus)
-### Apps (pre-configured UI cards)
+### [Power Flow card plus](https://github.com/flixlix/power-flow-card-plus)
+Use the following entities to configure the Power Flow card plus:
+<table>
+  <tr><th>Area</th><th>Option</th><th>Component</th><th>Channel</th></tr>
+  <tr><td>Grid</td><td>Combined</td><td>_sum</td><td>GridActivePower</td></tr>
+  <tr><td>Solar</td><td></td><td>_sum</td><td>ProductionActivePower</td></tr>
+  <tr><td rowspan="2">Battery</td><td>Combined</td><td>_sum</td><td>EssDischargePower</td></tr>
+  <tr><td>State of Charge</td><td>_sum</td><td>EssSoc</td></tr>
+  <tr><td>Home</td><td></td><td>_sum</td><td>ConsumptionActivePower</td></tr>
+</table>
+
+### Apps (template UI cards)
+
+To use the template cards, do the following:
+1. The template cards depend on the following prerequisites (Please install via HACS):
+     * [Decluttering card](https://github.com/custom-cards/decluttering-card)
+     * [Config template card](https://github.com/iantrich/config-template-card)
+     * [Button card](https://github.com/custom-cards/button-card)
+     * [Template entity row](https://github.com/thomasloven/lovelace-template-entity-row)
+3. Navigate to the dashboard in which you want to use the card
+4. Select edit mode (pencil on the top right corner)
+5. From the 3-dots menu in the top right corner, select "raw editor"
+6. Paste the full contents of [openems_templates.yaml](openems_templates.yaml) before the dashboard contents
+7. Go back to regular edit mode
+8. add a new user-defined card, using yaml. 
+
+#### EV Charging
+Sample Card config
+```
+type: custom:decluttering-card
+template: evcs_template
+variables:
+  - system: fems12345
+  - evcs_id: 0
+  - ctrlevcs_id: 0
+```
+
+Variables summary:
+* `system`: Set to your FEMS/OpenEMS system name
+* `evcs_id`: Set to your EVCS AppID. Eg `0` if your EVCS component is called `evcs0`. Default value: 0
+* `ctrlevcs_id`: Set to your CtrlEVCS AppID. Eg `1` if your EVCS component is called `ctrlEvcs1`. Default value: 0
+
+This is how the card looks (German version).\
+*All texts are automatically translated to your Home Assistant default language*
+
+![image](screenshots/evcs.jpg)
+#### Grid Optimized Charge
+#### Emergency Capacity Reserve
+
 ### Additional commonly used components
 
 
