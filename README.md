@@ -7,8 +7,9 @@ Home Assistant integration that interfaces FEMS and OpenEMS.
 * The integration provides full read and write access to Fenecon and OpenEMS systems. Every property which is accessible or configurable via the regular UI is made available equally in the Home Assistant UI.
 * Integration of every backend property, even if not accessible via the regular UI.
 * Backend system configuration is made fully visible and accessible to the Home Assistant UI:
-	*	[Components](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_openems_component) are made available as Home Assistant devices. 
-	*	 [Channels](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_channel) are made available as entities.
+	*	[Components](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_openems_component) are made available as Home Assistant service devices. 
+	*	[Channels](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_channel) are made available as entities.\
+   		<img src="screenshots/config_entry.jpg" width="600"/>
 *	Pre-configured UI cards for Storage, Charging Station and Optimized Charges apps. These cards are equal in the offered functionality as the regular Fenecon/OpenEMS built-in UI components. 
 
 ## Features / Common Use-cases:
