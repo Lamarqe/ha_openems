@@ -54,8 +54,10 @@ To use the template cards, do the following:
 7. Go back to regular edit mode
 8. add a new user-defined card, using yaml. 
 
+*All texts are automatically translated to your Home Assistant default language*
+
 #### EV Charging
-Sample Card config
+**Sample Card config**
 ```
 type: custom:decluttering-card
 template: evcs_template
@@ -65,17 +67,48 @@ variables:
   - ctrlevcs_id: 0
 ```
 
-Variables summary:
+**Card variables**
 * `system`: Set to your FEMS/OpenEMS system name
 * `evcs_id`: Set to your EVCS AppID. Eg `0` if your EVCS component is called `evcs0`. Default value: 0
 * `ctrlevcs_id`: Set to your CtrlEVCS AppID. Eg `1` if your EVCS component is called `ctrlEvcs1`. Default value: 0
 
-This is how the card looks (German version).\
-*All texts are automatically translated to your Home Assistant default language*
-
+**Card screenshot** (German version)\
 ![image](screenshots/evcs.jpg)
+
 #### Grid Optimized Charge
+**Sample Card config**
+```
+type: custom:decluttering-card
+template: optchrg_template
+variables:
+  - system: fems12345
+  - ctrlgridoptimizedcharge_id: 0
+```
+
+**Card variables**
+* `system`: Set to your FEMS/OpenEMS system name
+* `ctrlgridoptimizedcharge_id`: Set to your grid optimized charge AppID. Eg `5` if your optchrg component is called `ctrlGridOptimizedCharge5`. Default value: 0
+
+**Card screenshot** (German version)\
+_Note: unapplicable options are automatically hidden and thus not visible in the screenshot_
+![image](screenshots/gridoptimizedcharge.jpg)
+
 #### Emergency Capacity Reserve
+**Sample Card config**
+```
+type: custom:decluttering-card
+template: ess_template
+variables:
+  - system: fems12345
+  - ctrlemergencycapacityreserve_id: 0
+```
+
+**Card variables**
+* `system`: Set to your FEMS/OpenEMS system name
+* `ctrlemergencycapacityreserve_id`: Set to your emergency capacity AppID. Eg `0` if the component is called `ctrlEmergencyCapacityReserve0`. Default value: 0
+
+**Card screenshot** (German version)\
+![image](screenshots/ess.jpg)
 
 ### Additional commonly used components
 
