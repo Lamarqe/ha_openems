@@ -112,6 +112,21 @@ variables:
 
 ### Additional commonly used components
 
+#### BatteryInverter*
+Contains entities for inverter properties like:
+- temperatures of inverter, air, ...
+  - `bmspacktemperature`
+  - `airtemperature`
+  - `radiatortemperature`
+- The state of health: `bmssoh`
+
+#### CtrlIoHeatPump*
+Here you will find the current state of your SG ready connected heatpump.
+
+#### meter*
+Here you find the grids frequency.
+
+
 
 ## Installation
 
