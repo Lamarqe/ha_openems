@@ -357,6 +357,10 @@ class OpenEMSEdge:
             """Stop the updater."""
             self._fetch_task.cancel()
 
+        def clear(self):
+            """Clear the list of active subscriptions."""
+            self._active_subscriptions = []
+
         async def _update_subscriptions_forever(self):
             while True:
                 await asyncio.sleep(5)
@@ -413,7 +417,7 @@ class OpenEMSEdge:
             channel: OpenEMSChannel = self._registered_channels.get(key)
             if channel:
                 channel.handle_current_value(None)
-        self._channel_subscription_updater._active_subscriptions = []
+        self._channel_subscription_updater.clear()
         self._data_event.set()
         self._data_event.clear()
 
@@ -455,23 +459,30 @@ class OpenEMSEdge:
 
     @property
     def id(self):
+        """Return the edge ID."""
         return self._id
 
     @property
     def id_str(self):
+        "Return the edge ID string."
         return "edge" + self._id
 
     @property
     def config(self):
+        "Return the edge config."
         return self._edge_config
 
     @property
     def registered_channels(self):
+        "Return the list of all subscribed channels."
         return self._registered_channels
 
 
 class OpenEMSBackend:
+    """Class which represents a connection to an OpenEMS backend."""
+
     def __init__(self, host: str, username: str, password: str) -> None:
+        """Create a new OpenEMSBackend object."""
         self.username: str = username
         self.password: str = password
         self.host: str = host
@@ -486,7 +497,9 @@ class OpenEMSBackend:
         self._reconnect_task = None
         self._login_successful_event: asyncio.Event | None = asyncio.Event()
 
+    @staticmethod
     def wrap_jsonrpc(method, **params):
+        """Wrap a method call with paramters into a jsonrpc call."""
         envelope = {}
         envelope["jsonrpc"] = "2.0"
         envelope["method"] = method
@@ -495,6 +508,7 @@ class OpenEMSBackend:
         return envelope
 
     def edgeRpc(self, **kwargs):
+        """Handle an edge jsonrpc callback and call the respective method of the edge object."""
         edge = self.edges[kwargs["edgeId"]]
         method_name = kwargs["payload"]["method"]
         try:
@@ -543,12 +557,15 @@ class OpenEMSBackend:
             await asyncio.sleep(10)
 
     def start(self):
+        """Start a tasks which checks for connection losses tries to reconnect afterwards."""
         self._reconnect_task = asyncio.create_task(self._reconnect_forever())
 
     async def wait_for_login(self):
+        """Wait for response to a login request."""
         await self._login_successful_event.wait()
 
     async def stop(self):
+        """Close the connection to the backend and all internal connection objects."""
         self._reconnect_task.cancel()
         await self.rpc_server.close()
         for edge in self.edges.values():
@@ -565,6 +582,7 @@ class OpenEMSBackend:
             self.edges[edge_id] = edge
 
     async def prepare_entities(self):
+        """Parse json config of all edges."""
         for edge in self.edges.values():
             await edge.prepare_entities()
 
