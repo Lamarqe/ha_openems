@@ -110,12 +110,20 @@ async def async_setup_entry(
 
     # 3. Load config
     store_conf: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY_BACKEND_CONFIG)
-    if config_data := await store_conf.async_load():
-        backend.set_config(config_data)
+
+    if hass.is_running:
+        config_data = None
     else:
-        # this should only happen when the config got deleted explicitly
+        # Try to load the backend config from HA storage when HA starts up
+        config_data = await store_conf.async_load()
+
+    # Otherwise, read and parse the config from backend.
+    # Main use-case: User-triggered reload of the config entry
+    if not config_data:
         config_data = await backend.read_config()
         await store_conf.async_save(config_data)
+    else:
+        backend.set_config(config_data)
 
     await backend.prepare_entities()
 

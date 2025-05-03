@@ -590,7 +590,7 @@ class OpenEMSBackend:
         """Subscribe for edgeConfig updates."""
         return await self.rpc_server.subscribeEdges(edges=json.dumps([edge_id]))
 
-    async def read_config(self):
+    async def read_config(self) -> dict:
         """Request list of all edges and their config."""
         config = {}
         r = await self.rpc_server.getEdges(page=0, limit=20, searchParams={})

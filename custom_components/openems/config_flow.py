@@ -9,7 +9,12 @@ from typing import Any
 import jsonrpc_base
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import (
+    SOURCE_RECONFIGURE,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
@@ -79,16 +84,19 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                     self.hass, STORAGE_VERSION, STORAGE_KEY_BACKEND_CONFIG
                 )
                 await store.async_save(config_data)
-                # initialize options
-                options: dict[str:bool] = {}
-
-                for edge in config_data.values():
-                    for component in edge["components"]:
-                        options[component] = CONFIG.is_component_enabled(component)
 
                 options_key = STORAGE_KEY_HA_OPTIONS + "_" + backend.host
                 store_options: Store = Store(self.hass, STORAGE_VERSION, options_key)
-                await store_options.async_save(options)
+                # before setting up new component options, check if they already exist
+                if not (options := await store_options.async_load()):
+                    # initialize options
+                    options: dict[str:bool] = {}
+
+                    for edge in config_data.values():
+                        for component in edge["components"]:
+                            options[component] = CONFIG.is_component_enabled(component)
+
+                    await store_options.async_save(options)
 
                 # stop
                 await backend.stop()
@@ -97,6 +105,12 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
             except jsonrpc_base.jsonrpc.ProtocolError:
                 errors[CONF_PASSWORD] = "Wrong username / password."
             else:
+                if self.source == SOURCE_RECONFIGURE:
+                    self._abort_if_unique_id_mismatch()
+                    return self.async_update_reload_and_abort(
+                        entry=self._get_reconfigure_entry(), data=user_input
+                    )
+                # no reconfigure. Create new entry insteadd
                 return self.async_create_entry(
                     title=user_input[CONF_HOST], data=user_input
                 )
@@ -104,6 +118,16 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         # show errors in form
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Perform a reconfiguration."""
+        return self.async_show_form(
+            step_id="user",
+            data_schema=step_user_data_schema(self._get_reconfigure_entry().data),
+            errors=None,
         )
 
     @staticmethod
