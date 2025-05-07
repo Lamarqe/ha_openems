@@ -362,28 +362,37 @@ class OpenEMSEdge:
             self._active_subscriptions = []
 
         async def _update_subscriptions_forever(self):
-            while True:
-                await asyncio.sleep(5)
-                subscribe_in_progress_channels = list(
-                    self._edge.registered_channels.keys()
-                )
-                if (
-                    self._edge.backend.rpc_server.connected
-                    and subscribe_in_progress_channels != self._active_subscriptions
-                ):
-                    with contextlib.suppress(
-                        jsonrpc_base.jsonrpc.TransportError,
-                        jsonrpc_base.jsonrpc.ProtocolError,
+            try:
+                _LOGGER.debug("SubscriptionUpdater start")
+                while True:
+                    await asyncio.sleep(5)
+                    subscribe_in_progress_channels = list(
+                        self._edge.registered_channels.keys()
+                    )
+                    if (
+                        self._edge.backend.rpc_server.connected
+                        and subscribe_in_progress_channels != self._active_subscriptions
                     ):
-                        subscribe_call = OpenEMSBackend.wrap_jsonrpc(
-                            "subscribeChannels",
-                            count=0,
-                            channels=subscribe_in_progress_channels,
+                        _LOGGER.debug(
+                            "SubscriptionUpdater update: %d entities",
+                            len(subscribe_in_progress_channels),
                         )
-                        await self._edge.backend.rpc_server.edgeRpc(
-                            edgeId=self._edge.id_str, payload=subscribe_call
-                        )
-                        self._active_subscriptions = subscribe_in_progress_channels
+                        with contextlib.suppress(
+                            jsonrpc_base.jsonrpc.TransportError,
+                            jsonrpc_base.jsonrpc.ProtocolError,
+                        ):
+                            subscribe_call = OpenEMSBackend.wrap_jsonrpc(
+                                "subscribeChannels",
+                                count=0,
+                                channels=subscribe_in_progress_channels,
+                            )
+                            await self._edge.backend.rpc_server.edgeRpc(
+                                edgeId=self._edge.id_str, payload=subscribe_call
+                            )
+                            self._active_subscriptions = subscribe_in_progress_channels
+            except asyncio.CancelledError:
+                _LOGGER.debug("SubscriptionUpdater end")
+                raise
 
     def __init__(self, backend, id) -> None:
         """Initialize the edge."""
@@ -391,7 +400,6 @@ class OpenEMSEdge:
         self._id: int = id
         self._edge_config: dict[str, dict] | None = None
         self.components: dict[str, OpenEMSComponent] = {}
-        self._data_event: asyncio.Event | None = asyncio.Event()
         self.current_channel_data: dict | None = None
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
             self
@@ -418,8 +426,6 @@ class OpenEMSEdge:
             if channel:
                 channel.handle_current_value(None)
         self._channel_subscription_updater.clear()
-        self._data_event.set()
-        self._data_event.clear()
 
     def stop(self):
         """Stop the connection to edge and all its subscriptions."""
@@ -433,19 +439,12 @@ class OpenEMSEdge:
         """Jsonrpc callback to receive edge config updates."""
         self.set_config(params["components"])
 
-    async def wait_for_current_data(self):
-        """Wait for the next jsonrpc callback to currentData()."""
-        await self._data_event.wait()
-        return self.current_channel_data
-
     def currentData(self, params):
         """Jsonrpc callback to receive channel subscription updates."""
         self.current_channel_data = params
         for key in self.current_channel_data:
             if channel := self._registered_channels.get(key):
                 channel.handle_current_value(self.current_channel_data[key])
-        self._data_event.set()
-        self._data_event.clear()
 
     def register_channel(self, channel: OpenEMSChannel):
         """Register one channel for updates."""
@@ -636,27 +635,24 @@ class OpenEMSBackend:
 
     async def _read_component_info_channels(self, config: dict, edge: OpenEMSEdge):
         """Read hostname and all component names of an edge."""
+        auth = aiohttp.BasicAuth(self.username, self.password)
 
-        config_channels = ["_host/Hostname"]
-        config_channels.extend(
-            comp + "/_PropertyAlias" for comp in config[edge.id]["components"]
-        )
+        url = self.rest_base_url.joinpath("channel", ".+", "_PropertyAlias")
+        async with (
+            aiohttp.ClientSession(auth=auth) as session,
+            session.get(url) as resp,
+        ):
+            data = await resp.json()
+            for entry in data:
+                channel_name_items = entry["address"].split("/")
+                config[edge.id]["components"][channel_name_items[0]][
+                    channel_name_items[1]
+                ] = entry["value"]
 
-        # Subscribe channels
-        edge_call = OpenEMSBackend.wrap_jsonrpc(
-            "subscribeChannels", count=0, channels=config_channels
-        )
-        await self.rpc_server.edgeRpc(edgeId="edge" + edge.id, payload=edge_call)
-        # wait for data
-        data = await asyncio.wait_for(edge.wait_for_current_data(), timeout=2)
-        # Unsubscribe channels
-        edge_call = OpenEMSBackend.wrap_jsonrpc(
-            "subscribeChannels", count=0, channels=[]
-        )
-        await self.rpc_server.edgeRpc(edgeId="edge" + edge.id, payload=edge_call)
-
-        for channel_name, channel_value in data.items():
-            channel_name_items = channel_name.split("/")
-            config[edge.id]["components"][channel_name_items[0]][
-                channel_name_items[1]
-            ] = channel_value
+        url = self.rest_base_url.joinpath("channel", "_host", "Hostname")
+        async with (
+            aiohttp.ClientSession(auth=auth) as session,
+            session.get(url) as resp,
+        ):
+            data = await resp.json()
+            config[edge.id]["components"]["_host"]["Hostname"] = data["value"]

@@ -26,12 +26,7 @@ from homeassistant.helpers import (
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
-from .const import (
-    DOMAIN,
-    STORAGE_KEY_BACKEND_CONFIG,
-    STORAGE_KEY_HA_OPTIONS,
-    STORAGE_VERSION,
-)
+from .const import DOMAIN
 from .helpers import component_device, find_channel_in_backend
 from .openems import OpenEMSBackend, OpenEMSEdge
 
@@ -100,42 +95,34 @@ async def async_setup_entry(
     """Set up HA OpenEMS from a config entry."""
 
     # 1. Create API instance
-    config = config_entry.data
     backend = OpenEMSBackend(
-        config[CONF_HOST], config[CONF_USERNAME], config[CONF_PASSWORD]
+        config_entry.data["user_input"][CONF_HOST],
+        config_entry.data["user_input"][CONF_USERNAME],
+        config_entry.data["user_input"][CONF_PASSWORD],
     )
     # 2. Trigger the API connection (and authentication)
     backend.start()
     await backend.wait_for_login()
 
-    # 3. Load config
-    store_conf: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY_BACKEND_CONFIG)
-
-    if hass.is_running:
-        config_data = None
+    # 3. Reload config in case explicit user request to reload (hass.is_running)
+    if hass.is_running or not config_entry.data["config"]:
+        config = await backend.read_config()
+        entry_data = {
+            "user_input": config_entry.data["user_input"],
+            "config": config,
+        }
+        hass.config_entries.async_update_entry(entry=config_entry, data=entry_data)
     else:
-        # Try to load the backend config from HA storage when HA starts up
-        config_data = await store_conf.async_load()
-
-    # Otherwise, read and parse the config from backend.
-    # Main use-case: User-triggered reload of the config entry
-    if not config_data:
-        config_data = await backend.read_config()
-        await store_conf.async_save(config_data)
-    else:
-        backend.set_config(config_data)
+        backend.set_config(config_entry.data["config"])
 
     await backend.prepare_entities()
 
     # 4. Read and set config options
-    options_key = STORAGE_KEY_HA_OPTIONS + "_" + backend.host
-    store_options: Store = Store(hass, STORAGE_VERSION, options_key)
-    if options := await store_options.async_load():
-        edge: OpenEMSEdge
-        for edge in backend.edges.values():
-            for component_name, is_enabled in options.items():
-                if component := edge.components.get(component_name):
-                    component.create_entities = is_enabled
+    edge: OpenEMSEdge
+    for edge in backend.edges.values():
+        for component_name, is_enabled in config_entry.options.items():
+            if component := edge.components.get(component_name):
+                component.create_entities = is_enabled
 
     config_entry.runtime_data = RuntimeData(backend=backend)
     config_entry.async_on_unload(config_entry.add_update_listener(update_config))
@@ -157,7 +144,34 @@ async def async_migrate_entry(
     hass: HomeAssistant, config_entry: OpenEMSConfigEntry
 ) -> bool:
     """Migrate old entry."""
-    return True
+
+    if config_entry.version == 1:
+        store_conf: Store = Store(hass, 1, "openems_config")
+        if config_data := await store_conf.async_load():
+            # migrate config into entry
+            new_data = {"user_input": config_entry.data.copy()}
+            new_data["config"] = config_data
+            # delete config store data
+            await store_conf.async_remove()
+
+            host = config_entry.data[CONF_HOST]
+            options_key = "openems_options_" + host
+            store_options: Store = Store(hass, 1, options_key)
+            # delete options store data
+            await store_options.async_remove()
+
+            hass.config_entries.async_update_entry(
+                config_entry, data=new_data, version=2, minor_version=1
+            )
+            _LOGGER.debug(
+                "Migration to configuration version %s.%s successful",
+                config_entry.version,
+                config_entry.minor_version,
+            )
+            return True
+        return False
+
+    return False
 
 
 async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
@@ -190,8 +204,3 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
                     callback(component)
 
             component.create_entities = entry.options[comp_name]
-
-    # store options to make them available after HA restart
-    options_key = STORAGE_KEY_HA_OPTIONS + "_" + backend.host
-    store_options: Store = Store(hass, STORAGE_VERSION, options_key)
-    await store_options.async_save(entry.options.copy())

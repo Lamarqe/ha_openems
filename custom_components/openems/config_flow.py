@@ -19,15 +19,9 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import BooleanSelector, BooleanSelectorConfig
-from homeassistant.helpers.storage import Store
 
 from .__init__ import OpenEMSConfigEntry
-from .const import (
-    DOMAIN,
-    STORAGE_KEY_BACKEND_CONFIG,
-    STORAGE_KEY_HA_OPTIONS,
-    STORAGE_VERSION,
-)
+from .const import DOMAIN
 from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,13 +41,11 @@ def step_user_data_schema(user_input=None):
     )
 
 
-STEP_USER_DATA_SCHEMA = step_user_data_schema()
-
-
 class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
-    VERSION = 1
+    VERSION = 2
+    MINOR_VERSION = 1
 
     def __init__(self) -> None:
         """Initialize."""
@@ -78,41 +70,33 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 backend.start()
                 await asyncio.wait_for(backend.wait_for_login(), timeout=2)
                 # read config
-                config_data = await asyncio.wait_for(backend.read_config(), timeout=5)
-                # store config in HA
-                store: Store = Store(
-                    self.hass, STORAGE_VERSION, STORAGE_KEY_BACKEND_CONFIG
-                )
-                await store.async_save(config_data)
-
-                options_key = STORAGE_KEY_HA_OPTIONS + "_" + backend.host
-                store_options: Store = Store(self.hass, STORAGE_VERSION, options_key)
-                # before setting up new component options, check if they already exist
-                if not (options := await store_options.async_load()):
-                    # initialize options
-                    options: dict[str:bool] = {}
-
-                    for edge in config_data.values():
-                        for component in edge["components"]:
-                            options[component] = CONFIG.is_component_enabled(component)
-
-                    await store_options.async_save(options)
-
+                config = await asyncio.wait_for(backend.read_config(), timeout=5)
                 # stop
                 await backend.stop()
+
             except jsonrpc_base.TransportError:
                 errors[CONF_HOST] = "Cannot connect to the specified host."
             except jsonrpc_base.jsonrpc.ProtocolError:
                 errors[CONF_PASSWORD] = "Wrong username / password."
             else:
+                entry_data = {"user_input": user_input, "config": config}
+
                 if self.source == SOURCE_RECONFIGURE:
                     self._abort_if_unique_id_mismatch()
                     return self.async_update_reload_and_abort(
-                        entry=self._get_reconfigure_entry(), data=user_input
+                        entry=self._get_reconfigure_entry(), data=entry_data
                     )
-                # no reconfigure. Create new entry insteadd
+
+                # no reconfigure. Create new entry instead
+                # initialize options
+                options: dict[str:bool] = {}
+
+                for edge in entry_data["config"].values():
+                    for component in edge["components"]:
+                        options[component] = CONFIG.is_component_enabled(component)
+
                 return self.async_create_entry(
-                    title=user_input[CONF_HOST], data=user_input
+                    title=user_input[CONF_HOST], data=entry_data, options=options
                 )
 
         # show errors in form
@@ -126,7 +110,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         """Perform a reconfiguration."""
         return self.async_show_form(
             step_id="user",
-            data_schema=step_user_data_schema(self._get_reconfigure_entry().data),
+            data_schema=step_user_data_schema(
+                self._get_reconfigure_entry().data["user_input"]
+            ),
             errors=None,
         )
 
