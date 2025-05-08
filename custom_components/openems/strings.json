@@ -19,23 +19,8 @@
     }
   },
   "entity": {
-    "number": {
-      "ctrlEmergencyCapacityReserve/ReserveSoc": {
-        "name": "Reserve"
-      },
-      "ctrlEvcs/DefaultChargeMinPower": {
-        "name": "Minimale Leistung"
-      },
-      "ctrlEvcs/ForceChargeMinPower": {
-        "name": "Maximale Leistung"
-      },
-      "ctrlEvcs/EnergySessionLimit": {
-        "name": "Limit pro Session"
-      }
-    },
     "sensor": {
       "ctrlGridOptimizedCharge/DelayChargeState": {
-        "name": "Status Verzögerung",
         "state": {
           "Undefined": "Nicht definiert",
           "Active limit": "Begrenzung aktiv",
@@ -49,14 +34,7 @@
           "Avoid charging with low power for more efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden"
         }
       },
-      "ctrlGridOptimizedCharge/DelayChargeMaximumChargeLimit": {
-        "name": "Maximale Beladung"
-      },
-      "ctrlGridOptimizedCharge/TargetMinute": {
-        "name": "Endzeitpunkt der beschränkten Beladung"
-      },
       "evcs/Status": {
-        "name": "Status",
         "state": {
           "Undefined": "Nicht definiert",
           "Starting": "Starte...",
@@ -67,20 +45,10 @@
           "Charging rejected": "Laden verweigert",
           "The charging limit reached": "Ladelimit erreicht"
         }
-      },
-      "evcs/SetChargePowerLimit": {
-        "name": "Ladevorgabe"
-      },
-      "evcs/ChargePower": {
-        "name": "Ladeleistung"
-      },
-      "evcs/EnergySession": {
-        "name": "Energie seit Ladebeginn"
       }
     },
     "select": {
       "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
-        "name": "Risikobereitschaft",
         "state": {
           "LOW": "Gering",
           "MEDIUM": "Mittel",
@@ -88,42 +56,23 @@
         }
       },
       "ctrlEvcs/ChargeMode": {
-        "name": "Lademodus",
         "state": {
           "FORCE_CHARGE": "Zielwert",
           "EXCESS_POWER": "Überschuss"
         }
       },
       "ctrlEvcs/Priority": {
-        "name": "Priorität",
         "state": {
           "CAR": "Auto",
           "STORAGE": "Speicher"
         }
       },
       "ctrlGridOptimizedCharge/Mode": {
-        "name": "Modus",
         "state": {
           "OFF": "Aus",
           "AUTOMATIC": "Automatisch",
           "MANUAL": "Manuell"
         }
-      }
-    },
-    "switch": {
-      "_meta/IsEssChargeFromGridAllowed": {
-        "name": "Erhalt aus dem Netz"
-      },
-      "ctrlEmergencyCapacityReserve/IsReserveSocEnabled": {
-        "name": "Reserve aktiviert"
-      },
-      "ctrlEvcs/EnabledCharging": {
-        "name": "Laden aktiviert"
-      }
-    },
-    "time": {
-      "ctrlGridOptimizedCharge/ManualTargetTime": {
-        "name": "Endzeit"
       }
     }
   }
