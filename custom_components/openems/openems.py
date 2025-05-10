@@ -17,7 +17,7 @@ import aiohttp
 from jinja2 import Template
 import jsonrpc_base
 import jsonrpc_websocket
-import yarl
+from yarl import URL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -491,18 +491,18 @@ class OpenEMSBackend:
         self.username: str = username
         self.password: str = password
         self.host: str = host
-        websocket_url = "ws://" + host + ":8085/"  # Direct Edge connect
-        # websocket_url = "ws://" + host + ":8082/"        # OpenEMS UI
-        # websocket_url = "ws://" + host + ":80/websocket" # FEMS UI
-        self.rpc_server = jsonrpc_websocket.Server(
-            websocket_url, session=None, heartbeat=5
-        )
-        self.rest_base_url: yarl.URL = yarl.URL("http://" + host + ":8084" + "/rest/")
+        ws_url = "ws://" + host + ":8085/"  # Direct Edge connect
+        # ws_url = "ws://" + host + ":8082/"        # OpenEMS UI
+        # ws_url = "ws://" + host + ":80/websocket"  # FEMS local monitoring
+        # ws_url = "wss://portal.fenecon.de/openems-backend-ui2"  # FEMS online monitoring (no REST API)
+
+        self.rpc_server = jsonrpc_websocket.Server(ws_url, session=None, heartbeat=5)
+        self.rpc_server_task: asyncio.Task | None = None
+        self.rest_base_url: URL = URL("http://" + host + ":8084" + "/rest/")
         self.rpc_server.edgeRpc = self.edgeRpc
         self.edges: dict[int, OpenEMSEdge] = {}
         self.multi_edge = True
         self._reconnect_task = None
-        self._login_successful_event: asyncio.Event | None = asyncio.Event()
 
     @staticmethod
     def wrap_jsonrpc(method, **params):
@@ -534,45 +534,51 @@ class OpenEMSBackend:
 
     async def _reconnect_forever(self):
         while True:
+            # check for an existing connection
+            if self.rpc_server_task:
+                with contextlib.suppress(
+                    jsonrpc_base.jsonrpc.TransportError,
+                    jsonrpc_base.jsonrpc.ProtocolError,
+                ):
+                    await self.rpc_server_task
+                # connection lost
+                self.rpc_server_task = None
+                for edge in self.edges.values():
+                    edge.set_unavailable()
+                await asyncio.sleep(10)
+
             try:
-                ws_task = await self.rpc_server.ws_connect()
+                await self.connect_to_server()
+                # connected. Lets login
+                await self.login_to_server()
             except (
                 jsonrpc_base.jsonrpc.TransportError,
                 jsonrpc_base.jsonrpc.ProtocolError,
             ):
-                # cannot connect
                 await asyncio.sleep(10)
-                continue
 
-            # connected. Lets login
-            retval = await self.rpc_server.authenticateWithPassword(
-                username=self.username, password=self.password
-            )
-            self.multi_edge = retval["user"]["hasMultipleEdges"]
-            self._login_successful_event.set()
-            self._login_successful_event.clear()
-            with contextlib.suppress(
-                jsonrpc_base.jsonrpc.TransportError,
-                jsonrpc_base.jsonrpc.ProtocolError,
-            ):
-                await ws_task
-            # we lost connection
-            for edge in self.edges.values():
-                edge.set_unavailable()
-            self._login_successful_event.clear()
-            await asyncio.sleep(10)
+    async def connect_to_server(self):
+        self.rpc_server_task = await self.rpc_server.ws_connect()
+
+    async def login_to_server(self):
+        if not self.rpc_server.connected:
+            raise ConnectionError
+        retval = await self.rpc_server.authenticateWithPassword(
+            username=self.username, password=self.password
+        )
+        if user_dict := retval.get("user"):
+            self.multi_edge = user_dict["hasMultipleEdges"]
+        return retval
 
     def start(self):
         """Start a tasks which checks for connection losses tries to reconnect afterwards."""
         self._reconnect_task = asyncio.create_task(self._reconnect_forever())
 
-    async def wait_for_login(self):
-        """Wait for response to a login request."""
-        await self._login_successful_event.wait()
-
     async def stop(self):
         """Close the connection to the backend and all internal connection objects."""
-        self._reconnect_task.cancel()
+        if self._reconnect_task:
+            self._reconnect_task.cancel()
+            self._reconnect_task = None
         await self.rpc_server.close()
         for edge in self.edges.values():
             edge.stop()

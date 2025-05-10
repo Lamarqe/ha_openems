@@ -66,38 +66,41 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 user_input[CONF_PASSWORD],
             )
             try:
-                # login
-                backend.start()
-                await asyncio.wait_for(backend.wait_for_login(), timeout=2)
-                # read config
-                config = await asyncio.wait_for(backend.read_config(), timeout=5)
-                # stop
-                await backend.stop()
-
-            except jsonrpc_base.TransportError:
-                errors[CONF_HOST] = "Cannot connect to the specified host."
-            except jsonrpc_base.jsonrpc.ProtocolError:
-                errors[CONF_PASSWORD] = "Wrong username / password."
+                # connect
+                await asyncio.wait_for(backend.connect_to_server(), timeout=2)
+            except jsonrpc_base.TransportError as te:
+                errors[CONF_HOST] = f"{te.args[0]}: {te.args[1]}"
             else:
-                entry_data = {"user_input": user_input, "config": config}
+                try:
+                    # login
+                    await asyncio.wait_for(backend.login_to_server(), timeout=2)
+                    # read config
+                    config = await asyncio.wait_for(backend.read_config(), timeout=5)
+                    # stop
+                    await backend.stop()
 
-                if self.source == SOURCE_RECONFIGURE:
-                    self._abort_if_unique_id_mismatch()
-                    return self.async_update_reload_and_abort(
-                        entry=self._get_reconfigure_entry(), data=entry_data
+                except jsonrpc_base.jsonrpc.ProtocolError as pe:
+                    errors[CONF_PASSWORD] = f"{pe.args[0]}: {pe.args[1]}"
+                else:
+                    entry_data = {"user_input": user_input, "config": config}
+
+                    if self.source == SOURCE_RECONFIGURE:
+                        self._abort_if_unique_id_mismatch()
+                        return self.async_update_reload_and_abort(
+                            entry=self._get_reconfigure_entry(), data=entry_data
+                        )
+
+                    # no reconfigure. Create new entry instead
+                    # initialize options
+                    options: dict[str:bool] = {}
+
+                    for edge in entry_data["config"].values():
+                        for component in edge["components"]:
+                            options[component] = CONFIG.is_component_enabled(component)
+
+                    return self.async_create_entry(
+                        title=user_input[CONF_HOST], data=entry_data, options=options
                     )
-
-                # no reconfigure. Create new entry instead
-                # initialize options
-                options: dict[str:bool] = {}
-
-                for edge in entry_data["config"].values():
-                    for component in edge["components"]:
-                        options[component] = CONFIG.is_component_enabled(component)
-
-                return self.async_create_entry(
-                    title=user_input[CONF_HOST], data=entry_data, options=options
-                )
 
         # show errors in form
         return self.async_show_form(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
@@ -101,8 +102,9 @@ async def async_setup_entry(
         config_entry.data["user_input"][CONF_PASSWORD],
     )
     # 2. Trigger the API connection (and authentication)
-    backend.start()
-    await backend.wait_for_login()
+    await asyncio.wait_for(backend.connect_to_server(), timeout=2)
+    # login
+    await asyncio.wait_for(backend.login_to_server(), timeout=2)
 
     # 3. Reload config in case explicit user request to reload (hass.is_running)
     if hass.is_running or not config_entry.data["config"]:
@@ -128,6 +130,7 @@ async def async_setup_entry(
     config_entry.async_on_unload(config_entry.add_update_listener(update_config))
 
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
+    backend.start()
     return True
 
 
