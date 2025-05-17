@@ -19,6 +19,13 @@ import jsonrpc_base
 import jsonrpc_websocket
 from yarl import URL
 
+from .const import (
+    CONN_TYPE_DIRECT_EDGE,
+    CONN_TYPE_REST,
+    CONN_TYPE_WEB_FENECON,
+    connection_url,
+)
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -235,19 +242,16 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         if component_reference.startswith("$"):
             component_property = component_reference[1:]
             component_reference = self.component.properties[component_property]
-        # retrieve the value via FEMS REST API
-        url = self.component.edge.backend.rest_base_url.joinpath(
-            "channel", component_reference, channel_reference
-        )
-        auth = aiohttp.BasicAuth(
-            self.component.edge.backend.username, self.component.edge.backend.password
-        )
-        async with (
-            aiohttp.ClientSession(auth=auth) as session,
-            session.get(url) as resp,
-        ):
-            data = await resp.json()
-            return data["value"]
+        channel = component_reference + "/" + channel_reference
+        if self.component.edge.backend.connection_type == CONN_TYPE_WEB_FENECON:
+            # retrieve the value via Websocket API
+            data = await self.component.edge.get_channel_values_via_websocket([channel])
+        else:
+            # retrieve the value via REST API
+            data = await self.component.edge.backend.get_channel_values_via_rest(
+                [channel]
+            )
+        return data[channel]
 
 
 class OpenEMSBooleanProperty(OpenEMSProperty):
@@ -396,9 +400,9 @@ class OpenEMSEdge:
                         except (
                             jsonrpc_base.jsonrpc.TransportError,
                             jsonrpc_base.jsonrpc.ProtocolError,
-                        ) as exc:
-                            _LOGGER.debug(
-                                "SubscriptionUpdater error during subscribe", exc
+                        ):
+                            _LOGGER.exception(
+                                "SubscriptionUpdater error during subscribe"
                             )
             except asyncio.CancelledError:
                 _LOGGER.debug("SubscriptionUpdater end")
@@ -407,7 +411,7 @@ class OpenEMSEdge:
     def __init__(self, backend, id) -> None:
         """Initialize the edge."""
         self.backend: OpenEMSBackend = backend
-        self._id: int = id
+        self._id: str = id
         self._edge_config: dict[str, dict] | None = None
         self.components: dict[str, OpenEMSComponent] = {}
         self.current_channel_data: dict | None = None
@@ -482,23 +486,70 @@ class OpenEMSEdge:
         "Return the list of all subscribed channels."
         return self._registered_channels
 
+    async def get_channel_values_via_websocket(self, channels: list[str]):
+        """Read channels via dedicated websocket connection."""
+
+        # create new connection and login
+        rpc_server = jsonrpc_websocket.Server(
+            url=connection_url(self.backend.connection_type),
+            session=None,
+            heartbeat=5,
+        )
+
+        await rpc_server.ws_connect()
+        _LOGGER.debug("wsocket component info request: login")
+        await rpc_server.authenticateWithPassword(
+            username=self.backend.username, password=self.backend.password
+        )
+
+        # prepare callback event and subscribe for the required data
+        data_received: asyncio.Event | None = asyncio.Event()
+        data = None
+
+        def _handle_callback(**kwargs):
+            if kwargs["payload"]["method"] != "currentData":
+                # ignore
+                return
+
+            nonlocal data
+            data = kwargs["payload"]["params"]
+            data_received.set()
+
+        rpc_server.edgeRpc = _handle_callback
+        await rpc_server.subscribeEdges(edges=[self._id])
+
+        subscribe_call = OpenEMSBackend.wrap_jsonrpc(
+            "subscribeChannels", count=0, channels=channels
+        )
+        await rpc_server.edgeRpc(edgeId=self._id, payload=subscribe_call)
+
+        # wait for the data. When received, close connection and return data
+        await asyncio.wait_for(data_received.wait(), timeout=5)
+        await rpc_server.close()
+
+        return data
+
 
 class OpenEMSBackend:
     """Class which represents a connection to an OpenEMS backend."""
 
     def __init__(self, host: str, username: str, password: str) -> None:
         """Create a new OpenEMSBackend object."""
+        self.connection_type = CONN_TYPE_DIRECT_EDGE
+
         self.username: str = username
         self.password: str = password
         self.host: str = host
-        ws_url = "ws://" + host + ":8085/"  # Direct Edge connect
-        # ws_url = "ws://" + host + ":8082/"        # OpenEMS UI
-        # ws_url = "ws://" + host + ":80/websocket"  # FEMS local monitoring
-        # ws_url = "wss://portal.fenecon.de/openems-backend-ui2"  # FEMS online monitoring (no REST API)
+        self.ws_url: URL = connection_url(self.connection_type, host)
+        self.rest_base_url: URL | None = connection_url(CONN_TYPE_REST, host)
+        if self.connection_type == CONN_TYPE_WEB_FENECON:
+            # Fenecon Web portal does not support REST API access
+            self.rest_base_url = None
 
-        self.rpc_server = jsonrpc_websocket.Server(ws_url, session=None, heartbeat=5)
+        self.rpc_server = jsonrpc_websocket.Server(
+            self.ws_url, session=None, heartbeat=5
+        )
         self.rpc_server_task: asyncio.Task | None = None
-        self.rest_base_url: URL = URL("http://" + host + ":8084" + "/rest/")
         self.rpc_server.edgeRpc = self.edgeRpc
         self.edges: dict[int, OpenEMSEdge] = {}
         self.multi_edge = True
@@ -558,9 +609,11 @@ class OpenEMSBackend:
                 await asyncio.sleep(10)
 
     async def connect_to_server(self):
+        "Establish websocket connection."
         self.rpc_server_task = await self.rpc_server.ws_connect()
 
     async def login_to_server(self):
+        "Authenticate with username and password."
         if not self.rpc_server.connected:
             raise ConnectionError
         retval = await self.rpc_server.authenticateWithPassword(
@@ -617,11 +670,13 @@ class OpenEMSBackend:
                 r = await self.rpc_server.edgeRpc(edgeId=edge_id, payload=edge_call)
                 config[edge_id] = {}
                 config[edge_id]["components"] = r["payload"]["result"]["components"]
-                # read info details from selected channels
-                await self._read_component_info_channels(config, self.edges[edge_id])
 
                 # read properties of all channels of each component
                 await self._read_edge_channels(config, self.edges[edge_id])
+
+                # read info details from selected channels
+                await self._read_component_info_channels(config, self.edges[edge_id])
+
                 # update edge with the config
                 self.edges[edge_id].set_config(config[edge_id]["components"])
 
@@ -653,24 +708,50 @@ class OpenEMSBackend:
 
     async def _read_component_info_channels(self, config: dict, edge: OpenEMSEdge):
         """Read hostname and all component names of an edge."""
+
+        # Look up all components which have a channel "_PropertyAlias"
+        alias_components = []
+        for comp_name, comp in config[edge.id]["components"].items():
+            for chan in comp["channels"]:
+                if chan["id"] == "_PropertyAlias":
+                    alias_components.append(comp_name)
+                    continue
+
+        config_channels = ["_host/Hostname"]
+        if self.connection_type == CONN_TYPE_WEB_FENECON:
+            config_channels.extend(c + "/_PropertyAlias" for c in alias_components)
+            data = await edge.get_channel_values_via_websocket(config_channels)
+        else:
+            # optimize for performance by creating a regex
+            config_channels.append("|".join(alias_components) + "/_PropertyAlias")
+            data = await self.get_channel_values_via_rest(config_channels)
+
+        # store component aliases and hostname in the json config of the component
+        for address, value in data.items():
+            component, channel = address.split("/")
+            if component in config[edge.id]["components"]:
+                config[edge.id]["components"][component][channel] = value
+
+    async def get_channel_values_via_rest(self, channels: list[str]):
+        """Read channel values via REST API."""
         auth = aiohttp.BasicAuth(self.username, self.password)
+        values = []
 
-        url = self.rest_base_url.joinpath("channel", ".+", "_PropertyAlias")
-        async with (
-            aiohttp.ClientSession(auth=auth) as session,
-            session.get(url) as resp,
-        ):
-            data = await resp.json()
-            for entry in data:
-                component, channel = entry["address"].split("/")
-                if component in config[edge.id]["components"]:
-                    config[edge.id]["components"][component][channel] = entry["value"]
-
-        if "_host" in config[edge.id]["components"]:
-            url = self.rest_base_url.joinpath("channel", "_host", "Hostname")
+        for channel in channels:
+            url = self.rest_base_url.joinpath("channel", channel)
             async with (
-                aiohttp.ClientSession(auth=auth) as session,
+                aiohttp.ClientSession(raise_for_status=False, auth=auth) as session,
                 session.get(url) as resp,
             ):
+                if resp.status != 200:
+                    continue
                 data = await resp.json()
-                config[edge.id]["components"]["_host"]["Hostname"] = data["value"]
+                if not isinstance(data, list):
+                    data = [data]
+                values.extend(data)
+
+        # convert the data format so it matches the websocket data response structure
+        retval = {}
+        for record in values:
+            retval[record["address"]] = record["value"]
+        return retval
