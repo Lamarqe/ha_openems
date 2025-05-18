@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import logging
 from typing import ClassVar
 
-import jsonrpc_base
+from jsonrpc_base.jsonrpc import ProtocolError, TransportError
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
@@ -106,12 +106,12 @@ async def async_setup_entry(
     # 2. Trigger the API connection (and authentication)
     try:
         await asyncio.wait_for(backend.connect_to_server(), timeout=2)
-    except TimeoutError as ex:
+    except (TransportError, TimeoutError) as ex:
         raise ConfigEntryNotReady(f"Timeout while connecting to {backend.host}") from ex
     # login
     try:
         await backend.login_to_server()
-    except jsonrpc_base.jsonrpc.ProtocolError as ex:
+    except ProtocolError as ex:
         raise ConfigEntryAuthFailed(f"Wrong user / password for {backend.host}") from ex
 
     # 3. Reload config in case explicit user request to reload (hass.is_running)
