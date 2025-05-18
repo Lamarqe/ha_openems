@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import logging
 from typing import ClassVar
 
+import jsonrpc_base
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
@@ -19,6 +20,7 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import (
     config_validation as cv,
     device_registry as dr,
@@ -102,9 +104,15 @@ async def async_setup_entry(
         config_entry.data["user_input"][CONF_PASSWORD],
     )
     # 2. Trigger the API connection (and authentication)
-    await asyncio.wait_for(backend.connect_to_server(), timeout=2)
+    try:
+        await asyncio.wait_for(backend.connect_to_server(), timeout=2)
+    except TimeoutError as ex:
+        raise ConfigEntryNotReady(f"Timeout while connecting to {backend.host}") from ex
     # login
-    await asyncio.wait_for(backend.login_to_server(), timeout=2)
+    try:
+        await backend.login_to_server()
+    except jsonrpc_base.jsonrpc.ProtocolError as ex:
+        raise ConfigEntryAuthFailed(f"Wrong user / password for {backend.host}") from ex
 
     # 3. Reload config in case explicit user request to reload (hass.is_running)
     if hass.is_running or not config_entry.data["config"]:
