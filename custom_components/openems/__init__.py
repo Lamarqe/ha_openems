@@ -161,7 +161,7 @@ async def async_migrate_entry(
             edge_id = next(iter(config_data))
             new_data = {
                 "user_input": config_entry.data.copy(),
-                "components": config_data[edge_id],
+                "components": config_data[edge_id]["components"],
             }
             new_data["user_input"][CONF_EDGE] = edge_id
             # delete config store data
