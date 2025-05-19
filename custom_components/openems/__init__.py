@@ -32,7 +32,7 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import CONF_EDGE, DOMAIN
 from .helpers import component_device, find_channel_in_backend
-from .openems import OpenEMSBackend
+from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -160,9 +160,10 @@ async def async_migrate_entry(
         if config_data := await store_conf.async_load():
             # migrate config into entry
             edge_id = next(iter(config_data))
+            components = config_data[edge_id]["components"]
             new_data = {
                 "user_input": config_entry.data.copy(),
-                "components": config_data[edge_id]["components"],
+                "components": components,
             }
             new_data["user_input"][CONF_EDGE] = edge_id
             # delete config store data
@@ -171,11 +172,17 @@ async def async_migrate_entry(
             host = config_entry.data[CONF_HOST]
             options_key = "openems_options_" + host
             store_options: Store = Store(hass, 1, options_key)
-            # delete options store data
-            await store_options.async_remove()
+            if options := await store_options.async_load():
+                # delete options store data
+                await store_options.async_remove()
+            else:
+                # initialize options with default settings
+                options: dict[str:bool] = {}
+                for component in components:
+                    options[component] = CONFIG.is_component_enabled(component)
 
             hass.config_entries.async_update_entry(
-                config_entry, data=new_data, version=2, minor_version=1
+                config_entry, data=new_data, options=options, version=2, minor_version=1
             )
 
             # update entities unique ids
@@ -189,6 +196,7 @@ async def async_migrate_entry(
                 return {"new_unique_id": "/".join(unique_id_parts)}
 
             await async_migrate_entries(hass, config_entry.entry_id, update_unique_id)
+
             _LOGGER.debug(
                 "Migration to configuration version %s.%s successful",
                 config_entry.version,
