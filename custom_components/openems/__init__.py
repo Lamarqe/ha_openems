@@ -19,13 +19,14 @@ from homeassistant.const import (
     CONF_USERNAME,
     Platform,
 )
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import (
     config_validation as cv,
     device_registry as dr,
     entity_registry as er,
 )
+from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
@@ -176,6 +177,18 @@ async def async_migrate_entry(
             hass.config_entries.async_update_entry(
                 config_entry, data=new_data, version=2, minor_version=1
             )
+
+            # update entities unique ids
+            @callback
+            def update_unique_id(entity_entry):
+                """Update unique ID of entity entry."""
+                unique_id_parts = entity_entry.unique_id.split("/")
+                if len(unique_id_parts) != 4:
+                    return None
+                unique_id_parts[1] = unique_id_parts[1].removeprefix("edge")
+                return {"new_unique_id": "/".join(unique_id_parts)}
+
+            await async_migrate_entries(hass, config_entry.entry_id, update_unique_id)
             _LOGGER.debug(
                 "Migration to configuration version %s.%s successful",
                 config_entry.version,
