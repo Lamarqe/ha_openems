@@ -2,10 +2,16 @@
   "config": {
     "step": {
       "user": {
+        "description": "Set required parameter to connect to your FEMS / OpenEMS system",
         "data": {
           "host": "[%key:common::config_flow::data::host%]",
           "username": "[%key:common::config_flow::data::username%]",
           "password": "[%key:common::config_flow::data::password%]"
+        }
+      },
+      "edges": {
+        "data": {
+          "edges": "OpenEMS Edge to be integrated"
         }
       }
     },

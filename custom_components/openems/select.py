@@ -12,13 +12,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
 from .helpers import component_device, translation_key
-from .openems import (
-    CONFIG,
-    OpenEMSBackend,
-    OpenEMSComponent,
-    OpenEMSEdge,
-    OpenEMSEnumProperty,
-)
+from .openems import CONFIG, OpenEMSBackend, OpenEMSComponent, OpenEMSEnumProperty
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,12 +58,10 @@ async def async_setup_entry(
 
     backend: OpenEMSBackend = entry.runtime_data.backend
     # for all edges
-    edge: OpenEMSEdge
-    for edge in backend.edges.values():
-        component: OpenEMSComponent
-        for component in edge.components.values():
-            if component.create_entities:
-                _create_select_entities(component)
+    component: OpenEMSComponent
+    for component in backend.the_edge.components.values():
+        if component.create_entities:
+            _create_select_entities(component)
 
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.SELECT.value] = (

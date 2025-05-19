@@ -21,13 +21,7 @@ from .helpers import (
     translation_key,
     unit_description,
 )
-from .openems import (
-    CONFIG,
-    OpenEMSBackend,
-    OpenEMSComponent,
-    OpenEMSEdge,
-    OpenEMSNumberProperty,
-)
+from .openems import CONFIG, OpenEMSBackend, OpenEMSComponent, OpenEMSNumberProperty
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,12 +74,10 @@ async def async_setup_entry(
 
     backend: OpenEMSBackend = entry.runtime_data.backend
     # for all edges
-    edge: OpenEMSEdge
-    for edge in backend.edges.values():
-        component: OpenEMSComponent
-        for component in edge.components.values():
-            if component.create_entities:
-                _create_number_entities(component)
+    component: OpenEMSComponent
+    for component in backend.the_edge.components.values():
+        if component.create_entities:
+            _create_number_entities(component)
 
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.NUMBER.value] = (

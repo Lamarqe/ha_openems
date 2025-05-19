@@ -15,13 +15,18 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_BASE, CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.selector import BooleanSelector, BooleanSelectorConfig
+from homeassistant.helpers.selector import (
+    BooleanSelector,
+    BooleanSelectorConfig,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .__init__ import OpenEMSConfigEntry
-from .const import DOMAIN
+from .const import CONF_EDGE, CONF_EDGES, DOMAIN
 from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,9 +54,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize."""
-        self._host: str | None = None
-        self._username: str = "x"
-        self._password: str | None = None
+        self._config_data: dict[str, Any] = {}
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -65,6 +68,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 user_input[CONF_USERNAME],
                 user_input[CONF_PASSWORD],
             )
+            self._config_data = user_input
             try:
                 # connect
                 await asyncio.wait_for(backend.connect_to_server(), timeout=2)
@@ -74,15 +78,52 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 try:
                     # login
                     await asyncio.wait_for(backend.login_to_server(), timeout=2)
-                    # read config
-                    config = await asyncio.wait_for(backend.read_config(), timeout=5)
+                    edges = await asyncio.wait_for(backend.read_edges(), timeout=2)
+                    if backend.multi_edge:
+                        schema = {
+                            vol.Required(
+                                CONF_EDGES,
+                                default=user_input.get(CONF_EDGES),
+                            ): SelectSelector(
+                                SelectSelectorConfig(
+                                    options=[
+                                        e["id"]
+                                        for e in edges["edges"]
+                                        if e.get("isOnline")
+                                    ],
+                                    multiple=False,
+                                    mode=SelectSelectorMode.LIST,
+                                )
+                            ),
+                        }
+
+                        return self.async_show_form(
+                            step_id="edges",
+                            data_schema=vol.Schema(schema),
+                        )
+
+                    # read edge components to validate it is correctly running
+                    # will be used later to initialze options
+                    edge_id = next(iter(edges["edges"]))["id"]
+                    components = await asyncio.wait_for(
+                        backend.read_edge_components(edge_id),
+                        timeout=10,
+                    )
                     # stop
                     await backend.stop()
+
+                    if not components:
+                        errors[CONF_BASE] = "Cannot read edge components"
+                        return self.async_show_form(
+                            step_id="user", data_schema=data_schema, errors=errors
+                        )
 
                 except jsonrpc_base.jsonrpc.ProtocolError as pe:
                     errors[CONF_PASSWORD] = f"{pe.args[0]}: {pe.args[1]}"
                 else:
-                    entry_data = {"user_input": user_input, "config": config}
+                    # Todo: rename user_input to a better name?
+                    user_input[CONF_EDGE] = edge_id
+                    entry_data = {"user_input": user_input, "components": components}
 
                     if self.source == SOURCE_RECONFIGURE:
                         self._abort_if_unique_id_mismatch()
@@ -91,12 +132,11 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                         )
 
                     # no reconfigure. Create new entry instead
-                    # initialize options
-                    options: dict[str:bool] = {}
 
-                    for edge in entry_data["config"].values():
-                        for component in edge["components"]:
-                            options[component] = CONFIG.is_component_enabled(component)
+                    # initialize options with default settings
+                    options: dict[str:bool] = {}
+                    for component in components:
+                        options[component] = CONFIG.is_component_enabled(component)
 
                     return self.async_create_entry(
                         title=user_input[CONF_HOST], data=entry_data, options=options
@@ -106,6 +146,12 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
         )
+
+    async def async_step_edges(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle edges selection by user."""
+        print(user_input)
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
@@ -140,7 +186,7 @@ class OpenEMSOptionsFlow(OptionsFlow):
 
         backend: OpenEMSBackend = self.config_entry.runtime_data.backend
         schema: vol.Schema = vol.Schema({})
-        for comp_name, comp in next(iter(backend.edges.values())).components.items():
+        for comp_name, comp in backend.the_edge.components.items():
             bool_selector = BooleanSelector(BooleanSelectorConfig())
             schema_entry = vol.Required(comp_name, default=comp.create_entities)
             schema = schema.extend({schema_entry: bool_selector})
@@ -149,11 +195,3 @@ class OpenEMSOptionsFlow(OptionsFlow):
             step_id="init",
             data_schema=schema,
         )
-
-
-class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""

@@ -6,6 +6,9 @@ from yarl import URL
 
 DOMAIN = "openems"
 
+CONF_EDGES = "edges"
+CONF_EDGE = "edge"
+
 STORAGE_VERSION = 1
 
 CONN_TYPE_DIRECT_EDGE = "direct_edge"

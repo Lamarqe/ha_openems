@@ -21,6 +21,7 @@ from yarl import URL
 
 from .const import (
     CONN_TYPE_DIRECT_EDGE,
+    CONN_TYPE_LOCAL_FEMS,
     CONN_TYPE_REST,
     CONN_TYPE_WEB_FENECON,
     connection_url,
@@ -224,6 +225,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         # step 1: retrieve the values of all linked channels
         for ref in re.findall("{(.*?)}", expr):
             if ref not in self.component.ref_values:
+                # TODO: This could be optimized to load ref values in bulk
                 self.component.ref_values[ref] = await self._get_ref_value(ref)
 
         # step 2: replace all linked channels with their values
@@ -248,9 +250,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
             data = await self.component.edge.get_channel_values_via_websocket([channel])
         else:
             # retrieve the value via REST API
-            data = await self.component.edge.backend.get_channel_values_via_rest(
-                [channel]
-            )
+            data = await self.component.edge.get_channel_values_via_rest([channel])
         return data[channel]
 
 
@@ -412,7 +412,7 @@ class OpenEMSEdge:
         """Initialize the edge."""
         self.backend: OpenEMSBackend = backend
         self._id: str = id
-        self._edge_config: dict[str, dict] | None = None
+        self._component_config: dict[str, dict] | None = None
         self.components: dict[str, OpenEMSComponent] = {}
         self.current_channel_data: dict | None = None
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
@@ -421,13 +421,98 @@ class OpenEMSEdge:
         self.hostname: str | None = None
         self._registered_channels: dict = {}
 
+    async def read_components(self) -> dict:
+        """Read components of the edge."""
+
+        # read component list
+        edge_call = OpenEMSBackend.wrap_jsonrpc("getEdgeConfig")
+        r = await self.backend.rpc_server.edgeRpc(edgeId=self._id, payload=edge_call)
+        components = r["payload"]["result"]["components"]
+
+        # read properties of all channels of each component
+        await self._read_edge_channels(components)
+
+        # read info details from selected channels
+        await self._read_component_info_channels(components)
+
+        self._component_config = components
+        return self._component_config
+
+    async def _read_edge_channels(self, components):
+        # Load channels of each component
+        for componentId in components:
+            edge_component_call = OpenEMSBackend.wrap_jsonrpc(
+                "getChannelsOfComponent",
+                componentId=componentId,
+            )
+            edge_call = OpenEMSBackend.wrap_jsonrpc(
+                "componentJsonApi",
+                componentId="_componentManager",
+                payload=edge_component_call,
+            )
+            r = await self.backend.rpc_server.edgeRpc(
+                edgeId=self._id,
+                payload=edge_call,
+            )
+            components[componentId]["channels"] = r["payload"]["result"]["channels"]
+
+    async def _read_component_info_channels(self, components: dict):
+        """Read hostname and all component names of an edge."""
+
+        # Look up all components which have a channel "_PropertyAlias"
+        alias_components = []
+        for comp_name, comp in components.items():
+            for chan in comp["channels"]:
+                if chan["id"] == "_PropertyAlias":
+                    alias_components.append(comp_name)
+                    continue
+
+        config_channels = ["_host/Hostname"]
+        if self.backend.connection_type == CONN_TYPE_WEB_FENECON:
+            config_channels.extend(c + "/_PropertyAlias" for c in alias_components)
+            data = await self.get_channel_values_via_websocket(config_channels)
+        else:
+            # optimize for performance by creating a regex
+            config_channels.append("|".join(alias_components) + "/_PropertyAlias")
+            data = await self.get_channel_values_via_rest(config_channels)
+
+        # store component aliases and hostname in the json config of the component
+        for address, value in data.items():
+            component, channel = address.split("/")
+            if component in components:
+                components[component][channel] = value
+
+    async def get_channel_values_via_rest(self, channels: list[str]):
+        """Read channel values via REST API."""
+        auth = aiohttp.BasicAuth(self.backend.username, self.backend.password)
+        values = []
+
+        for channel in channels:
+            url = self.backend.rest_base_url.joinpath("channel", channel)
+            async with (
+                aiohttp.ClientSession(raise_for_status=False, auth=auth) as session,
+                session.get(url) as resp,
+            ):
+                if resp.status != 200:
+                    continue
+                data = await resp.json()
+                if not isinstance(data, list):
+                    data = [data]
+                values.extend(data)
+
+        # convert the data format so it matches the websocket data response structure
+        retval = {}
+        for record in values:
+            retval[record["address"]] = record["value"]
+        return retval
+
     async def prepare_entities(self):
         """Parse json config and create class structures."""
-        self.hostname = self._edge_config["_host"]["Hostname"]
+        self.hostname = self._component_config["_host"]["Hostname"]
         if self.backend.multi_edge:
             self.hostname += " " + self.id
 
-        for name, contents in self._edge_config.items():
+        for name, contents in self._component_config.items():
             if "channels" in contents:
                 component: OpenEMSComponent = OpenEMSComponent(self, name, contents)
                 await component.init_channels(contents["channels"])
@@ -446,13 +531,14 @@ class OpenEMSEdge:
         """Stop the connection to edge and all its subscriptions."""
         self._channel_subscription_updater.stop()
 
-    def set_config(self, params):
+    def set_component_config(self, params):
         """Store the configuration which the edge sent us."""
-        self._edge_config = params
+        self._component_config = params
 
     def edgeConfig(self, params):
         """Jsonrpc callback to receive edge config updates."""
-        self.set_config(params["components"])
+        self.set_component_config(params["components"])
+        # TODO: renew component channels and component info values
 
     def currentData(self, params):
         """Jsonrpc callback to receive channel subscription updates."""
@@ -479,7 +565,7 @@ class OpenEMSEdge:
     @property
     def config(self):
         "Return the edge config."
-        return self._edge_config
+        return self._component_config
 
     @property
     def registered_channels(self):
@@ -535,11 +621,13 @@ class OpenEMSBackend:
 
     def __init__(self, host: str, username: str, password: str) -> None:
         """Create a new OpenEMSBackend object."""
-        self.connection_type = CONN_TYPE_DIRECT_EDGE
+        self.connection_type = CONN_TYPE_LOCAL_FEMS
 
+        self.host: str = host
         self.username: str = username
         self.password: str = password
-        self.host: str = host
+        # self.username: str = "demo@fenecon.de"
+        # self.password: str = "femsdemo"
         self.ws_url: URL = connection_url(self.connection_type, host)
         self.rest_base_url: URL | None = connection_url(CONN_TYPE_REST, host)
         if self.connection_type == CONN_TYPE_WEB_FENECON:
@@ -551,9 +639,9 @@ class OpenEMSBackend:
         )
         self.rpc_server_task: asyncio.Task | None = None
         self.rpc_server.edgeRpc = self.edgeRpc
-        self.edges: dict[int, OpenEMSEdge] = {}
         self.multi_edge = True
         self._reconnect_task = None
+        self.the_edge: OpenEMSEdge | None = None
 
     @staticmethod
     def wrap_jsonrpc(method, **params):
@@ -567,14 +655,13 @@ class OpenEMSBackend:
 
     def edgeRpc(self, **kwargs):
         """Handle an edge jsonrpc callback and call the respective method of the edge object."""
-        if kwargs["edgeId"] not in self.edges:
+        if kwargs["edgeId"] != self.the_edge.id:
             _LOGGER.error("Received response for undefined edge: %s", kwargs["edgeId"])
             return
 
-        edge = self.edges[kwargs["edgeId"]]
         method_name = kwargs["payload"]["method"]
         try:
-            method = getattr(edge, method_name)
+            method = getattr(self.the_edge, method_name)
         except AttributeError:
             _LOGGER.error("Unhandled callback method: %s", method_name)
             return
@@ -594,8 +681,7 @@ class OpenEMSBackend:
                     await self.rpc_server_task
                 # connection lost
                 self.rpc_server_task = None
-                for edge in self.edges.values():
-                    edge.set_unavailable()
+                self.the_edge.set_unavailable()
                 await asyncio.sleep(10)
 
             try:
@@ -633,125 +719,32 @@ class OpenEMSBackend:
             self._reconnect_task.cancel()
             self._reconnect_task = None
         await self.rpc_server.close()
-        for edge in self.edges.values():
-            edge.stop()
+        self.the_edge.stop()
 
-    def set_config(self, config: dict):
-        """Parse list of all edges and their config."""
-        self.edges = {}
-        for edge_id, edge_config in config.items():
-            edge = OpenEMSEdge(self, edge_id)
-            # Load edgeConfig
-            edge.set_config(edge_config["components"])
-
-            self.edges[edge_id] = edge
+    def set_component_config(self, edge_id, components: dict) -> OpenEMSEdge:
+        """Prepare edge and all its components."""
+        self.the_edge = OpenEMSEdge(self, edge_id)
+        self.the_edge.set_component_config(components)
+        return self.the_edge
 
     async def prepare_entities(self):
         """Parse json config of all edges."""
-        for edge in self.edges.values():
-            await edge.prepare_entities()
+        await self.the_edge.prepare_entities()
 
     async def subscribe_for_config_changes(self, edge_id):
         """Subscribe for edgeConfig updates."""
         return await self.rpc_server.subscribeEdges(edges=json.dumps([edge_id]))
 
-    async def read_config(self) -> dict:
-        """Request list of all edges and their config."""
-        config = {}
-        r = await self.rpc_server.getEdges(page=0, limit=20, searchParams={})
-        json_edges = r["edges"]
-        for json_edge in json_edges:
-            if json_edge["isOnline"]:
-                edge_id = json_edge["id"]
-                self.edges[edge_id] = OpenEMSEdge(self, edge_id)
+    async def read_edges(self) -> dict:
+        """Request list of all edges."""
+        return await self.rpc_server.getEdges(page=0, limit=20, searchParams={})
 
-                # Load edgeConfig
-                edge_call = OpenEMSBackend.wrap_jsonrpc("getEdgeConfig")
-                r = await self.rpc_server.edgeRpc(edgeId=edge_id, payload=edge_call)
-                config[edge_id] = {}
-                config[edge_id]["components"] = r["payload"]["result"]["components"]
-
-                # read properties of all channels of each component
-                await self._read_edge_channels(config, self.edges[edge_id])
-
-                # read info details from selected channels
-                await self._read_component_info_channels(config, self.edges[edge_id])
-
-                # update edge with the config
-                self.edges[edge_id].set_config(config[edge_id]["components"])
-
-        return config
-
-    async def _read_edge_channels(self, config, edge):
-        # Load channels of each component
-        for componentId in config[edge.id]["components"]:
-            with contextlib.suppress(
-                jsonrpc_base.jsonrpc.TransportError,
-                jsonrpc_base.jsonrpc.ProtocolError,
-            ):
-                edge_component_call = OpenEMSBackend.wrap_jsonrpc(
-                    "getChannelsOfComponent",
-                    componentId=componentId,
-                )
-                edge_call = OpenEMSBackend.wrap_jsonrpc(
-                    "componentJsonApi",
-                    componentId="_componentManager",
-                    payload=edge_component_call,
-                )
-                r = await self.rpc_server.edgeRpc(
-                    edgeId=edge.id,
-                    payload=edge_call,
-                )
-                config[edge.id]["components"][componentId]["channels"] = r["payload"][
-                    "result"
-                ]["channels"]
-
-    async def _read_component_info_channels(self, config: dict, edge: OpenEMSEdge):
-        """Read hostname and all component names of an edge."""
-
-        # Look up all components which have a channel "_PropertyAlias"
-        alias_components = []
-        for comp_name, comp in config[edge.id]["components"].items():
-            for chan in comp["channels"]:
-                if chan["id"] == "_PropertyAlias":
-                    alias_components.append(comp_name)
-                    continue
-
-        config_channels = ["_host/Hostname"]
-        if self.connection_type == CONN_TYPE_WEB_FENECON:
-            config_channels.extend(c + "/_PropertyAlias" for c in alias_components)
-            data = await edge.get_channel_values_via_websocket(config_channels)
+    async def read_edge_components(self, edge_id: str) -> dict:
+        """Request config of an edge."""
+        try:
+            self.the_edge = OpenEMSEdge(self, edge_id)
+            components = await self.the_edge.read_components()
+        except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
+            return None
         else:
-            # optimize for performance by creating a regex
-            config_channels.append("|".join(alias_components) + "/_PropertyAlias")
-            data = await self.get_channel_values_via_rest(config_channels)
-
-        # store component aliases and hostname in the json config of the component
-        for address, value in data.items():
-            component, channel = address.split("/")
-            if component in config[edge.id]["components"]:
-                config[edge.id]["components"][component][channel] = value
-
-    async def get_channel_values_via_rest(self, channels: list[str]):
-        """Read channel values via REST API."""
-        auth = aiohttp.BasicAuth(self.username, self.password)
-        values = []
-
-        for channel in channels:
-            url = self.rest_base_url.joinpath("channel", channel)
-            async with (
-                aiohttp.ClientSession(raise_for_status=False, auth=auth) as session,
-                session.get(url) as resp,
-            ):
-                if resp.status != 200:
-                    continue
-                data = await resp.json()
-                if not isinstance(data, list):
-                    data = [data]
-                values.extend(data)
-
-        # convert the data format so it matches the websocket data response structure
-        retval = {}
-        for record in values:
-            retval[record["address"]] = record["value"]
-        return retval
+            return components

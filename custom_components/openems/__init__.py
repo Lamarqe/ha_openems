@@ -29,9 +29,9 @@ from homeassistant.helpers import (
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN
+from .const import CONF_EDGE, DOMAIN
 from .helpers import component_device, find_channel_in_backend
-from .openems import OpenEMSBackend, OpenEMSEdge
+from .openems import OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,6 +103,7 @@ async def async_setup_entry(
         config_entry.data["user_input"][CONF_USERNAME],
         config_entry.data["user_input"][CONF_PASSWORD],
     )
+    edge_id = config_entry.data["user_input"][CONF_EDGE]
     # 2. Trigger the API connection (and authentication)
     try:
         await asyncio.wait_for(backend.connect_to_server(), timeout=2)
@@ -114,25 +115,23 @@ async def async_setup_entry(
     except ProtocolError as ex:
         raise ConfigEntryAuthFailed(f"Wrong user / password for {backend.host}") from ex
 
-    # 3. Reload config in case explicit user request to reload (hass.is_running)
-    if hass.is_running or not config_entry.data["config"]:
-        config = await backend.read_config()
+    # 3. Reload component list in case explicit user request to reload (hass.is_running)
+    if hass.is_running or not config_entry.data["components"]:
+        components = await backend.read_edge_components(edge_id)
         entry_data = {
             "user_input": config_entry.data["user_input"],
-            "config": config,
+            "components": components,
         }
         hass.config_entries.async_update_entry(entry=config_entry, data=entry_data)
     else:
-        backend.set_config(config_entry.data["config"])
+        backend.set_component_config(edge_id, config_entry.data["components"])
 
     await backend.prepare_entities()
 
     # 4. Read and set config options
-    edge: OpenEMSEdge
-    for edge in backend.edges.values():
-        for component_name, is_enabled in config_entry.options.items():
-            if component := edge.components.get(component_name):
-                component.create_entities = is_enabled
+    for component_name, is_enabled in config_entry.options.items():
+        if component := backend.the_edge.components.get(component_name):
+            component.create_entities = is_enabled
 
     config_entry.runtime_data = RuntimeData(backend=backend)
     config_entry.async_on_unload(config_entry.add_update_listener(update_config))
@@ -155,13 +154,16 @@ async def async_migrate_entry(
     hass: HomeAssistant, config_entry: OpenEMSConfigEntry
 ) -> bool:
     """Migrate old entry."""
-
     if config_entry.version == 1:
         store_conf: Store = Store(hass, 1, "openems_config")
         if config_data := await store_conf.async_load():
             # migrate config into entry
-            new_data = {"user_input": config_entry.data.copy()}
-            new_data["config"] = config_data
+            edge_id = next(iter(config_data))
+            new_data = {
+                "user_input": config_entry.data.copy(),
+                "components": config_data[edge_id],
+            }
+            new_data["user_input"][CONF_EDGE] = edge_id
             # delete config store data
             await store_conf.async_remove()
 
@@ -196,22 +198,20 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     device_registry = dr.async_get(hass)
 
     # for all edges
-    edge: OpenEMSEdge
-    for edge in backend.edges.values():
-        for comp_name, component in edge.components.items():
-            if not entry.options[comp_name] and component.create_entities:
-                # remove entities
-                comp_device = component_device(component)
-                device = device_registry.async_get_device(comp_device["identifiers"])
-                entities = er.async_entries_for_device(entity_registry, device.id, True)
-                for entity in entities:
-                    entity_registry.async_remove(entity.entity_id)
-                # remove device
-                device_registry.async_remove_device(device.id)
+    for comp_name, component in backend.the_edge.components.items():
+        if not entry.options[comp_name] and component.create_entities:
+            # remove entities
+            comp_device = component_device(component)
+            device = device_registry.async_get_device(comp_device["identifiers"])
+            entities = er.async_entries_for_device(entity_registry, device.id, True)
+            for entity in entities:
+                entity_registry.async_remove(entity.entity_id)
+            # remove device
+            device_registry.async_remove_device(device.id)
 
-            # process newly enabled components
-            if entry.options[comp_name] and not component.create_entities:
-                for callback in entry.runtime_data.add_component_callbacks.values():
-                    callback(component)
+        # process newly enabled components
+        if entry.options[comp_name] and not component.create_entities:
+            for callback in entry.runtime_data.add_component_callbacks.values():
+                callback(component)
 
-            component.create_entities = entry.options[comp_name]
+        component.create_entities = entry.options[comp_name]

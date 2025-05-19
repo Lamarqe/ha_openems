@@ -1,0 +1,85 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "edges": {
+                "data": {
+                    "edges": "OpenEMS Edge to be integrated"
+                }
+            },
+            "user": {
+                "data": {
+                    "host": "Host",
+                    "password": "Password",
+                    "username": "Username"
+                },
+                "description": "Set required parameter to connect to your FEMS / OpenEMS system"
+            }
+        }
+    },
+    "entity": {
+        "select": {
+            "ctrlEvcs/ChargeMode": {
+                "state": {
+                    "EXCESS_POWER": "\u00dcberschuss",
+                    "FORCE_CHARGE": "Zielwert"
+                }
+            },
+            "ctrlEvcs/Priority": {
+                "state": {
+                    "CAR": "Auto",
+                    "STORAGE": "Speicher"
+                }
+            },
+            "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
+                "state": {
+                    "HIGH": "Hoch",
+                    "LOW": "Gering",
+                    "MEDIUM": "Mittel"
+                }
+            },
+            "ctrlGridOptimizedCharge/Mode": {
+                "state": {
+                    "AUTOMATIC": "Automatisch",
+                    "MANUAL": "Manuell",
+                    "OFF": "Aus"
+                }
+            }
+        },
+        "sensor": {
+            "ctrlGridOptimizedCharge/DelayChargeState": {
+                "state": {
+                    "Active limit": "Begrenzung aktiv",
+                    "Avoid charging with low power for more efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
+                    "Delay charge part is disabled": "Verz\u00f6gerte Ladung deaktiviert",
+                    "Delay charge was not started because there is no production or to less production": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
+                    "Limit cannot be adapted because of other constraints with higher priority": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
+                    "No active limitation": "Keine Begrenzung aktiv",
+                    "No remaining capacity": "Keine Kapazit\u00e4t verbleibend",
+                    "No remaining time": "Keine Zeit verbleibend",
+                    "Target minute not calculated": "Zielzeitpunkt nicht berechet",
+                    "Undefined": "Nicht definiert"
+                }
+            },
+            "evcs/Status": {
+                "state": {
+                    "Charging": "Ladevorgang aktiv",
+                    "Charging rejected": "Laden verweigert",
+                    "Error": "Fehler",
+                    "Not ready for Charging": "Nicht bereit zum Laden",
+                    "Ready for Charging": "Bereit zum Laden",
+                    "Starting": "Starte...",
+                    "The charging limit reached": "Ladelimit erreicht",
+                    "Undefined": "Nicht definiert"
+                }
+            }
+        }
+    }
+}

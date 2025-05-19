@@ -22,13 +22,7 @@ from .helpers import (
     translation_key,
     unit_description,
 )
-from .openems import (
-    CONFIG,
-    OpenEMSBackend,
-    OpenEMSChannel,
-    OpenEMSComponent,
-    OpenEMSEdge,
-)
+from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,18 +79,16 @@ async def async_setup_entry(
     backend: OpenEMSBackend = entry.runtime_data.backend
     device_registry = dr.async_get(hass)
     # for all edges
-    edge: OpenEMSEdge
-    for edge in backend.edges.values():
-        # Create the edge device
-        device_registry.async_get_or_create(
-            config_entry_id=entry.entry_id,
-            name=edge.hostname,
-            identifiers={(DOMAIN, edge.hostname)},
-        )
-        component: OpenEMSComponent
-        for component in edge.components.values():
-            if component.create_entities:
-                _create_sensor_entities(component)
+    # Create the edge device
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        name=backend.the_edge.hostname,
+        identifiers={(DOMAIN, backend.the_edge.hostname)},
+    )
+    component: OpenEMSComponent
+    for component in backend.the_edge.components.values():
+        if component.create_entities:
+            _create_sensor_entities(component)
 
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.SENSOR.value] = (
