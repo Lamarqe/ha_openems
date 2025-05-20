@@ -41,7 +41,7 @@ def step_user_data_schema(user_input=None) -> vol.Schema:
         {
             vol.Required(CONF_HOST, default=default_host): str,
             vol.Required(CONF_USERNAME, default=default_user): str,
-            vol.Required(CONF_PASSWORD, default_pass): str,
+            vol.Required(CONF_PASSWORD, default=default_pass): str,
         }
     )
 
