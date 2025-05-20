@@ -46,13 +46,13 @@ def step_user_data_schema(user_input=None) -> vol.Schema:
     )
 
 
-def step_edges_data_schema(edge_response: dict, user_input=None) -> vol.Schema:
+def step_edges_data_schema(edge_response: dict, default_edge) -> vol.Schema:
     """Define the edges step input options."""
     return vol.Schema(
         {
             vol.Required(
                 CONF_EDGES,
-                default=user_input.get(CONF_EDGES) if user_input else None,
+                default=default_edge,
             ): SelectSelector(
                 SelectSelectorConfig(
                     options=[
@@ -102,7 +102,14 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 edges = await asyncio.wait_for(backend.read_edges(), timeout=2)
                 if backend.multi_edge:
-                    edges_schema = step_edges_data_schema(edges)
+                    if self.source == SOURCE_RECONFIGURE:
+                        default_edge = self._get_reconfigure_entry().data["user_input"][
+                            CONF_EDGE
+                        ]
+                    else:
+                        default_edge = None
+
+                    edges_schema = step_edges_data_schema(edges, default_edge)
                     return self.async_show_form(
                         step_id="edges",
                         data_schema=edges_schema,
