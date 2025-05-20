@@ -57,7 +57,6 @@ async def async_setup_entry(
     ############ END MARKER _create_select_entities ##############
 
     backend: OpenEMSBackend = entry.runtime_data.backend
-    # for all edges
     component: OpenEMSComponent
     for component in backend.the_edge.components.values():
         if component.create_entities:

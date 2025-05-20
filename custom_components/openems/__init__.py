@@ -19,7 +19,7 @@ from homeassistant.const import (
     CONF_USERNAME,
     Platform,
 )
-from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import (
     config_validation as cv,
@@ -186,7 +186,6 @@ async def async_migrate_entry(
             )
 
             # update entities unique ids
-            @callback
             def update_unique_id(entity_entry):
                 """Update unique ID of entity entry."""
                 unique_id_parts = entity_entry.unique_id.split("/")

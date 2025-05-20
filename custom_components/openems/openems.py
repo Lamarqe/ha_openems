@@ -621,7 +621,7 @@ class OpenEMSBackend:
 
     def __init__(self, host: str, username: str, password: str) -> None:
         """Create a new OpenEMSBackend object."""
-        self.connection_type = CONN_TYPE_LOCAL_FEMS
+        self.connection_type = CONN_TYPE_DIRECT_EDGE
 
         self.host: str = host
         self.username: str = username
@@ -741,10 +741,5 @@ class OpenEMSBackend:
 
     async def read_edge_components(self, edge_id: str) -> dict:
         """Request config of an edge."""
-        try:
-            self.the_edge = OpenEMSEdge(self, edge_id)
-            components = await self.the_edge.read_components()
-        except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
-            return None
-        else:
-            return components
+        self.the_edge = OpenEMSEdge(self, edge_id)
+        return await self.the_edge.read_components()

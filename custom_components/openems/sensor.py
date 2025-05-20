@@ -78,7 +78,6 @@ async def async_setup_entry(
 
     backend: OpenEMSBackend = entry.runtime_data.backend
     device_registry = dr.async_get(hass)
-    # for all edges
     # Create the edge device
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
