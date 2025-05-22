@@ -8,6 +8,7 @@ from typing import Any
 
 import jsonrpc_base
 import voluptuous as vol
+from yarl import URL
 
 from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
@@ -15,7 +16,14 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.const import CONF_BASE, CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import (
+    CONF_BASE,
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_TYPE,
+    CONF_URL,
+    CONF_USERNAME,
+)
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     BooleanSelector,
@@ -26,44 +34,20 @@ from homeassistant.helpers.selector import (
 )
 
 from .__init__ import OpenEMSConfigEntry
-from .const import CONF_EDGE, CONF_EDGES, DOMAIN
+from .const import (
+    CONF_EDGE,
+    CONF_EDGES,
+    CONN_TYPE_CUSTOM_URL,
+    CONN_TYPE_DIRECT_EDGE,
+    CONN_TYPE_LOCAL_FEMS,
+    CONN_TYPE_LOCAL_OPENEMS,
+    CONN_TYPE_WEB_FENECON,
+    DOMAIN,
+    connection_url,
+)
 from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def step_user_data_schema(user_input=None) -> vol.Schema:
-    """Define the config flow input options."""
-    default_host = user_input[CONF_HOST] if user_input else ""
-    default_user = user_input[CONF_USERNAME] if user_input else "x"
-    default_pass = user_input[CONF_PASSWORD] if user_input else ""
-    return vol.Schema(
-        {
-            vol.Required(CONF_HOST, default=default_host): str,
-            vol.Required(CONF_USERNAME, default=default_user): str,
-            vol.Required(CONF_PASSWORD, default=default_pass): str,
-        }
-    )
-
-
-def step_edges_data_schema(edge_response: dict, default_edge) -> vol.Schema:
-    """Define the edges step input options."""
-    return vol.Schema(
-        {
-            vol.Required(
-                CONF_EDGES,
-                default=default_edge,
-            ): SelectSelector(
-                SelectSelectorConfig(
-                    options=[
-                        e["id"] for e in edge_response["edges"] if e.get("isOnline")
-                    ],
-                    multiple=False,
-                    mode=SelectSelectorMode.LIST,
-                )
-            ),
-        }
-    )
 
 
 class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -76,55 +60,141 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize."""
         self._config_data: dict[str, Any] = {}
 
+    def _step_user_data_schema(self, user_input=None) -> vol.Schema:
+        """Define the config flow input options."""
+        if not user_input:
+            user_input = {}
+        adv_schema = (
+            {
+                vol.Required(
+                    CONF_TYPE,
+                    default=user_input.get(CONF_TYPE, CONN_TYPE_DIRECT_EDGE),
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            CONN_TYPE_LOCAL_FEMS,
+                            CONN_TYPE_LOCAL_OPENEMS,
+                            CONN_TYPE_DIRECT_EDGE,
+                            CONN_TYPE_WEB_FENECON,
+                            CONN_TYPE_CUSTOM_URL,
+                        ],
+                        multiple=False,
+                        mode=SelectSelectorMode.LIST,
+                    )
+                ),
+                vol.Optional(CONF_URL, default=user_input.get(CONF_URL, "")): str,
+            }
+            if self.show_advanced_options
+            else {}
+        )
+        return vol.Schema(
+            {
+                vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str,
+                vol.Required(
+                    CONF_USERNAME, default=user_input.get(CONF_USERNAME, "")
+                ): str,
+                vol.Required(
+                    CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
+                ): str,
+                **adv_schema,
+            }
+        )
+
+    def _step_edges_data_schema(self, edge_response: dict, default_edge) -> vol.Schema:
+        """Define the edges step input options."""
+        return vol.Schema(
+            {
+                vol.Required(
+                    CONF_EDGES,
+                    default=default_edge,
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            e["id"] for e in edge_response["edges"] if e.get("isOnline")
+                        ],
+                        multiple=False,
+                        mode=SelectSelectorMode.LIST,
+                    )
+                ),
+            }
+        )
+
+    def _validate_user_input_complete(self, user_input) -> bool:
+        return user_input.get(CONF_TYPE) == CONN_TYPE_CUSTOM_URL and not user_input.get(
+            CONF_URL
+        )
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
-        data_schema = step_user_data_schema(user_input)
-        if user_input is not None:
-            backend = OpenEMSBackend(
-                user_input[CONF_HOST],
-                user_input[CONF_USERNAME],
-                user_input[CONF_PASSWORD],
-            )
-            self._config_data = user_input
-            try:
-                # connect
-                await asyncio.wait_for(backend.connect_to_server(), timeout=2)
-            except jsonrpc_base.TransportError as te:
-                errors[CONF_HOST] = f"{te.args[0]}: {te.args[1]}"
-            try:
-                # login
-                await asyncio.wait_for(backend.login_to_server(), timeout=2)
-            except jsonrpc_base.jsonrpc.ProtocolError as pe:
-                errors[CONF_PASSWORD] = f"{pe.args[0]}: {pe.args[1]}"
-            try:
-                edges = await asyncio.wait_for(backend.read_edges(), timeout=2)
-                if backend.multi_edge:
-                    if self.source == SOURCE_RECONFIGURE:
-                        default_edge = self._get_reconfigure_entry().data["user_input"][
-                            CONF_EDGE
-                        ]
-                    else:
-                        default_edge = None
+        if not user_input:
+            return self._show_form(user_input, errors)
 
-                    edges_schema = step_edges_data_schema(edges, default_edge)
-                    return self.async_show_form(
-                        step_id="edges",
-                        data_schema=edges_schema,
-                    )
+        if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
+            if not user_input.get(CONF_URL):
+                errors[CONF_URL] = "Custom URL must not be empty."
+                return self._show_form(user_input, errors)
 
-                # single edge backend, all required data has been received.
-                self._config_data[CONF_EDGE] = next(iter(edges["edges"]))["id"]
-                return await self._create_or_update_entry(backend)
+            conn_url = URL(user_input[CONF_URL])
+            if not conn_url.absolute:
+                errors[CONF_URL] = "Custom URL must be absolute."
+                return self._show_form(user_input, errors)
 
-            except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
-                _LOGGER.exception("Cannot read edge components")
-                errors[CONF_BASE] = "Cannot read edge components"
+        else:
+            conn_url = connection_url(user_input[CONF_TYPE], user_input[CONF_HOST])
 
+        backend = OpenEMSBackend(
+            conn_url,
+            user_input[CONF_USERNAME],
+            user_input[CONF_PASSWORD],
+        )
+        self._config_data = user_input
+        try:
+            # connect
+            await asyncio.wait_for(backend.connect_to_server(), timeout=2)
+        except jsonrpc_base.TransportError as te:
+            errors[CONF_HOST] = f"{te.args[0]}: {te.args[1]}"
+            return self._show_form(user_input, errors)
+
+        try:
+            # login
+            await asyncio.wait_for(backend.login_to_server(), timeout=2)
+        except jsonrpc_base.jsonrpc.ProtocolError as pe:
+            errors[CONF_PASSWORD] = f"{pe.args[0]}: {pe.args[1]}"
             await backend.stop()
+            return self._show_form(user_input, errors)
+
+        try:
+            edges = await asyncio.wait_for(backend.read_edges(), timeout=2)
+            if backend.multi_edge:
+                if self.source == SOURCE_RECONFIGURE:
+                    default_edge = self._get_reconfigure_entry().data["user_input"][
+                        CONF_EDGE
+                    ]
+                else:
+                    default_edge = None
+
+                edges_schema = self._step_edges_data_schema(edges, default_edge)
+                return self.async_show_form(
+                    step_id="edges",
+                    data_schema=edges_schema,
+                )
+
+            # single edge backend, all required data has been received.
+            self._config_data[CONF_EDGE] = next(iter(edges["edges"]))["id"]
+            return await self._create_or_update_entry(backend)
+
+        except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
+            _LOGGER.exception("Cannot read edge components")
+            errors[CONF_BASE] = "Cannot read edge components"
+            await backend.stop()
+            return self._show_form(user_input, errors)
+
+    def _show_form(self, user_input, errors):
         # show errors in form
+        data_schema = self._step_user_data_schema(user_input)
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors
         )
@@ -135,8 +205,15 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         # backend will be closed in case of success.
         # in case of exceptions, caller must stop the backend.
         if not backend:
+            if self._config_data[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
+                conn_url = URL(self._config_data[CONF_URL])
+            else:
+                conn_url = connection_url(
+                    self._config_data[CONF_TYPE], self._config_data[CONF_HOST]
+                )
+
             local_backend: OpenEMSBackend = OpenEMSBackend(
-                self._config_data[CONF_HOST],
+                conn_url,
                 self._config_data[CONF_USERNAME],
                 self._config_data[CONF_PASSWORD],
             )
@@ -202,7 +279,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         """Perform a reconfiguration."""
         return self.async_show_form(
             step_id="user",
-            data_schema=step_user_data_schema(
+            data_schema=self._step_user_data_schema(
                 self._get_reconfigure_entry().data["user_input"]
             ),
             errors=None,

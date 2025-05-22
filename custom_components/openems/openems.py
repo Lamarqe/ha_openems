@@ -24,6 +24,7 @@ from .const import (
     CONN_TYPE_LOCAL_FEMS,
     CONN_TYPE_REST,
     CONN_TYPE_WEB_FENECON,
+    CONN_TYPES,
     connection_url,
 )
 
@@ -245,12 +246,12 @@ class OpenEMSNumberProperty(OpenEMSProperty):
             component_property = component_reference[1:]
             component_reference = self.component.properties[component_property]
         channel = component_reference + "/" + channel_reference
-        if self.component.edge.backend.connection_type == CONN_TYPE_WEB_FENECON:
-            # retrieve the value via Websocket API
-            data = await self.component.edge.get_channel_values_via_websocket([channel])
-        else:
+        if self.component.edge.backend.rest_base_url:
             # retrieve the value via REST API
             data = await self.component.edge.get_channel_values_via_rest([channel])
+        else:
+            # retrieve the value via Websocket API
+            data = await self.component.edge.get_channel_values_via_websocket([channel])
         return data[channel]
 
 
@@ -468,13 +469,13 @@ class OpenEMSEdge:
                     continue
 
         config_channels = ["_host/Hostname"]
-        if self.backend.connection_type == CONN_TYPE_WEB_FENECON:
-            config_channels.extend(c + "/_PropertyAlias" for c in alias_components)
-            data = await self.get_channel_values_via_websocket(config_channels)
-        else:
+        if self.backend.rest_base_url:
             # optimize for performance by creating a regex
             config_channels.append("|".join(alias_components) + "/_PropertyAlias")
             data = await self.get_channel_values_via_rest(config_channels)
+        else:
+            config_channels.extend(c + "/_PropertyAlias" for c in alias_components)
+            data = await self.get_channel_values_via_websocket(config_channels)
 
         # store component aliases and hostname in the json config of the component
         for address, value in data.items():
@@ -577,7 +578,7 @@ class OpenEMSEdge:
 
         # create new connection and login
         rpc_server = jsonrpc_websocket.Server(
-            url=connection_url(self.backend.connection_type),
+            url=self.backend.ws_url,
             session=None,
             heartbeat=5,
         )
@@ -619,20 +620,18 @@ class OpenEMSEdge:
 class OpenEMSBackend:
     """Class which represents a connection to an OpenEMS backend."""
 
-    def __init__(self, host: str, username: str, password: str) -> None:
+    def __init__(self, ws_url: URL, username: str, password: str) -> None:
         """Create a new OpenEMSBackend object."""
-        self.connection_type = CONN_TYPE_DIRECT_EDGE
-
-        self.host: str = host
+        self.ws_url: URL = ws_url
         self.username: str = username
         self.password: str = password
         # self.username: str = "demo@fenecon.de"
         # self.password: str = "femsdemo"
-        self.ws_url: URL = connection_url(self.connection_type, host)
-        self.rest_base_url: URL | None = connection_url(CONN_TYPE_REST, host)
-        if self.connection_type == CONN_TYPE_WEB_FENECON:
+        if ws_url.host == CONN_TYPES[CONN_TYPE_WEB_FENECON]["host"]:
             # Fenecon Web portal does not support REST API access
-            self.rest_base_url = None
+            self.rest_base_url: URL | None = None
+        else:
+            self.rest_base_url: URL | None = connection_url(CONN_TYPE_REST, ws_url.host)
 
         self.rpc_server = jsonrpc_websocket.Server(
             self.ws_url, session=None, heartbeat=5

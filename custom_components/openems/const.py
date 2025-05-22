@@ -15,6 +15,7 @@ CONN_TYPE_DIRECT_EDGE = "direct_edge"
 CONN_TYPE_LOCAL_FEMS = "local_fems"
 CONN_TYPE_LOCAL_OPENEMS = "local_openems"
 CONN_TYPE_WEB_FENECON = "web_fenecon"
+CONN_TYPE_CUSTOM_URL = "custom_url"
 CONN_TYPE_REST = "rest"
 
 

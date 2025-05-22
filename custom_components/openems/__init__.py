@@ -10,12 +10,15 @@ from typing import ClassVar
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
 import voluptuous as vol
+from yarl import URL
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_HOST,
     CONF_PASSWORD,
+    CONF_TYPE,
+    CONF_URL,
     CONF_USERNAME,
     Platform,
 )
@@ -30,7 +33,7 @@ from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
-from .const import CONF_EDGE, DOMAIN
+from .const import CONF_EDGE, CONN_TYPE_CUSTOM_URL, DOMAIN, connection_url
 from .helpers import component_device, find_channel_in_backend
 from .openems import CONFIG, OpenEMSBackend
 
@@ -99,8 +102,15 @@ async def async_setup_entry(
     """Set up HA OpenEMS from a config entry."""
 
     # 1. Create API instance
+    if config_entry.data["user_input"][CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
+        conn_url = URL(config_entry.data["user_input"][CONF_URL])
+    else:
+        conn_url = connection_url(
+            config_entry.data["user_input"][CONF_TYPE],
+            config_entry.data["user_input"][CONF_HOST],
+        )
     backend = OpenEMSBackend(
-        config_entry.data["user_input"][CONF_HOST],
+        conn_url,
         config_entry.data["user_input"][CONF_USERNAME],
         config_entry.data["user_input"][CONF_PASSWORD],
     )
