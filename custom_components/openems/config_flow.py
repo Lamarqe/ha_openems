@@ -295,7 +295,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         elif self._config_data[CONF_TYPE] == CONN_TYPE_WEB_FENECON:
             title = "FEMS Web: " + self._config_data[CONF_USERNAME]
         else:
-            title = conn_url.host
+            title = backend.ws_url.host
         if backend.multi_edge:
             title += " " + self._config_data[CONF_EDGE]
 
