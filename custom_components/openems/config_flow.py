@@ -64,41 +64,50 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         """Define the config flow input options."""
         if not user_input:
             user_input = {}
-        adv_schema = (
-            {
-                vol.Required(
-                    CONF_TYPE,
-                    default=user_input.get(CONF_TYPE, CONN_TYPE_DIRECT_EDGE),
-                ): SelectSelector(
-                    SelectSelectorConfig(
-                        options=[
-                            CONN_TYPE_LOCAL_FEMS,
-                            CONN_TYPE_LOCAL_OPENEMS,
-                            CONN_TYPE_DIRECT_EDGE,
-                            CONN_TYPE_WEB_FENECON,
-                            CONN_TYPE_CUSTOM_URL,
-                        ],
-                        multiple=False,
-                        mode=SelectSelectorMode.LIST,
-                    )
-                ),
-                vol.Optional(CONF_URL, default=user_input.get(CONF_URL, "")): str,
-            }
-            if self.show_advanced_options
-            else {}
+        schema: vol.Schema = vol.Schema(
+            {vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str}
         )
-        return vol.Schema(
+        if self.show_advanced_options:
+            schema = schema.extend(
+                {vol.Optional(CONF_HOST, default=user_input.get(CONF_HOST, "")): str}
+            )
+        else:
+            schema = schema.extend(
+                {vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str}
+            )
+        schema = schema.extend(
             {
-                vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str,
                 vol.Required(
                     CONF_USERNAME, default=user_input.get(CONF_USERNAME, "")
                 ): str,
                 vol.Required(
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
-                **adv_schema,
-            }
+            },
         )
+        if self.show_advanced_options:
+            schema = schema.extend(
+                {
+                    vol.Required(
+                        CONF_TYPE,
+                        default=user_input.get(CONF_TYPE, CONN_TYPE_DIRECT_EDGE),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[
+                                CONN_TYPE_LOCAL_FEMS,
+                                CONN_TYPE_LOCAL_OPENEMS,
+                                CONN_TYPE_DIRECT_EDGE,
+                                CONN_TYPE_WEB_FENECON,
+                                CONN_TYPE_CUSTOM_URL,
+                            ],
+                            multiple=False,
+                            mode=SelectSelectorMode.LIST,
+                        )
+                    ),
+                    vol.Optional(CONF_URL, default=user_input.get(CONF_URL, "")): str,
+                }
+            )
+        return schema
 
     def _step_edges_data_schema(self, edge_response: dict, default_edge) -> vol.Schema:
         """Define the edges step input options."""
@@ -129,7 +138,24 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
+
+        # preset connection type for non-advanced users
+        if not self.show_advanced_options:
+            user_input[CONF_TYPE] = CONN_TYPE_DIRECT_EDGE
+
         if not user_input:
+            return self._show_form(user_input, errors)
+
+        if (
+            user_input[CONF_TYPE]
+            in [
+                CONN_TYPE_DIRECT_EDGE,
+                CONN_TYPE_LOCAL_FEMS,
+                CONN_TYPE_LOCAL_OPENEMS,
+            ]
+            and not user_input.get(CONF_HOST, "").strip()
+        ):
+            errors[CONF_HOST] = "Please provide host for local connection."
             return self._show_form(user_input, errors)
 
         if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
@@ -137,13 +163,22 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_URL] = "Custom URL must not be empty."
                 return self._show_form(user_input, errors)
 
-            conn_url = URL(user_input[CONF_URL])
+            try:
+                conn_url = URL(user_input[CONF_URL])
+            except ValueError as e:
+                errors[CONF_URL] = f"Invalid URL provided: {e!s}."
+                return self._show_form(user_input, errors)
+
             if not conn_url.absolute:
                 errors[CONF_URL] = "Custom URL must be absolute."
                 return self._show_form(user_input, errors)
 
         else:
-            conn_url = connection_url(user_input[CONF_TYPE], user_input[CONF_HOST])
+            try:
+                conn_url = connection_url(user_input[CONF_TYPE], user_input[CONF_HOST])
+            except ValueError as e:
+                errors[CONF_HOST] = str(e)
+                return self._show_form(user_input, errors)
 
         backend = OpenEMSBackend(
             conn_url,
@@ -250,9 +285,21 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         for component in components:
             options[component] = CONFIG.is_component_enabled(component)
 
-        return self.async_create_entry(
-            title=self._config_data[CONF_HOST], data=entry_data, options=options
-        )
+        # Create meaningful entry title, alter strategy based on selected options
+        if self._config_data[CONF_TYPE] in [
+            CONN_TYPE_DIRECT_EDGE,
+            CONN_TYPE_LOCAL_FEMS,
+            CONN_TYPE_LOCAL_OPENEMS,
+        ]:
+            title = self._config_data[CONF_HOST]
+        elif self._config_data[CONF_TYPE] == CONN_TYPE_WEB_FENECON:
+            title = "FEMS Web: " + self._config_data[CONF_USERNAME]
+        else:
+            title = conn_url.host
+        if backend.multi_edge:
+            title += " " + self._config_data[CONF_EDGE]
+
+        return self.async_create_entry(title=title, data=entry_data, options=options)
 
     async def async_step_edges(
         self, user_input: dict[str, Any] | None = None
