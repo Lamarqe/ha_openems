@@ -5,8 +5,14 @@
         },
         "error": {
             "cannot_connect": "Failed to connect",
+            "cannot_read_components": "Cannot read edge components",
+            "custom_url_missing": "Custom URL must not be empty",
+            "error_processing_edge": "Error during processing the selected edge",
+            "host_missing": "Please provide host for local connection",
             "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
+            "invalid_url": "Invalid URL provided",
+            "unknown": "Unexpected error",
+            "url_not_absolute": "Custom URL must be absolute"
         },
         "step": {
             "edges": {
@@ -18,7 +24,15 @@
                 "data": {
                     "host": "Host",
                     "password": "Password",
+                    "type": "Connection type",
+                    "url": "Custom URL",
                     "username": "Username"
+                },
+                "data_description": {
+                    "host": "The hostname or IP address of your Fenecon or OpenEMS system",
+                    "password": "For local monitoring, common values are \"guest\" or \"owner\"",
+                    "url": "Custom Websocket URL, eg: ws://192.168.1.100:8888/websocket",
+                    "username": "The username to access the system. Use \"x\" for local monitoring access"
                 },
                 "description": "Set required parameter to connect to your FEMS / OpenEMS system"
             }
@@ -28,57 +42,68 @@
         "select": {
             "ctrlEvcs/ChargeMode": {
                 "state": {
-                    "EXCESS_POWER": "\u00dcberschuss",
-                    "FORCE_CHARGE": "Zielwert"
+                    "EXCESS_POWER": "Excess power",
+                    "FORCE_CHARGE": "Force charge"
                 }
             },
             "ctrlEvcs/Priority": {
                 "state": {
-                    "CAR": "Auto",
-                    "STORAGE": "Speicher"
+                    "CAR": "Car",
+                    "STORAGE": "Storage"
                 }
             },
             "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
                 "state": {
-                    "HIGH": "Hoch",
-                    "LOW": "Gering",
-                    "MEDIUM": "Mittel"
+                    "HIGH": "High",
+                    "LOW": "Low",
+                    "MEDIUM": "Medium"
                 }
             },
             "ctrlGridOptimizedCharge/Mode": {
                 "state": {
-                    "AUTOMATIC": "Automatisch",
-                    "MANUAL": "Manuell",
-                    "OFF": "Aus"
+                    "AUTOMATIC": "Automatic",
+                    "MANUAL": "Manual",
+                    "OFF": "Off"
                 }
             }
         },
         "sensor": {
             "ctrlGridOptimizedCharge/DelayChargeState": {
                 "state": {
-                    "Active limit": "Begrenzung aktiv",
-                    "Avoid charging with low power for more efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
-                    "Delay charge part is disabled": "Verz\u00f6gerte Ladung deaktiviert",
-                    "Delay charge was not started because there is no production or to less production": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
-                    "Limit cannot be adapted because of other constraints with higher priority": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
-                    "No active limitation": "Keine Begrenzung aktiv",
-                    "No remaining capacity": "Keine Kapazit\u00e4t verbleibend",
-                    "No remaining time": "Keine Zeit verbleibend",
-                    "Target minute not calculated": "Zielzeitpunkt nicht berechet",
-                    "Undefined": "Nicht definiert"
+                    "Active limit": "Active limit",
+                    "Avoid charging with low power for more efficiency": "Avoid charging with low power for more efficiency",
+                    "Delay charge part is disabled": "Delay charge part is disabled",
+                    "Delay charge was not started because there is no production or to less production": "Delay charge was not started because there is no production or to less production",
+                    "Limit cannot be adapted because of other constraints with higher priority": "Limit cannot be adapted because of other constraints with higher priority",
+                    "No active limitation": "No active limitation",
+                    "No remaining capacity": "No remaining capacity",
+                    "No remaining time": "No remaining time",
+                    "Target minute not calculated": "Target minute not calculated",
+                    "Undefined": "Undefined"
                 }
             },
             "evcs/Status": {
                 "state": {
                     "Charging": "Ladevorgang aktiv",
-                    "Charging rejected": "Laden verweigert",
-                    "Error": "Fehler",
-                    "Not ready for Charging": "Nicht bereit zum Laden",
-                    "Ready for Charging": "Bereit zum Laden",
-                    "Starting": "Starte...",
-                    "The charging limit reached": "Ladelimit erreicht",
-                    "Undefined": "Nicht definiert"
+                    "Charging rejected": "Charging rejected",
+                    "Error": "Error",
+                    "Not ready for Charging": "Not ready for Charging",
+                    "Ready for Charging": "Ready for Charging",
+                    "Starting": "Starting",
+                    "The charging limit reached": "The charging limit reached",
+                    "Undefined": "Undefined"
                 }
+            }
+        }
+    },
+    "selector": {
+        "connection_type": {
+            "options": {
+                "custom_url": "Custom Websocket URL (hostname option will not be used)",
+                "direct_edge": "Direct edge Websocket connection (port 8085)",
+                "local_fems": "FEMS local monitoring (port 80)",
+                "local_openems": "OpenEMS local monitoring (port 8082)",
+                "web_fenecon": "Fenecon online monitoring at portal.fenecon.de (hostname option will not be used)"
             }
         }
     }

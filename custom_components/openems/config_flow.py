@@ -100,6 +100,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                                 CONN_TYPE_WEB_FENECON,
                                 CONN_TYPE_CUSTOM_URL,
                             ],
+                            translation_key="connection_type",
                             multiple=False,
                             mode=SelectSelectorMode.LIST,
                         )
@@ -155,22 +156,23 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
             ]
             and not user_input.get(CONF_HOST, "").strip()
         ):
-            errors[CONF_HOST] = "Please provide host for local connection."
+            errors[CONF_HOST] = "host_missing"
             return self._show_form(user_input, errors)
 
         if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
             if not user_input.get(CONF_URL):
-                errors[CONF_URL] = "Custom URL must not be empty."
+                errors[CONF_URL] = "custom_url_missing"
                 return self._show_form(user_input, errors)
 
             try:
                 conn_url = URL(user_input[CONF_URL])
             except ValueError as e:
-                errors[CONF_URL] = f"Invalid URL provided: {e!s}."
+                errors[CONF_URL] = "invalid_url"
+                errors[CONF_BASE] = str(e)
                 return self._show_form(user_input, errors)
 
             if not conn_url.absolute:
-                errors[CONF_URL] = "Custom URL must be absolute."
+                errors[CONF_URL] = "url_not_absolute"
                 return self._show_form(user_input, errors)
 
         else:
@@ -223,7 +225,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
 
         except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
             _LOGGER.exception("Cannot read edge components")
-            errors[CONF_BASE] = "Cannot read edge components"
+            errors[CONF_BASE] = "cannot_read_components"
             await backend.stop()
             return self._show_form(user_input, errors)
 
@@ -313,7 +315,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self._create_or_update_entry()
             except (jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError):
                 _LOGGER.exception("Error during processing the selected edge")
-                errors[CONF_EDGES] = "Error during processing the selected edge"
+                errors[CONF_EDGES] = "error_processing_edge"
 
         # show errors in form
         return self.async_show_form(

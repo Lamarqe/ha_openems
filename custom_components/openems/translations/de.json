@@ -1,20 +1,40 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Device is already configured"
+            "already_configured": "Gerät bereits konfiguriert"
         },
         "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
+            "cannot_connect": "Verbindung fehlgeschlagen",
+            "cannot_read_components": "Edge Komponenten konnten nicht geladen werden",
+            "custom_url_missing": "Individuelle URL nicht angegeben",
+            "error_processing_edge": "Fehler beim Lesen der Edge Konfiguration",
+            "host_missing": "Bitte Hostnamen für die Verbindung angeben",
+            "invalid_auth": "Fehler während der Authentifizierung",
+            "invalid_url": "Ungültige URL angegeben",
+            "unknown": "Unerwarter Fehler",
+            "url_not_absolute": "Indiviudelle URL muss absolut sein."
         },
         "step": {
+            "edges": {
+                "data": {
+                    "edges": "OpenEMS Edge zur Integration auswählen"
+                }
+            },
             "user": {
                 "data": {
                     "host": "Host",
-                    "password": "Password",
-                    "username": "Username"
-                }
+                    "password": "Passwort",
+                    "type": "Verbindungstyp",
+                    "url": "Individuelle URL",
+                    "username": "Benutzername"
+                },
+                "data_description": {
+                    "host": "Der Hostname oder die IP Addresse des Fenecon oder OpenEMS systems",
+                    "password": "Standardwerte für das lokale Monitoring: \"guest\" oder \"owner\"",
+                    "url": "Individuelle WebSocket URL",
+                    "username": "Der Benutzername um auf das System zuzugreifen. Verwende \"x\" für das lokale Monitoring."
+                },
+                "description": "Einstellungen der FEMS / OpenEMS Verbindungsparameter"
             }
         }
     },
@@ -73,6 +93,17 @@
                     "The charging limit reached": "Ladelimit erreicht",
                     "Undefined": "Nicht definiert"
                 }
+            }
+        }
+    },
+    "selector": {
+        "connection_type": {
+            "options": {
+                "custom_url": "Individuelle Websocket URL (angegebener Hostname wird nicht verwendet)",
+                "direct_edge": "Direkte Edge Websocket Verbindung (Port 8085)",
+                "local_fems": "FEMS lokales Monitoring (Port 80)",
+                "local_openems": "OpenEMS lokales Monitoring (Port 8082)",
+                "web_fenecon": "Fenecon Online Monitoring auf portal.fenecon.de (angegebener Hostname wird nicht verwendet)"
             }
         }
     }
