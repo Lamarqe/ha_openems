@@ -33,7 +33,13 @@ from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
-from .const import CONF_EDGE, CONN_TYPE_CUSTOM_URL, DOMAIN, connection_url
+from .const import (
+    CONF_EDGE,
+    CONN_TYPE_CUSTOM_URL,
+    CONN_TYPE_DIRECT_EDGE,
+    DOMAIN,
+    connection_url,
+)
 from .helpers import component_device, find_channel_in_backend
 from .openems import CONFIG, OpenEMSBackend
 
@@ -176,6 +182,7 @@ async def async_migrate_entry(
                 "components": components,
             }
             new_data["user_input"][CONF_EDGE] = edge_id
+            new_data["user_input"][CONF_TYPE] = CONN_TYPE_DIRECT_EDGE
             # delete config store data
             await store_conf.async_remove()
 
