@@ -140,12 +140,12 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
 
+        if not user_input:
+            return self._show_form(user_input, errors)
+
         # preset connection type for non-advanced users
         if not self.show_advanced_options:
             user_input[CONF_TYPE] = CONN_TYPE_DIRECT_EDGE
-
-        if not user_input:
-            return self._show_form(user_input, errors)
 
         if (
             user_input[CONF_TYPE]
