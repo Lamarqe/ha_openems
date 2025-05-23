@@ -19,14 +19,7 @@ import jsonrpc_base
 import jsonrpc_websocket
 from yarl import URL
 
-from .const import (
-    CONN_TYPE_DIRECT_EDGE,
-    CONN_TYPE_LOCAL_FEMS,
-    CONN_TYPE_REST,
-    CONN_TYPE_WEB_FENECON,
-    CONN_TYPES,
-    connection_url,
-)
+from .const import CONN_TYPE_REST, CONN_TYPE_WEB_FENECON, CONN_TYPES, connection_url
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -625,8 +618,6 @@ class OpenEMSBackend:
         self.ws_url: URL = ws_url
         self.username: str = username
         self.password: str = password
-        # self.username: str = "demo@fenecon.de"
-        # self.password: str = "femsdemo"
         if ws_url.host == CONN_TYPES[CONN_TYPE_WEB_FENECON]["host"]:
             # Fenecon Web portal does not support REST API access
             self.rest_base_url: URL | None = None
