@@ -9,8 +9,6 @@ DOMAIN = "openems"
 CONF_EDGES = "edges"
 CONF_EDGE = "edge"
 
-STORAGE_VERSION = 1
-
 CONN_TYPE_DIRECT_EDGE = "direct_edge"
 CONN_TYPE_LOCAL_FEMS = "local_fems"
 CONN_TYPE_LOCAL_OPENEMS = "local_openems"

@@ -187,47 +187,49 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
             user_input[CONF_USERNAME],
             user_input[CONF_PASSWORD],
         )
-        self._config_data = user_input
         try:
-            # connect
-            await asyncio.wait_for(backend.connect_to_server(), timeout=2)
-        except jsonrpc_base.TransportError as te:
-            errors[CONF_HOST] = f"{te.args[0]}: {te.args[1]}"
-            return self._show_form(user_input, errors)
+            self._config_data = user_input
+            try:
+                # connect
+                await asyncio.wait_for(backend.connect_to_server(), timeout=2)
+            except jsonrpc_base.TransportError as te:
+                errors[CONF_HOST] = f"{te.args[0]}: {te.args[1]}"
+                return self._show_form(user_input, errors)
 
-        try:
-            # login
-            await asyncio.wait_for(backend.login_to_server(), timeout=2)
-        except jsonrpc_base.jsonrpc.ProtocolError as pe:
-            errors[CONF_PASSWORD] = f"{pe.args[0]}: {pe.args[1]}"
+            try:
+                # login
+                await asyncio.wait_for(backend.login_to_server(), timeout=2)
+            except jsonrpc_base.jsonrpc.ProtocolError as pe:
+                errors[CONF_PASSWORD] = f"{pe.args[0]}: {pe.args[1]}"
+                return self._show_form(user_input, errors)
+
+            try:
+                edges = await asyncio.wait_for(backend.read_edges(), timeout=2)
+                if backend.multi_edge:
+                    if self.source == SOURCE_RECONFIGURE:
+                        default_edge = self._get_reconfigure_entry().data["user_input"][
+                            CONF_EDGE
+                        ]
+                    else:
+                        default_edge = None
+
+                    edges_schema = self._step_edges_data_schema(edges, default_edge)
+                    return self.async_show_form(
+                        step_id="edges",
+                        data_schema=edges_schema,
+                    )
+
+                # single edge backend, all required data has been received.
+                self._config_data[CONF_EDGE] = next(iter(edges["edges"]))["id"]
+                return await self._create_or_update_entry(backend)
+
+            except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
+                _LOGGER.exception("Cannot read edge components")
+                errors[CONF_BASE] = "cannot_read_components"
+                return self._show_form(user_input, errors)
+
+        finally:
             await backend.stop()
-            return self._show_form(user_input, errors)
-
-        try:
-            edges = await asyncio.wait_for(backend.read_edges(), timeout=2)
-            if backend.multi_edge:
-                if self.source == SOURCE_RECONFIGURE:
-                    default_edge = self._get_reconfigure_entry().data["user_input"][
-                        CONF_EDGE
-                    ]
-                else:
-                    default_edge = None
-
-                edges_schema = self._step_edges_data_schema(edges, default_edge)
-                return self.async_show_form(
-                    step_id="edges",
-                    data_schema=edges_schema,
-                )
-
-            # single edge backend, all required data has been received.
-            self._config_data[CONF_EDGE] = next(iter(edges["edges"]))["id"]
-            return await self._create_or_update_entry(backend)
-
-        except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
-            _LOGGER.exception("Cannot read edge components")
-            errors[CONF_BASE] = "cannot_read_components"
-            await backend.stop()
-            return self._show_form(user_input, errors)
 
     def _show_form(self, user_input, errors):
         # show errors in form
@@ -237,41 +239,14 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def _create_or_update_entry(
-        self, backend: OpenEMSBackend | None = None
+        self, backend: OpenEMSBackend
     ) -> ConfigFlowResult:
-        # backend will be closed in case of success.
-        # in case of exceptions, caller must stop the backend.
-        if not backend:
-            if self._config_data[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
-                conn_url = URL(self._config_data[CONF_URL])
-            else:
-                conn_url = connection_url(
-                    self._config_data[CONF_TYPE], self._config_data[CONF_HOST]
-                )
-
-            local_backend: OpenEMSBackend = OpenEMSBackend(
-                conn_url,
-                self._config_data[CONF_USERNAME],
-                self._config_data[CONF_PASSWORD],
-            )
-            await local_backend.connect_to_server()
-            await local_backend.login_to_server()
-            backend = local_backend
-        else:
-            local_backend = None
-
         # read edge components to validate it is correctly running
         # and to initialize entry options
-        try:
-            components = await asyncio.wait_for(
-                backend.read_edge_components(self._config_data[CONF_EDGE]),
-                timeout=10,
-            )
-            await backend.stop()
-        except (jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError):
-            if local_backend:
-                await local_backend.stop()
-            raise
+        components = await asyncio.wait_for(
+            backend.read_edge_components(self._config_data[CONF_EDGE]),
+            timeout=10,
+        )
 
         entry_data = {"user_input": self._config_data, "components": components}
 
@@ -311,11 +286,27 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         edges_schema = self.cur_step["data_schema"]
         if user_input is not None:
             self._config_data[CONF_EDGE] = user_input[CONF_EDGES]
+            if self._config_data[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
+                conn_url = URL(self._config_data[CONF_URL])
+            else:
+                conn_url = connection_url(
+                    self._config_data[CONF_TYPE], self._config_data[CONF_HOST]
+                )
+
+            backend: OpenEMSBackend = OpenEMSBackend(
+                conn_url,
+                self._config_data[CONF_USERNAME],
+                self._config_data[CONF_PASSWORD],
+            )
             try:
-                return await self._create_or_update_entry()
+                await backend.connect_to_server()
+                await backend.login_to_server()
+                return await self._create_or_update_entry(backend)
             except (jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError):
                 _LOGGER.exception("Error during processing the selected edge")
                 errors[CONF_EDGES] = "error_processing_edge"
+            finally:
+                await backend.stop()
 
         # show errors in form
         return self.async_show_form(

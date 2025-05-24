@@ -709,7 +709,8 @@ class OpenEMSBackend:
             self._reconnect_task.cancel()
             self._reconnect_task = None
         await self.rpc_server.close()
-        self.the_edge.stop()
+        if self.the_edge:
+            self.the_edge.stop()
 
     def set_component_config(self, edge_id, components: dict) -> OpenEMSEdge:
         """Prepare edge and all its components."""
