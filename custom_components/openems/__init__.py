@@ -41,7 +41,7 @@ from .const import (
     connection_url,
 )
 from .helpers import component_device, find_channel_in_backend
-from .openems import CONFIG, OpenEMSBackend
+from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             return
         config_entry = hass.config_entries.async_get_entry(entry.config_entry_id)
         backend: OpenEMSBackend = config_entry.runtime_data.backend
-        channel = find_channel_in_backend(backend, entry.unique_id)
+        channel: OpenEMSChannel = find_channel_in_backend(backend, entry.unique_id)
         try:
             await channel.update_value(value)
         except AttributeError:

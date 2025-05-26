@@ -1,0 +1,16 @@
+[
+    {
+        "component_regexp":"ctrlEvcs\\d+",
+        "rules": [
+            {
+                "channel":"_PropertyEnabledCharging",
+                "requires": ["_PropertyChargeMode"],
+                "when": true
+            },
+            {
+                "channel":"_PropertyChargeMode",
+                "requires":["_PropertyEnabledCharging"]
+            }
+        ]
+    }
+]

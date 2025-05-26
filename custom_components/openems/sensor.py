@@ -120,26 +120,16 @@ class OpenEMSSensorEntity(SensorEntity):
         self._attr_device_info = device_info
         self._attr_should_poll = False
         self._attr_extra_state_attributes = channel.orig_json
-        self._state: int = None
-
-    def handle_current_value(self, value) -> None:
-        """Handle a state update."""
-        if value in self._channel.options:
-            value = self._channel.options[value]
-
-        if self._state != value:
-            self._state = value
-            self.async_schedule_update_ha_state()
 
     @property
     def native_value(self) -> int | None:
         """Return the value of the sensor."""
-        return self._state
+        return self._channel.native_value
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
         self._channel.register_callback(
-            self.handle_current_value,
+            self.async_schedule_update_ha_state,
         )
         await super().async_added_to_hass()
 

@@ -109,18 +109,11 @@ class OpenEMSNumberEntity(NumberEntity):
         self._attr_device_info = device_info
         self._attr_should_poll = False
         self._attr_extra_state_attributes = channel.orig_json
-        self._value = None
-
-    def handle_current_value(self, new_value) -> None:
-        """Handle a number update."""
-        if self._value != new_value:
-            self._value = new_value
-            self.async_schedule_update_ha_state()
 
     @property
     def native_value(self) -> int | None:
         """Return the value of the number entity."""
-        return self._value
+        return self._channel.native_value
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the current value."""
@@ -130,7 +123,7 @@ class OpenEMSNumberEntity(NumberEntity):
     async def async_added_to_hass(self) -> None:
         """Entity created."""
         self._channel.register_callback(
-            self.handle_current_value,
+            self.async_schedule_update_ha_state,
         )
         await super().async_added_to_hass()
 

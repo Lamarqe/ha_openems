@@ -93,25 +93,11 @@ class OpenEMSSelectEntity(SelectEntity):
         self._attr_device_info = device_info
         self._attr_should_poll = False
         self._attr_extra_state_attributes = channel.orig_json
-        self._raw_value = None
-
-    def handle_current_value(self, value) -> None:
-        """Handle a state update."""
-        if self._raw_value != value:
-            previous_option = self.current_option
-            self._raw_value = value
-            if previous_option != self.current_option:
-                self.async_schedule_update_ha_state()
 
     @property
     def current_option(self) -> str | None:
         """Return the current option."""
-        if (
-            isinstance(self._raw_value, str)
-            and self._raw_value in self.entity_description.options
-        ):
-            return self._raw_value
-        return None
+        return self._channel.current_option
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
@@ -121,7 +107,7 @@ class OpenEMSSelectEntity(SelectEntity):
     async def async_added_to_hass(self) -> None:
         """Entity created."""
         self._channel.register_callback(
-            self.handle_current_value,
+            self.async_schedule_update_ha_state,
         )
         await super().async_added_to_hass()
 
