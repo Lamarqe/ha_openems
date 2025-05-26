@@ -206,7 +206,7 @@ class OpenEMSProperty(OpenEMSChannel):
                     if chan.name == channel_name
                 )
                 properties.append(
-                    (self.name[9].lower() + self.name[10:], channel.current_value)
+                    (channel.name[9].lower() + channel.name[10:], channel.current_value)
                 )
 
         await self.component.update_config(properties)
