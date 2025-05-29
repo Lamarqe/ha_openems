@@ -1,6 +1,6 @@
 
 # ha_openems
-Home Assistant integration that interfaces FEMS and OpenEMS.
+Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 
 ## Overview
 
@@ -145,7 +145,7 @@ Here you find the grids frequency.\
 
 1. Install HACS (https://hacs.xyz/docs/setup/download)
 2. Manually add [this repository](https://github.com/Lamarqe/ha_openems) to HACS
-3. Select and enable "FEMS & OpenEMS" Integration
+3. Select and enable "Fenecon FEMS & OpenEMS" Integration
 
 ## Configuration
 Navigate to Settings -> Devices & Services -> Integrations. Click "Add Integration" and select "Fenecon FEMS & OpenEMS" from the list.
