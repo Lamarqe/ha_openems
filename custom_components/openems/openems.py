@@ -375,6 +375,7 @@ class OpenEMSComponent:
         self.ref_values: dict = {}
         self.properties: dict = json_def["properties"]
         self.sensors: list[OpenEMSChannel] = []
+        self.boolean_sensors: list[OpenEMSChannel] = []
         self.enum_properties: list[OpenEMSEnumProperty] = []
         self.number_properties: list[OpenEMSNumberProperty] = []
         self.boolean_properties: list[OpenEMSBooleanProperty] = []
@@ -424,7 +425,11 @@ class OpenEMSComponent:
 
             else:
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
-                self.sensors.append(channel)
+                match channel_json["type"]:
+                    case "BOOLEAN":
+                        self.boolean_sensors.append(channel)
+                    case _:
+                        self.sensors.append(channel)
 
     async def update_config(self, channels: list[tuple[str, Any]]):
         """Send updateComponentConfig request to backend."""
@@ -446,6 +451,7 @@ class OpenEMSComponent:
         """Return all channels of the component (all platforms)."""
         return [
             *self.sensors,
+            *self.boolean_sensors,
             *self.enum_properties,
             *self.number_properties,
             *self.boolean_properties,
