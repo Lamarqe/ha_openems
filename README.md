@@ -202,7 +202,6 @@ Futhermore, in case the connection details shall be adjusted, you can use the sa
 
 ### Limitations
 
- - Due to missing test environments, multi-edge systems are expected to cause problems. Issues will be resolved in cooperation with first users. Please give it a try and report bugs here.
 - This integration is not affiliated with Fenecon.
 	- Fenecon might change APIs with upcoming version.
 	- The developers take no responsibility for anything that happens to your equipment due to this integration. I.e., 
