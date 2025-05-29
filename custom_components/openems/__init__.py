@@ -235,7 +235,6 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     entity_registry = er.async_get(hass)
     device_registry = dr.async_get(hass)
 
-    # for all edges
     for comp_name, component in backend.the_edge.components.items():
         if not entry.options[comp_name] and component.create_entities:
             # remove entities

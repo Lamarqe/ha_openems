@@ -9,7 +9,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -33,12 +33,32 @@ async def async_setup_entry(
         device = component_device(component)
         # create empty device explicitly, in case their are no entities
         device_registry = dr.async_get(hass)
+
+        # ==================== TODO REMOVE_LATER_START ============================
+        # remove duplicate (non-binary) sensors if they exist
+        entity_registry = er.async_get(hass)
+        er_device = device_registry.async_get_device(device["identifiers"])
+        ha_entities = er.async_entries_for_device(entity_registry, er_device.id, True)
+        # ==================== TODO REMOVE_LATER_END =============================
+
         device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
 
         entities: list[OpenEMSBinarySensorEntity] = []
         channel: OpenEMSChannel
         channel_list: list[OpenEMSChannel] = component.boolean_sensors
+
         for channel in channel_list:
+            # ==================== TODO REMOVE_LATER_START ============================
+            # remove duplicate (non-binary) sensors if they exist
+            wrong_analog_sensors = [
+                e
+                for e in ha_entities
+                if e.domain == Platform.SENSOR and e.unique_id == channel.unique_id()
+            ]
+            if wrong_analog_sensors:
+                entity_registry.async_remove(wrong_analog_sensors[0].entity_id)
+            # ==================== TODO REMOVE_LATER_END =============================
+
             # device_class = BinarySensorDeviceClass.WE_DONT_KNOW
             enable_by_default = CONFIG.is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMSBinarySensorDescription(
