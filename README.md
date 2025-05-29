@@ -10,7 +10,9 @@ Home Assistant integration that interfaces FEMS and OpenEMS.
 	*	[Components](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_openems_component) are made available as Home Assistant service devices. 
 	*	[Channels](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_channel) are made available as entities.\
    		<img src="screenshots/config_entry.jpg" width="600"/>
-*	Pre-configured UI cards for Storage, Charging Station and Optimized Charges apps. These cards are equal in the offered functionality as the regular Fenecon/OpenEMS built-in UI components. 
+*	Pre-configured UI cards for Storage, Charging Station and Optimized Charges apps. These cards are equal in the offered functionality as the regular Fenecon/OpenEMS built-in UI components.
+* Works with Fenecon and OpenEMS single and multi-edge systems.
+* Advanced configuration options to support non-standard connection types.
 
 ## Features / Common Use-cases:
 
@@ -139,18 +141,45 @@ Here you find the grids frequency.\
 3. Select and enable "FEMS & OpenEMS" Integration
 
 ## Configuration
-### Basic configuration
-1. Enter your connection details: 
-   - IP address or hostname
-   - User name (typically "x" for FEMS systems)
-   - Password:
-     - `user` for read-only access
-     - `owner` for control access
+Navigate to Settings -> Devices & Services -> Integrations. Click "Add Integration" and select "Fenecon FEMS & OpenEMS" from the list.
+### Main configuration dialog
+Enter your connection details: 
+Parameter | Description
+------ | ---------- 
+Host | The hostname or IP address of your Fenecon or OpenEMS system. E.g. `fems12345` or `192.168.1.100`
+Username | The username to access the system. Use `x` for local monitoring access. For FEMS online monitoring, your Email address is used as username
+Password | For local monitoring, common values are `guest` or `owner`
+Connection Type<br> | Choose 1 of the 5 supported connection types:<br><li>FEMS local monitoring (port 80)</li><li>OpenEMS local monitoring (port 8082)</li><li>Direct edge Websocket connection (port 8085). This is the standard connection type and pre-selected by default</li><li>Fenecon online monitoring at portal.fenecon.de (hostname option will not be used)</li><li>Custom Websocket URL (hostname option will not be used)</li>
+Custom URL* | Custom Websocket URL, eg: `ws://192.168.1.100:8888/websocket`
 
-If you only want to use the default options, you are all set. 
-### Advanced configuration
-2. Select "configure" on the config entry and select the devices for which you want entities to be created (skip this part if you only want to use the default options)
-3. Enable additional entities 
+*Options _Connection Type_ and _Custom URL_ are visible only to users who enabled **Advanced Mode**: In the bottom left, select your username to go to your [User profile](https://my.home-assistant.io/redirect/profile), and enable Advanced mode.
+
+#### Selection of components and channels to be integrated
+After setting up the config entry, there is a [default list](https://github.com/Lamarqe/ha_openems/blob/main/custom_components/openems/config/default_channels.json) of entities which is enabled. Entities for channels outside of these components are initially not created. Other entities within the created components are disabled by default.
+
+In order to add or remove entities of additional or unwanted components, start the options flow by selecting the Configure option right next to the config entry name:
+
+<img src="screenshots/options_flow.jpg" width="400"/>
+Afterwards, a dialog will appear which allows to enable or disable each component in the configured system (screenshot shortened, depenent on your system, there can be 20 to 50 components available in the system:
+
+<img src="screenshots/options_dialog.jpg" width="200"/>
+
+#### Select entities that will be active in Home Assistant 
+Also for enabled components, most of the entities created are disabled by default. In order to adjust the selection, click the entities number of the config entry ("1038 entities" in the screenshot above).
+This will open the entities dialog. In this dialog, (1) activate multi-select, (2) select the entities you want to enable or disable, then (3) enable / disable the selected items via the 3 dot menu on the top right:
+
+<img src="screenshots/entity_selection.jpg" width="500"/>
+**Only enabled entities will be subscribed in the backed!**
+
+#### Check the backend for configuration changes, change connection details
+In case of changes in the backend, users can check the backend for changes and with that update the config entries list of components and channels.
+In order to do so, select the 3 dots next to the config entry. From the resulting menu, select **Reload**
+
+Futhermore, in case the connection details shall be adjusted, you can use the same menu and select **Reconfigure**. This will bring up the main config dialog and allow you to make all necessary changes.
+
+<img src="screenshots/reload_reconfigure.jpg" width="600"/>
+
+
 
 ## Disclaimer
 
