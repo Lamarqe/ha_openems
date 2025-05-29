@@ -14,6 +14,13 @@ Home Assistant integration that interfaces FEMS and OpenEMS.
 * Works with Fenecon and OpenEMS single and multi-edge systems.
 * Advanced configuration options to support non-standard connection types.
 
+## Table of contents
+
+  * [Features / Common Use-cases](#features--common-use-cases)
+  * [Installation](#installation)
+  * [Configuration](#configuration)
+  * [Disclaimer](#disclaimer) 
+
 ## Features / Common Use-cases:
 
 ### Energy Dashboard
