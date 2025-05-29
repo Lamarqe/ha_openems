@@ -167,7 +167,7 @@ After setting up the config entry, there is a [default list](https://github.com/
 In order to add or remove entities of additional or unwanted components, start the options flow by selecting the Configure option right next to the config entry name:
 
 <img src="screenshots/options_flow.jpg" width="400"/>
-Afterwards, a dialog will appear which allows to enable or disable each component in the configured system (screenshot shortened, depenent on your system, there can be 20 to 50 components available in the system:
+Afterwards, a dialog will appear which allows to enable or disable each component in the configured system (screenshot shortened. Depending on your system configuration, there can be 20 to 50 components available in the list):
 
 <img src="screenshots/options_dialog.jpg" width="200"/>
 
