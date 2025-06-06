@@ -30,7 +30,7 @@
                 },
                 "data_description": {
                     "host": "Der Hostname oder die IP Addresse des Fenecon oder OpenEMS systems",
-                    "password": "Standardwerte für das lokale Monitoring: \"guest\" oder \"owner\"",
+                    "password": "Standardwerte für das lokale Monitoring: \"user\" oder \"owner\"",
                     "url": "Individuelle WebSocket URL",
                     "username": "Der Benutzername um auf das System zuzugreifen. Verwende \"x\" für das lokale Monitoring."
                 },
