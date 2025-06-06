@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 from typing import Any
 
@@ -81,68 +81,54 @@ class OpenEMSUpdateEntity(UpdateEntity):
             UpdateEntityFeature.PROGRESS | UpdateEntityFeature.INSTALL
         )
 
-        self._state = None
-
-    @property
-    def available(self) -> bool:
-        """Return if data point is available."""
-        return bool(self._state)
-
-    @property
-    def installed_version(self) -> str | None:
-        """Version installed and in use."""
-        status = next(iter(self._state))
-        match status:
-            case "updated":
-                return self._state[status]["version"]
-            case "available":
-                return self._state[status]["currentVersion"]
-            case _:
-                return None
-
-    @property
-    def in_progress(self) -> bool | int | None:
-        """Update installation progress."""
-        status = next(iter(self._state))
-        return status == "running"
-
-    @property
-    def update_percentage(self) -> bool | int | None:
-        """Update installation progress."""
-        status = next(iter(self._state))
-        return self._state[status]["percentCompleted"] if status == "running" else None
-
-    @property
-    def latest_version(self) -> str | None:
-        """Latest version available for install."""
-        status = next(iter(self._state))
-        match status:
-            case "updated":
-                return self._state[status]["version"]
-            case "available":
-                return self._state[status]["latestVersion"]
-            case _:
-                return None
-
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
         """Install an update."""
         update_task = asyncio.create_task(self._edge.execute_system_update())
         # give the backend some time to start the update before checking progress
-        asyncio.sleep(0.5)
-        while True:
+        update_start_time = datetime.now()
+        await asyncio.sleep(0.5)
+        # if the update did not finish after 15 minutes, something went wrong
+        while datetime.now() - update_start_time < timedelta(minutes=15):
             await self.async_update()
             self.async_write_ha_state()
             if not self.in_progress:
                 if not update_task.done():
                     update_task.cancel()
+                _LOGGER.info("Update complete: %s", self.unique_id)
                 return
             await asyncio.sleep(10)
 
     async def async_update(self) -> None:
         """Trigger the entity status update, will be called after SCAN_INTERVAL."""
         try:
-            self._state = await self._edge.get_system_update_state()
+            state = await self._edge.get_system_update_state()
+            status = next(iter(state))
+            match status:
+                case "updated":
+                    self._set_versions(state[status]["version"])
+                case "available":
+                    self._set_versions(
+                        state[status]["currentVersion"], state[status]["latestVersion"]
+                    )
+                case "running":
+                    self._set_progress_percentage(state[status]["percentCompleted"])
+                case _:
+                    self._set_versions(None)
+
         except (jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError):
-            self._state = None
+            self._set_versions(None)
+
+    def _set_versions(self, curr_ver: str | None, new_ver: str | None = None) -> None:
+        self._attr_available = bool(curr_ver)
+        self._attr_installed_version = curr_ver
+        self._attr_latest_version = new_ver if new_ver else curr_ver
+        # reset potential update in progress indicators
+        self._attr_in_progress = self.in_progress and not self._attr_available
+        self._attr_update_percentage = None
+
+    def _set_progress_percentage(self, percentage: int) -> None:
+        self._attr_available = True
+        self._attr_in_progress = True
+        self._attr_update_percentage = percentage
