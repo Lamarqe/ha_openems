@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
 from typing import Any
+
+import jsonrpc_base
 
 from homeassistant.components.update import (
     UpdateEntity,
@@ -125,8 +128,21 @@ class OpenEMSUpdateEntity(UpdateEntity):
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
         """Install an update."""
-        await self._edge.execute_system_update()
+        update_task = asyncio.create_task(self._edge.execute_system_update())
+        # give the backend some time to start the update before checking progress
+        asyncio.sleep(0.5)
+        while True:
+            await self.async_update()
+            self.async_write_ha_state()
+            if not self.in_progress:
+                if not update_task.done():
+                    update_task.cancel()
+                return
+            await asyncio.sleep(10)
 
     async def async_update(self) -> None:
         """Trigger the entity status update, will be called after SCAN_INTERVAL."""
-        self._state = await self._edge.get_system_update_state()
+        try:
+            self._state = await self._edge.get_system_update_state()
+        except (jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError):
+            self._state = None
