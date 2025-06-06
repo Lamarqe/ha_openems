@@ -89,16 +89,22 @@ class OpenEMSUpdateEntity(UpdateEntity):
         # give the backend some time to start the update before checking progress
         update_start_time = datetime.now()
         await asyncio.sleep(0.5)
-        # if the update did not finish after 15 minutes, something went wrong
-        while datetime.now() - update_start_time < timedelta(minutes=15):
-            await self.async_update()
-            self.async_write_ha_state()
-            if not self.in_progress:
-                if not update_task.done():
-                    update_task.cancel()
-                _LOGGER.info("Update complete: %s", self.unique_id)
-                return
-            await asyncio.sleep(10)
+        try:
+            # if the update did not finish after 15 minutes, something went wrong
+            while datetime.now() - update_start_time < timedelta(minutes=15):
+                await self.async_update()
+                self.async_write_ha_state()
+                if not self.in_progress:
+                    _LOGGER.info("Update finished succesfully: %s", self.unique_id)
+                    return
+                await asyncio.sleep(10)
+            _LOGGER.info(
+                "Update still running after 15 minutes. Stop waiting to finish: %s",
+                self.unique_id,
+            )
+        finally:
+            if not update_task.done():
+                update_task.cancel()
 
     async def async_update(self) -> None:
         """Trigger the entity status update, will be called after SCAN_INTERVAL."""
