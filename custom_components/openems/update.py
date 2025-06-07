@@ -80,6 +80,7 @@ class OpenEMSUpdateEntity(UpdateEntity):
         self._attr_supported_features = (
             UpdateEntityFeature.PROGRESS | UpdateEntityFeature.INSTALL
         )
+        self._attr_release_url = "https://portal.fenecon.de/changelog"
 
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
