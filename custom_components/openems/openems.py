@@ -812,14 +812,19 @@ class OpenEMSBackend:
                 ):
                     await self.rpc_server_task
                 # connection lost
+                _LOGGER.info("Connection to backend %s lost", self.the_edge.hostname)
                 self.rpc_server_task = None
                 self.the_edge.set_unavailable()
                 await asyncio.sleep(10)
 
             try:
                 await self.connect_to_server()
+                _LOGGER.debug("Reconnected to backend %s", self.the_edge.hostname)
                 # connected. Lets login
                 await self.login_to_server()
+                _LOGGER.info(
+                    "Connection to backend %s reestablished", self.the_edge.hostname
+                )
             except (
                 jsonrpc_base.jsonrpc.TransportError,
                 jsonrpc_base.jsonrpc.ProtocolError,
