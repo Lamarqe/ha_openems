@@ -730,6 +730,27 @@ class OpenEMSEdge:
 
         return data
 
+    async def get_system_update_state(self) -> dict:
+        """Read getSystemUpdateState response."""
+        system_update_state_call = OpenEMSBackend.wrap_jsonrpc("getSystemUpdateState")
+        edge_call = OpenEMSBackend.wrap_jsonrpc(
+            "componentJsonApi", componentId="_host", payload=system_update_state_call
+        )
+        result = await self.backend.rpc_server.edgeRpc(
+            edgeId=self._id, payload=edge_call
+        )
+        return result["payload"]["result"]
+
+    async def execute_system_update(self) -> None:
+        """Trigger executeSystemUpdate request."""
+        system_update_state_call = OpenEMSBackend.wrap_jsonrpc(
+            "executeSystemUpdate", isDebug=False
+        )
+        edge_call = OpenEMSBackend.wrap_jsonrpc(
+            "componentJsonApi", componentId="_host", payload=system_update_state_call
+        )
+        await self.backend.rpc_server.edgeRpc(edgeId=self._id, payload=edge_call)
+
 
 class OpenEMSBackend:
     """Class which represents a connection to an OpenEMS backend."""
