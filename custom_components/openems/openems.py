@@ -434,6 +434,14 @@ class OpenEMSComponent:
     async def update_config(self, channels: list[tuple[str, Any]]):
         """Send updateComponentConfig request to backend."""
         properties = [{"name": chan[0], "value": chan[1]} for chan in channels]
+        if not self.edge.backend.rpc_server.connected:
+            _LOGGER.error(
+                'No connection to backend. Cannot send "updateComponentConfig" message for component %s with properties: %s',
+                self.name,
+                str(properties),
+            )
+            return
+
         envelope = OpenEMSBackend.wrap_jsonrpc(
             "updateComponentConfig", componentId=self.name, properties=properties
         )
