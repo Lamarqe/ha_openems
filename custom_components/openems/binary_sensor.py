@@ -38,7 +38,11 @@ async def async_setup_entry(
         # remove duplicate (non-binary) sensors if they exist
         entity_registry = er.async_get(hass)
         er_device = device_registry.async_get_device(device["identifiers"])
-        ha_entities = er.async_entries_for_device(entity_registry, er_device.id, True)
+        ha_entities = (
+            er.async_entries_for_device(entity_registry, er_device.id, True)
+            if er_device
+            else []
+        )
         # ==================== TODO REMOVE_LATER_END =============================
 
         device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
