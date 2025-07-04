@@ -237,7 +237,7 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     device_registry = dr.async_get(hass)
 
     for comp_name, component in backend.the_edge.components.items():
-        if not entry.options[comp_name] and component.create_entities:
+        if not entry.options.get(comp_name) and component.create_entities:
             # remove entities
             comp_device = component_device(component)
             device = device_registry.async_get_device(comp_device["identifiers"])
@@ -248,8 +248,8 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
             device_registry.async_remove_device(device.id)
 
         # process newly enabled components
-        if entry.options[comp_name] and not component.create_entities:
+        if entry.options.get(comp_name) and not component.create_entities:
             for callback in entry.runtime_data.add_component_callbacks.values():
                 callback(component)
 
-        component.create_entities = entry.options[comp_name]
+        component.create_entities = entry.options.get(comp_name)
