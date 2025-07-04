@@ -4,12 +4,12 @@
   "codeowners": ["@Lamarqe"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://community.home-assistant.io/t/ha-openems-fems-and-openems-integration",
+  "documentation": "https://github.com/Lamarqe/ha_openems?tab=readme-ov-file#ha_openems",
   "integration_type": "hub",
   "iot_class": "local_push",
   "requirements": ["jsonrpc-websocket==3.1.5"],
   "ssdp": [],
-  "version": "1.0.1",
+  "version": "1.0.2",
   "zeroconf": [],
   "loggers": ["custom_components.openems"]
 }
