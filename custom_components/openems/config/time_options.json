@@ -7,5 +7,14 @@
                 "is_time": true
             }
         ]
+    },
+    {
+        "component_regexp": "ctrlIoHeatingElement\\d+",
+        "channels": [
+            {
+                "id": "_PropertyEndTime",
+                "is_time": true
+            }
+        ]
     }
 ]
