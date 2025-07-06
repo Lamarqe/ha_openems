@@ -149,5 +149,33 @@
                 ]
             }
         ]
+    },
+    {
+        "component_regexp": "ctrlIoHeatingElement\\d+",
+        "channels": [
+            {
+                "id": "_PropertyDefaultLevel",
+                "options": [
+                    "LEVEL_1",
+                    "LEVEL_2",
+                    "LEVEL_3"
+                ]
+            },
+            {
+                "id": "_PropertyMode",
+                "options": [
+                    "AUTOMATIC",
+                    "MANUAL_ON",
+                    "MANUAL_OFF"
+                ]
+            },
+            {
+                "id": "_PropertyWorkMode",
+                "options": [
+                    "TIME",
+                    "NONE"
+                ]
+            }
+        ]
     }
 ]
