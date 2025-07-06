@@ -38,5 +38,18 @@
                 }
             }
         ]
+    },
+    {
+        "component_regexp": "ctrlIoHeatingElement\\d+",
+        "channels": [
+            {
+                "id": "_PropertyMinTime",
+                "limit": {
+                    "lower": "1",
+                    "upper": "10"
+
+                }
+            }
+        ]
     }
 ]

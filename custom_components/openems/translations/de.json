@@ -65,6 +65,26 @@
                     "manual": "Manuell",
                     "off": "Aus"
                 }
+            },
+            "ctrlioheatingelement_s_l_a_s_h_defaultlevel": {
+                "state": {
+                    "level_1": "Level 1",
+                    "level_2": "Level 2",
+                    "level_3": "Level 3"
+                }
+            },
+            "ctrlioheatingelement_s_l_a_s_h_mode": {
+                "state": {
+                    "automatic": "Automatisch",
+                    "manual_on": "An",
+                    "manual_off": "Aus"
+                }
+            },
+            "ctrlioheatingelement_s_l_a_s_h_workmode": {
+                "state": {
+                    "time": "Garantierte Mindestzeit",
+                    "none": "Überschussleistung, ausschließlich"
+                }
             }
         },
         "sensor": {
