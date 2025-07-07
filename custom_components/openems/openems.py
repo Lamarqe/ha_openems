@@ -306,8 +306,8 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         upper_limit = await self._compute_expression(limit_def["upper"])
         lower_scaled = lower_limit * self.multiplier
         upper_scaled = upper_limit * self.multiplier
-        min_step_range = (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
-        self.step = max (1, 10 ** math.ceil(math.log10(min_step_range)))
+        min_step_range = max (1, (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS)
+        self.step = 10 ** math.ceil(math.log10(min_step_range)))
         self.lower_limit = math.ceil(float(lower_scaled) / self.step) * self.step
         self.upper_limit = math.ceil(float(upper_scaled) / self.step) * self.step
 
