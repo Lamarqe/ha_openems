@@ -79,6 +79,12 @@
                     "MANUAL_ON": "An",
                     "MANUAL_OFF": "Aus"
                 }
+            },
+            "ctrlIoHeatingElement/WorkMode": {
+                "state": {
+                    "TIME": "Garantierte Mindestzeit",
+                    "NONE": "Überschussleistung, ausschließlich"
+                }
             }
         },
         "sensor": {

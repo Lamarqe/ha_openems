@@ -79,6 +79,12 @@
                     "MANUAL_ON": "On",
                     "MANUAL_OFF": "Off"
                 }
+            },
+            "ctrlIoHeatingElement/WorkMode": {
+                "state": {
+                    "TIME": "Guaranteed minimum time",
+                    "NONE": "Excess power only"
+                }
             }
         },
         "sensor": {

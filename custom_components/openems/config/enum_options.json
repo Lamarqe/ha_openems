@@ -172,7 +172,8 @@
             {
                 "id": "_PropertyWorkMode",
                 "options": [
-                    "TIME"
+                    "TIME",
+                    "NONE"
                 ]
             }
         ]
