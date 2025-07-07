@@ -112,7 +112,7 @@
       },
       "ctrlIoHeatingElement/WorkMode": {
         "state": {
-          "TIME": "Guaranteed minimal time",
+          "TIME": "Guaranteed minimum time",
           "NONE": "Excess power only"
         }
       }
