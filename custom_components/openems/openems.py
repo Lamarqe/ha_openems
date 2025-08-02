@@ -342,6 +342,12 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         else:
             # retrieve the value via Websocket API
             data = await self.component.edge.get_channel_values_via_websocket([channel])
+        _LOGGER.debug(
+            "_get_ref_value: reference def: %s, channel: %s, value: %s",
+            reference_def,
+            channel,
+            data[channel],
+        )
         return data[channel]
 
 
