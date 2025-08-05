@@ -585,16 +585,22 @@ class OpenEMSEdge:
                 "getChannelsOfComponent",
                 componentId=componentId,
             )
-            edge_call = OpenEMSBackend.wrap_jsonrpc(
-                "componentJsonApi",
-                componentId="_componentManager",
-                payload=edge_component_call,
-            )
-            r = await self.backend.rpc_server.edgeRpc(
-                edgeId=self._id,
-                payload=edge_call,
-            )
-            components[componentId]["channels"] = r["payload"]["result"]["channels"]
+            try:
+                edge_call = OpenEMSBackend.wrap_jsonrpc(
+                    "componentJsonApi",
+                    componentId="_componentManager",
+                    payload=edge_component_call,
+                )
+                r = await self.backend.rpc_server.edgeRpc(
+                    edgeId=self._id,
+                    payload=edge_call,
+                )
+                components[componentId]["channels"] = r["payload"]["result"]["channels"]
+            except (
+                jsonrpc_base.jsonrpc.TransportError,
+                jsonrpc_base.jsonrpc.ProtocolError,
+            ):
+                del components[componentId]
 
     async def _read_component_info_channels(self, components: dict):
         """Read hostname and all component names of an edge."""
