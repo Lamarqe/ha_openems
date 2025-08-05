@@ -313,20 +313,31 @@ class OpenEMSNumberProperty(OpenEMSProperty):
 
     async def _compute_expression(self, expr) -> float:
         """Resolve an expression like "{$evcs.id/MinHardwarePower} / {$evcs.id/Phases}" to a concrete number."""
-        # step 1: retrieve the values of all linked channels
-        for ref in re.findall("{(.*?)}", expr):
-            if ref not in self.component.ref_values:
-                # TODO: This could be optimized to load ref values in bulk
-                self.component.ref_values[ref] = await self._get_ref_value(ref)
+        try:
+            # step 1: retrieve the values of all linked channels
+            for ref in re.findall("{(.*?)}", expr):
+                if ref not in self.component.ref_values:
+                    # TODO: This could be optimized to load ref values in bulk
+                    self.component.ref_values[ref] = await self._get_ref_value(ref)
 
-        # step 2: replace all linked channels with their values
-        def lookup_ref_value(matchobj) -> str:
-            return str(self.component.ref_values[matchobj.group()[1:-1]])
+            # step 2: replace all linked channels with their values
+            def lookup_ref_value(matchobj) -> str:
+                return str(self.component.ref_values[matchobj.group()[1:-1]])
 
-        value_expr = re.sub("{(.*?)}", lookup_ref_value, expr)
+            value_expr = re.sub("{(.*?)}", lookup_ref_value, expr)
 
-        # step 3: calculate the expression (using jinja2)
-        return float(Template("{{" + value_expr + "}}").render())
+            # step 3: calculate the expression (using jinja2)
+            return float(Template("{{" + value_expr + "}}").render())
+        except (
+            jsonrpc_base.jsonrpc.TransportError,
+            jsonrpc_base.jsonrpc.ProtocolError,
+            ValueError,
+        ):
+            _LOGGER.warning(
+                "_compute_expression: could not calculate expression: %s. Using 0",
+                expr,
+            )
+            return 0
 
     async def _get_ref_value(self, reference_def: str):
         """Resolve an expression like "$evcs.id/Phases" to its concrete value."""
