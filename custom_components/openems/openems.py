@@ -600,6 +600,10 @@ class OpenEMSEdge:
                 jsonrpc_base.jsonrpc.TransportError,
                 jsonrpc_base.jsonrpc.ProtocolError,
             ):
+                _LOGGER.warning(
+                    "_read_edge_channels: could not read channels of component %s, skipping",
+                    componentId,
+                )
                 del components[componentId]
 
     async def _read_component_info_channels(self, components: dict):
