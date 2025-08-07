@@ -580,7 +580,7 @@ class OpenEMSEdge:
 
     async def _read_edge_channels(self, components):
         # Load channels of each component
-        for componentId in components:
+        for componentId in list(components):
             edge_component_call = OpenEMSBackend.wrap_jsonrpc(
                 "getChannelsOfComponent",
                 componentId=componentId,
