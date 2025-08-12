@@ -29,7 +29,7 @@ Use the following entities to configure the Energy Dashboard:
 <table>
   <tr><th>Area</th><th>Option</th><th>Component</th><th>Channel</th><th><i>comment</i></th></tr>
   <tr><td rowspan="2">Electricity Grid</td><td>Grid Consumption </td><td>_sum</td><td>GridBuyActiveEnergy</td><td></td></tr>
-  <tr><td>Return to Grid </td><td>_sum</td><td>GridBuyActiveEnergy</td><td></td></tr>
+  <tr><td>Return to Grid </td><td>_sum</td><td>GridSellActiveEnergy</td><td></td></tr>
   <tr><td rowspan="3">Solar Panels</td><td rowspan="3">Solar production </td><td>_sum</td><td>ProductionActiveEnergy</td><td><i>combined view</i></td></tr>
   <tr><td>pvInverter*</td><td>ActiveProductionEnergy</td><td rowspan="2"><i>individual view</i></td></tr>
   <tr><td>charger*</td><td>ActualEnergy</td></tr>
