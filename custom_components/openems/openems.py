@@ -304,9 +304,21 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         """Initialize the limits of the number channel."""
         lower_limit = await self._compute_expression(limit_def["lower"])
         upper_limit = await self._compute_expression(limit_def["upper"])
+        # assure upper limit is larger than lower limit
+        if upper_limit < lower_limit + 10:
+            upper_limit = lower_limit + 10
+            _LOGGER.warning(
+                'Upper limit of config value "%s" too small. Adjusting to %d',
+                limit_def["upper"],
+                upper_limit,
+            )
         lower_scaled = lower_limit * self.multiplier
         upper_scaled = upper_limit * self.multiplier
-        min_step_range = (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
+        # split range into 200, but assure min step size of 1
+        min_step_range = max(
+            1, (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
+        )
+        # align step size with a power of 10
         self.step = 10 ** math.ceil(math.log10(min_step_range))
         self.lower_limit = math.ceil(float(lower_scaled) / self.step) * self.step
         self.upper_limit = math.ceil(float(upper_scaled) / self.step) * self.step
