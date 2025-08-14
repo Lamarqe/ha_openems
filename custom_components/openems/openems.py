@@ -441,16 +441,29 @@ class OpenEMSComponent:
                         if limit_def := CONFIG.get_number_limit(
                             self.name, channel_json["id"]
                         ):
-                            multiplier = CONFIG.get_number_multiplier(
-                                self.name, channel_json["id"]
-                            )
-                            prop = OpenEMSNumberProperty(
-                                component=self, channel_json=channel_json
-                            )
-                            if multiplier is not None:
-                                await prop.init_multiplier(multiplier)
-                            await prop.init_limits(limit_def)
-                            self.number_properties.append(prop)
+                            try:
+                                multiplier = CONFIG.get_number_multiplier(
+                                    self.name, channel_json["id"]
+                                )
+                                prop = OpenEMSNumberProperty(
+                                    component=self, channel_json=channel_json
+                                )
+                                if multiplier is not None:
+                                    await prop.init_multiplier(multiplier)
+                                await prop.init_limits(limit_def)
+                                self.number_properties.append(prop)
+                            except (
+                                TypeError,
+                                jsonrpc_base.jsonrpc.TransportError,
+                                jsonrpc_base.jsonrpc.ProtocolError,
+                                ValueError,
+                            ):
+                                _LOGGER.warning(
+                                    "Error during initialization of channel %s/%s",
+                                    self.name,
+                                    channel_json["id"],
+                                    exc_info=True,
+                                )
 
             else:
                 channel = OpenEMSChannel(component=self, channel_json=channel_json)
