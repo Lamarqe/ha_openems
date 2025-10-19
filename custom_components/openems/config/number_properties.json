@@ -11,17 +11,17 @@
             },
             {
                 "id": "_PropertyForceChargeMinPower",
-                "multiplier": "{$evcs.id/Phases}",
+                "multiplier": "{{$evcs.id/Phases}}",
                 "limit": {
-                    "lower": "{$evcs.id/MinimumHardwarePower} / {$evcs.id/Phases}",
-                    "upper": "{$evcs.id/MaximumHardwarePower} / {$evcs.id/Phases}"
+                    "lower": "{{$evcs.id/MinimumHardwarePower}} / {{$evcs.id/Phases}}",
+                    "upper": "{{$evcs.id/MaximumHardwarePower}} / {{$evcs.id/Phases}}"
                 }
             },
             {
                 "id": "_PropertyDefaultChargeMinPower",
                 "limit": {
-                    "lower": "{$evcs.id/MinimumHardwarePower}",
-                    "upper": "{$evcs.id/MaximumHardwarePower}"
+                    "lower": "{{$evcs.id/MinimumHardwarePower}}",
+                    "upper": "{{$evcs.id/MaximumHardwarePower}}"
                 }
             }
         ]
