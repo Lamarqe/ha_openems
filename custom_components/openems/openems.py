@@ -24,6 +24,7 @@ from yarl import URL
 from .const import CONN_TYPE_REST, CONN_TYPE_WEB_FENECON, CONN_TYPES, connection_url
 
 _LOGGER = logging.getLogger(__name__)
+SLASH_ESC = "___SLASH___"
 
 
 class OpenEMSConfig:
@@ -140,13 +141,13 @@ class OpenEMSChannel:
         self._current_value: Any = None
 
     def handle_current_value(self, value):
-        """Handle a new value and notify Home Assistant."""
+        """Handle a new entity value and notify Home Assistant."""
         if value != self._current_value:
             self._current_value = value
             self.notify_ha()
 
-    def handle_raw_value(self, value) -> None:
-        """Handle a value update from the backend."""
+    def handle_data_update(self, channel_name, value) -> None:
+        """Handle a data update from the backend."""
         if value in self.options:
             value = self.options[value]
         self.handle_current_value(value)
@@ -181,7 +182,8 @@ class OpenEMSChannel:
     def register_callback(self, callback: Callable):
         """Register callback."""
         self.callback = callback
-        self.component.edge.register_channel(self)
+        channel_names = {self.component.name + "/" + self.name}
+        self.component.edge.register_channel(channel_names, self)
 
     def unregister_callback(self):
         """Remove callback."""
@@ -226,8 +228,8 @@ class OpenEMSEnumProperty(OpenEMSProperty):
         """Return the current option."""
         return self._current_value
 
-    def handle_raw_value(self, value):
-        """Handle a value update from the backend."""
+    def handle_data_update(self, channel_name, value):
+        """Handle a data update from the backend."""
         if isinstance(value, str) and value in self.options:
             new_val = value
         else:
@@ -238,8 +240,8 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 class OpenEMSTimeProperty(OpenEMSProperty):
     """Class representing a enum property of an OpenEMS component."""
 
-    def handle_raw_value(self, value):
-        """Handle a value update from the backend."""
+    def handle_data_update(self, channel_name, value):
+        """Handle a data update from the backend."""
         if value is None:
             new_val = None
         else:
@@ -274,104 +276,163 @@ class OpenEMSNumberProperty(OpenEMSProperty):
     ) -> None:
         """Initialize the number channel."""
         super().__init__(component, channel_json)
+        self.multiplier_def: Template = None
+        self.lower_limit_def: Template = None
+        self.upper_limit_def: Template = None
+
         self.multiplier: float = 1.0
-        self.lower_limit: float = None
-        self.upper_limit: float = None
-        self.step: float = None
+        self.lower_limit: float = 0
+        self.upper_limit: float = 100000
+        self.step: float = 1.0
+        self.reference_channels: dict[str, Any] = {}
 
     @property
     def native_value(self) -> Number | None:
         """Return the value of the number entity."""
         return self._current_value
 
-    def handle_raw_value(self, value):
-        """Handle a value update from the backend."""
-        if isinstance(value, Number):
-            new_val = self.multiplier * value
+    def handle_data_update(self, channel_name, value):
+        """Handle a data update from the backend."""
+        channel_reference = channel_name.replace("/", SLASH_ESC)
+        if channel_reference in self.reference_channels:
+            if self.reference_channels[channel_reference] != value:
+                self.reference_channels[channel_reference] = value
+                if self._update_config():
+                    # config vars changed. Update the entity in HA
+                    self.notify_ha()
         else:
-            new_val = None
-        self.handle_current_value(new_val)
+            if isinstance(value, Number):
+                new_val = self.multiplier * value
+            else:
+                new_val = None
+            self.handle_current_value(new_val)
+
+    def _update_config(self) -> tuple[float, float, float]:
+        """Calculate the new multiplier, limits and step after references changed.
+
+        Return True if at least one of these parameters changed, False otherwise.
+        """
+        multiplier = self.multiplier
+        lower_limit = self.lower_limit
+        upper_limit = self.upper_limit
+        step = self.step
+        if self.multiplier_def:
+            try:
+                render_result = self.multiplier_def.render(self.reference_channels)
+                multiplier = float(render_result)
+            except (ValueError, TypeError):
+                multiplier = 1.0
+
+        try:
+            render_result = self.lower_limit_def.render(self.reference_channels)
+            lower_noscale = float(render_result)
+        except (ValueError, TypeError):
+            lower_noscale = None
+
+        try:
+            render_result = self.upper_limit_def.render(self.reference_channels)
+            upper_noscale = float(render_result)
+        except (ValueError, TypeError):
+            upper_noscale = None
+
+        if upper_noscale is None or lower_noscale is None:
+            lower_limit = 0
+            upper_limit = 100000
+        else:
+            # assure upper limit is larger than lower limit
+            if upper_noscale < lower_noscale + 10:
+                upper_noscale = lower_noscale + 10
+                _LOGGER.warning(
+                    "Upper limit, resulting from config too small. Adjusting to %d",
+                    upper_noscale,
+                )
+            lower_scaled = lower_noscale * multiplier
+            upper_scaled = upper_noscale * multiplier
+            # split range into 200, but assure min step size of 1
+            min_step_range = max(
+                1, (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
+            )
+            # align step size with a power of 10
+            step = 10 ** math.ceil(math.log10(min_step_range))
+            lower_limit = math.ceil(float(lower_scaled) / step) * step
+            upper_limit = math.ceil(float(upper_scaled) / step) * step
+
+        if (new_config := (multiplier, lower_limit, upper_limit, step)) != (
+            self.multiplier,
+            self.lower_limit,
+            self.upper_limit,
+            self.step,
+        ):
+            self.multiplier, self.lower_limit, self.upper_limit, self.step = new_config
+            _LOGGER.debug(
+                "Config of entity %s changed: Multiplier: %d, Lower Limit: %d, Upper Limit: %d, Step: %d",
+                self.name,
+                self.multiplier,
+                self.lower_limit,
+                self.upper_limit,
+                self.step,
+            )
+            return True
+
+        return False
 
     async def update_value(self, new_value: Number) -> None:
         """Handle value change request from Home Assisant."""
         await super().update_value(new_value / self.multiplier)
 
-    async def init_multiplier(self, multiplier):
+    def set_multiplier_def(self, multiplier_def):
         """Initialize the multiplier of the number channel."""
-        self.multiplier = await self._compute_expression(multiplier)
+        self.multiplier_def, has_references = self._prepare_ref_value(multiplier_def)
+        if not has_references:
+            # no external references. Calculate the result immediately
+            self.multiplier = float(self.multiplier_def.render())
 
-    async def init_limits(self, limit_def):
+    def set_limit_def(self, limit_def):
         """Initialize the limits of the number channel."""
-        lower_limit = await self._compute_expression(limit_def["lower"])
-        upper_limit = await self._compute_expression(limit_def["upper"])
-        # assure upper limit is larger than lower limit
-        if upper_limit < lower_limit + 10:
-            upper_limit = lower_limit + 10
-            _LOGGER.warning(
-                'Upper limit of config value "%s" too small. Adjusting to %d',
-                limit_def["upper"],
-                upper_limit,
-            )
-        lower_scaled = lower_limit * self.multiplier
-        upper_scaled = upper_limit * self.multiplier
-        # split range into 200, but assure min step size of 1
-        min_step_range = max(
-            1, (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
+        self.lower_limit_def, has_references = self._prepare_ref_value(
+            limit_def["lower"]
         )
-        # align step size with a power of 10
-        self.step = 10 ** math.ceil(math.log10(min_step_range))
-        self.lower_limit = math.ceil(float(lower_scaled) / self.step) * self.step
-        self.upper_limit = math.ceil(float(upper_scaled) / self.step) * self.step
+        if not has_references:
+            # no external references. Calculate the result immediately
+            self.lower_limit = float(self.lower_limit_def.render())
 
-    async def _compute_expression(self, expr) -> float:
-        """Resolve an expression like "{$evcs.id/MinHardwarePower} / {$evcs.id/Phases}" to a concrete number."""
-        try:
-            # step 1: retrieve the values of all linked channels
-            for ref in re.findall("{(.*?)}", expr):
-                if ref not in self.component.ref_values:
-                    # TODO: This could be optimized to load ref values in bulk
-                    self.component.ref_values[ref] = await self._get_ref_value(ref)
-
-            # step 2: replace all linked channels with their values
-            def lookup_ref_value(matchobj) -> str:
-                return str(self.component.ref_values[matchobj.group()[1:-1]])
-
-            value_expr = re.sub("{(.*?)}", lookup_ref_value, expr)
-
-            # step 3: calculate the expression (using jinja2)
-            return float(Template("{{" + value_expr + "}}").render())
-        except (
-            jsonrpc_base.jsonrpc.TransportError,
-            jsonrpc_base.jsonrpc.ProtocolError,
-            ValueError,
-        ):
-            _LOGGER.warning(
-                "_compute_expression: could not calculate expression: %s. Using 0",
-                expr,
-            )
-            return 0
-
-    async def _get_ref_value(self, reference_def: str):
-        """Resolve an expression like "$evcs.id/Phases" to its concrete value."""
-        component_reference, channel_reference = reference_def.split("/")
-        # if the component starts with $, treat it like a variable to be looked up in the component properties
-        if component_reference.startswith("$"):
-            component_property = component_reference[1:]
-            component_reference = self.component.properties[component_property]
-        channel = component_reference + "/" + channel_reference
-        if self.component.edge.backend.rest_base_url:
-            # retrieve the value via REST API
-            data = await self.component.edge.get_channel_values_via_rest([channel])
-        else:
-            # retrieve the value via Websocket API
-            data = await self.component.edge.get_channel_values_via_websocket([channel])
-        _LOGGER.debug(
-            "_get_ref_value: reference def: %s, channel: %s, value: %s",
-            reference_def,
-            channel,
-            data[channel],
+        self.upper_limit_def, has_references = self._prepare_ref_value(
+            limit_def["upper"]
         )
-        return data[channel]
+        if not has_references:
+            # no external references. Calculate the result immediately
+            self.upper_limit = float(self.upper_limit_def.render())
+
+    def _prepare_ref_value(self, expr) -> tuple[Template, set[str]]:
+        """Parse a template string into a template and channels contained."""
+        has_reference = False
+
+        def calc_component_reference(matchobj) -> str:
+            nonlocal has_reference
+            has_reference = True
+            comp_ref, channel = matchobj.group()[2:-2].split("/")
+            if comp_ref[0] == "$":
+                # if the reference starts with $, treat the component like a variable,
+                # to be looked up in the component properties
+                # replace all linked channels with their values
+                comp_ref = self.component.properties[comp_ref[1:]]
+
+            # prepare value containers of required channels
+            linked_channel = comp_ref + SLASH_ESC + channel
+            if linked_channel not in self.reference_channels:
+                self.reference_channels[linked_channel] = None
+            return linked_channel
+
+        value_expr = "{{" + re.sub(r"{{(.*?)}}", calc_component_reference, expr) + "}}"
+        return Template(value_expr), has_reference
+
+    def register_callback(self, callback: Callable):
+        """Register callback."""
+        self.callback = callback
+        channel_names = {x.replace(SLASH_ESC, "/") for x in self.reference_channels} | {
+            self.component.name + "/" + self.name,
+        }
+        self.component.edge.register_channel(channel_names, self)
 
 
 class OpenEMSBooleanProperty(OpenEMSProperty):
@@ -384,8 +445,8 @@ class OpenEMSBooleanProperty(OpenEMSProperty):
         """Return true if switch is on."""
         return self._current_value
 
-    def handle_raw_value(self, value):
-        """Handle a value update from the backend."""
+    def handle_data_update(self, channel_name, value):
+        """Handle a data update from the backend."""
         if isinstance(value, int):
             new_val = bool(value)
         else:
@@ -449,8 +510,8 @@ class OpenEMSComponent:
                                     component=self, channel_json=channel_json
                                 )
                                 if multiplier is not None:
-                                    await prop.init_multiplier(multiplier)
-                                await prop.init_limits(limit_def)
+                                    prop.set_multiplier_def(multiplier)
+                                prop.set_limit_def(limit_def)
                                 self.number_properties.append(prop)
                             except (
                                 TypeError,
@@ -584,7 +645,7 @@ class OpenEMSEdge:
             self
         )
         self.hostname: str | None = None
-        self._registered_channels: dict = {}
+        self._registered_channels: dict[str, set[OpenEMSChannel]] = {}
 
     async def read_components(self) -> dict:
         """Read components of the edge."""
@@ -696,10 +757,9 @@ class OpenEMSEdge:
 
     def set_unavailable(self):
         """Set all active entities to unavailable and clear the subscription indicator."""
-        for key in self.current_channel_data:
-            channel: OpenEMSChannel = self._registered_channels.get(key)
-            if channel:
-                channel.handle_current_value(None)
+        for channel_name in self.current_channel_data:
+            for channel in self._registered_channels[channel_name]:
+                channel.handle_data_update(channel_name, None)
         self._channel_subscription_updater.clear()
 
     def stop(self):
@@ -718,19 +778,25 @@ class OpenEMSEdge:
     def currentData(self, params):
         """Jsonrpc callback to receive channel subscription updates."""
         self.current_channel_data = params
-        for key in self.current_channel_data:
-            if channel := self._registered_channels.get(key):
-                channel.handle_raw_value(self.current_channel_data[key])
+        for channel_name, value in self.current_channel_data.items():
+            for channel in self._registered_channels[channel_name]:
+                channel.handle_data_update(channel_name, value)
 
-    def register_channel(self, channel: OpenEMSChannel):
-        """Register one channel for updates."""
-        key = channel.component.name + "/" + channel.name
-        self._registered_channels[key] = channel
+    def register_channel(self, channel_names: set[str], handler: OpenEMSChannel):
+        """Register a channel and its dependent channels for updates."""
+        for channel_name in channel_names:
+            if channel_name not in self._registered_channels:
+                self._registered_channels[channel_name] = {handler}
+            else:
+                self._registered_channels[channel_name].add(handler)
 
-    def unregister_channel(self, channel: OpenEMSChannel):
-        """Remove one channel from updates."""
-        key = channel.component.name + "/" + channel.name
-        del self._registered_channels[key]
+    def unregister_channel(self, handler: OpenEMSChannel):
+        """Remove a channel from receiving updates."""
+        for channel_name, handlers in list(self._registered_channels.items()):
+            if handler in handlers:
+                handlers.remove(handler)
+                if not handlers:
+                    del self._registered_channels[channel_name]
 
     @property
     def id(self):

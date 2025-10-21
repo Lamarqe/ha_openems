@@ -51,9 +51,6 @@ async def async_setup_entry(
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
                 mode=NumberMode.SLIDER,
-                native_min_value=channel.lower_limit,
-                native_max_value=channel.upper_limit,
-                native_step=channel.step,
                 # remove "_Property" prefix
                 name=channel.name[9:],
                 device_class=unit_desc.device_class,
@@ -109,6 +106,21 @@ class OpenEMSNumberEntity(NumberEntity):
         self._attr_device_info = device_info
         self._attr_should_poll = False
         self._attr_extra_state_attributes = channel.orig_json
+
+    @property
+    def native_min_value(self):
+        """Return minimum value."""
+        return self._channel.lower_limit
+
+    @property
+    def native_max_value(self):
+        """Return maximum value."""
+        return self._channel.upper_limit
+
+    @property
+    def native_step(self):
+        """Return step size."""
+        return self._channel.step
 
     @property
     def native_value(self) -> int | None:
