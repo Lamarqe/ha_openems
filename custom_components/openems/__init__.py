@@ -127,12 +127,16 @@ async def async_setup_entry(
     try:
         await asyncio.wait_for(backend.connect_to_server(), timeout=2)
     except (TransportError, TimeoutError) as ex:
-        raise ConfigEntryNotReady(f"Timeout while connecting to {backend.host}") from ex
+        raise ConfigEntryNotReady(
+            f"Timeout while connecting to {backend.ws_url.host}"
+        ) from ex
     # login
     try:
         await backend.login_to_server()
     except ProtocolError as ex:
-        raise ConfigEntryAuthFailed(f"Wrong user / password for {backend.host}") from ex
+        raise ConfigEntryAuthFailed(
+            f"Wrong user / password for {backend.ws_url.host}"
+        ) from ex
 
     # 3. Reload component list in case explicit user request to reload (hass.is_running)
     if hass.is_running or not config_entry.data["components"]:
