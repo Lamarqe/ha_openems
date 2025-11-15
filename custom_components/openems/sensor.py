@@ -17,7 +17,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .__init__ import OpenEMSConfigEntry
 from .const import DOMAIN
 from .helpers import (
-    OpenEMSSensorUnitClass,
+    OpenEMSUnitClass,
     component_device,
     translation_key,
     unit_description,
@@ -50,8 +50,8 @@ async def async_setup_entry(
                 state_class = None
                 uom = None
             else:
-                unit_desc: OpenEMSSensorUnitClass = unit_description(channel.unit)
-                device_class = unit_desc.device_class
+                unit_desc: OpenEMSUnitClass = unit_description(channel.unit)
+                device_class = unit_desc.sensor_device_class
                 state_class = unit_desc.state_class
                 uom = unit_desc.unit
 

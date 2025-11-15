@@ -29,6 +29,7 @@ from homeassistant.helpers import (
     device_registry as dr,
     entity_registry as er,
 )
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
@@ -41,7 +42,7 @@ from .const import (
     connection_url,
 )
 from .helpers import component_device, find_channel_in_backend
-from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel
+from .openems import CONFIG, OpenEMSBackend, OpenEMSProperty
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,8 +65,16 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def service_update_component_config(service_call: ServiceCall) -> None:
         entity_reg = er.async_get(hass)
         entity_id = service_call.data.get(ATTR_ENTITY_ID)
+        if not entity_id:
+            _LOGGER.error("No entity found in service call")
+            return
+
         value = service_call.data.get("value")
-        entry: er.RegistryEntry = entity_reg.async_get(entity_id)
+        entry: er.RegistryEntry | None = entity_reg.async_get(entity_id)
+        if not entry or not entry.config_entry_id:
+            _LOGGER.error("No proper entry found in registry for entity %s", entity_id)
+            return
+
         if entry.platform != DOMAIN:
             _LOGGER.error(
                 "Update_component_config was called for entity %s. Must be called with openems entity, not %s",
@@ -73,9 +82,28 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 entry.platform,
             )
             return
-        config_entry = hass.config_entries.async_get_entry(entry.config_entry_id)
+
+        config_entry: OpenEMSConfigEntry | None = hass.config_entries.async_get_entry(
+            entry.config_entry_id
+        )
+        if not config_entry:
+            _LOGGER.error(
+                "No config entry found for entity %s with config_entry_id %s",
+                entity_id,
+                entry.config_entry_id,
+            )
+            return
+
         backend: OpenEMSBackend = config_entry.runtime_data.backend
-        channel: OpenEMSChannel = find_channel_in_backend(backend, entry.unique_id)
+        channel = find_channel_in_backend(backend, entry.unique_id)
+        if not channel or not isinstance(channel, OpenEMSProperty):
+            _LOGGER.error(
+                "No property channel found in backend for entity %s with unique_id %s",
+                entity_id,
+                entry.unique_id,
+            )
+            return
+
         try:
             await channel.update_value(value)
         except AttributeError:
@@ -100,7 +128,7 @@ class RuntimeData:
     """Data class to store all relevant runtime data."""
 
     backend: OpenEMSBackend
-    add_component_callbacks: ClassVar[dict[str:Callable]] = {}
+    add_component_callbacks: ClassVar[dict[str, Callable]] = {}
 
 
 async def async_setup_entry(
@@ -194,13 +222,14 @@ async def async_migrate_entry(
 
             host = config_entry.data[CONF_HOST]
             options_key = "openems_options_" + host
-            store_options: Store = Store(hass, 1, options_key)
-            if options := await store_options.async_load():
+            store_options: Store = Store[dict[str, bool]](hass, 1, options_key)
+            options: dict[str, bool] | None = await store_options.async_load()
+            if options:
                 # delete options store data
                 await store_options.async_remove()
             else:
                 # initialize options with default settings
-                options: dict[str:bool] = {}
+                options = {}
                 for component in components:
                     options[component] = CONFIG.is_component_enabled(component)
 
@@ -243,8 +272,11 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     for comp_name, component in backend.the_edge.components.items():
         if not entry.options.get(comp_name) and component.create_entities:
             # remove entities
-            comp_device = component_device(component)
-            device = device_registry.async_get_device(comp_device["identifiers"])
+            comp_device: DeviceInfo = component_device(component)
+            device = device_registry.async_get_device(comp_device.get("identifiers"))
+            if not device:
+                continue
+
             entities = er.async_entries_for_device(entity_registry, device.id, True)
             for entity in entities:
                 entity_registry.async_remove(entity.entity_id)
@@ -256,4 +288,4 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
             for callback in entry.runtime_data.add_component_callbacks.values():
                 callback(component)
 
-        component.create_entities = entry.options.get(comp_name)
+        component.create_entities = bool(entry.options.get(comp_name))

@@ -258,11 +258,12 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
 
         # no reconfigure. Create new entry instead
         # initialize options with default settings
-        options: dict[str:bool] = {}
+        options: dict[str, bool] = {}
         for component in components:
             options[component] = CONFIG.is_component_enabled(component)
 
         # Create meaningful entry title, alter strategy based on selected options
+        title: str = ""
         if self._config_data[CONF_TYPE] in [
             CONN_TYPE_DIRECT_EDGE,
             CONN_TYPE_LOCAL_FEMS,
@@ -271,7 +272,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
             title = self._config_data[CONF_HOST]
         elif self._config_data[CONF_TYPE] == CONN_TYPE_WEB_FENECON:
             title = "FEMS Web: " + self._config_data[CONF_USERNAME]
-        else:
+        elif backend.ws_url.host is not None:
             title = backend.ws_url.host
         if backend.multi_edge:
             title += " " + self._config_data[CONF_EDGE]
@@ -283,7 +284,10 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle edges selection by user."""
         errors: dict[str, str] = {}
-        edges_schema = self.cur_step["data_schema"]
+        if not self.cur_step:
+            return self.async_abort(reason="No current step found in edges step")
+
+        edges_schema = self.cur_step.get("data_schema")
         if user_input is not None:
             self._config_data[CONF_EDGE] = user_input[CONF_EDGES]
             if self._config_data[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:

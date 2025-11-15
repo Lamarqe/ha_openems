@@ -135,9 +135,9 @@ class OpenEMSChannel:
         self.component: OpenEMSComponent = component
         self.name: str = name
         self.unit: str = unit
-        self.options: list | None = options
+        self.options: dict = options
         self.orig_json: list | None = channel_json
-        self.callback: callable | None = None
+        self.callback: Callable | None = None
         self._current_value: Any = None
 
     def handle_current_value(self, value):
@@ -307,7 +307,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
                 new_val = None
             self.handle_current_value(new_val)
 
-    def _update_config(self) -> tuple[float, float, float]:
+    def _update_config(self) -> bool:
         """Calculate the new multiplier, limits and step after references changed.
 
         Return True if at least one of these parameters changed, False otherwise.
@@ -638,13 +638,13 @@ class OpenEMSEdge:
         """Initialize the edge."""
         self.backend: OpenEMSBackend = backend
         self._id: str = id
-        self._component_config: dict[str, dict] | None = None
+        self._component_config: dict[str, dict] = {}
         self.components: dict[str, OpenEMSComponent] = {}
         self.current_channel_data: dict | None = None
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
             self
         )
-        self.hostname: str | None = None
+        self.hostname: str = ""
         self._registered_channels: dict[str, set[OpenEMSChannel]] = {}
 
     async def read_components(self) -> dict:

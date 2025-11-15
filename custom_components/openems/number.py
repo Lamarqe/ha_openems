@@ -16,7 +16,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .__init__ import OpenEMSConfigEntry
 from .helpers import (
     DeviceInfo,
-    OpenEMSSensorUnitClass,
+    OpenEMSUnitClass,
     component_device,
     translation_key,
     unit_description,
@@ -45,7 +45,7 @@ async def async_setup_entry(
         channel_list: list[OpenEMSNumberProperty] = component.number_properties
         for channel in channel_list:
             entity_enabled = CONFIG.is_channel_enabled(component.name, channel.name)
-            unit_desc: OpenEMSSensorUnitClass = unit_description(channel.unit)
+            unit_desc: OpenEMSUnitClass = unit_description(channel.unit)
             entity_description = OpenEMSNumberDescription(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
@@ -53,8 +53,7 @@ async def async_setup_entry(
                 mode=NumberMode.SLIDER,
                 # remove "_Property" prefix
                 name=channel.name[9:],
-                device_class=unit_desc.device_class,
-                # state_class=unit_desc.state_class,
+                device_class=unit_desc.number_device_class,
                 native_unit_of_measurement=unit_desc.unit,
                 translation_key=translation_key(channel),
             )
