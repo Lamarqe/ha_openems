@@ -141,26 +141,30 @@ class OpenEMSChannel:
         self.callback: Callable | None = None
         self._current_value: Any = None
 
-    def handle_current_value(self, value):
+    def handle_current_value(self, value: Any) -> None:
         """Handle a new entity value and notify Home Assistant."""
         if value != self._current_value:
             self._current_value = value
             self.notify_ha()
 
-    def handle_data_update(self, channel_name, value: float | None) -> None:
+    def handle_data_update(self, channel_name, value: str | float | None) -> None:
         """Handle a data update from the backend."""
-        if value is not None:
-            if isinstance(value, int) and value in self.options:
+        if value is not None and isinstance(value, int):
+            if value in self.options:
                 enum_value = self.options[value]
                 self.handle_current_value(enum_value)
-                return
+            else:
+                self.handle_current_value(value)
         else:
             self.handle_current_value(None)
 
     @property
-    def native_value(self) -> Any | None:
+    def native_value(self) -> str | int | None:
         """Return the value of the sensor."""
-        return self._current_value
+        if isinstance(self._current_value, (str, int)):
+            return self._current_value
+
+        return None
 
     @property
     def current_value(self):
@@ -231,11 +235,14 @@ class OpenEMSEnumProperty(OpenEMSProperty):
     @property
     def current_option(self) -> str | None:
         """Return the current option."""
-        return self._current_value
+        if isinstance(self._current_value, str):
+            return self._current_value
 
-    def handle_data_update(self, channel_name, value: str | None):
+        return None
+
+    def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
-        if value is not None and value in self.options:
+        if value is not None and isinstance(value, str) and value in self.options:
             self.handle_current_value(value)
         else:
             self.handle_current_value(None)
@@ -244,9 +251,9 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 class OpenEMSTimeProperty(OpenEMSProperty):
     """Class representing a enum property of an OpenEMS component."""
 
-    def handle_data_update(self, channel_name, value: str | None):
+    def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
-        if value is None:
+        if not isinstance(value, str):
             new_val = None
         else:
             try:
@@ -259,7 +266,10 @@ class OpenEMSTimeProperty(OpenEMSProperty):
     @property
     def native_value(self) -> time | None:
         """Return the value of the time entity."""
-        return self._current_value
+        if isinstance(self._current_value, time):
+            return self._current_value
+
+        return None
 
     async def async_set_value(self, value: time) -> None:
         """Update the selected time."""
@@ -289,14 +299,17 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         self.upper_limit_def: Template = Template(str(self.upper_limit))
 
         self.step: float = 1.0
-        self.reference_channels: dict[str, str | None] = {}
+        self.reference_channels: dict[str, str | float | None] = {}
 
     @property
     def native_value(self) -> float | None:
         """Return the value of the number entity."""
-        return self._current_value
+        if isinstance(self._current_value, (float, int)):
+            return self._current_value
 
-    def handle_data_update(self, channel_name, value: str | None):
+        return None
+
+    def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
         channel_reference = channel_name.replace("/", SLASH_ESC)
         if channel_reference in self.reference_channels:
@@ -307,11 +320,8 @@ class OpenEMSNumberProperty(OpenEMSProperty):
                     self.notify_ha()
             return
 
-        if value is not None:
-            try:
-                new_val = self.multiplier * float(value)
-            except (TypeError, ValueError):
-                new_val = None
+        if isinstance(value, (float, int)):
+            new_val = self.multiplier * value
         else:
             new_val = None
         self.handle_current_value(new_val)
@@ -454,9 +464,9 @@ class OpenEMSBooleanProperty(OpenEMSProperty):
         """Return true if switch is on."""
         return self._current_value
 
-    def handle_data_update(self, channel_name, value: str | None):
+    def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
-        if value is not None and isinstance(value, int):
+        if isinstance(value, int):
             new_val = bool(value)
         else:
             new_val = None
@@ -794,7 +804,7 @@ class OpenEMSEdge:
         self.set_component_config(params["components"])
         # TODO: renew component channels and component info values
 
-    def currentData(self, params: dict[str, str]):
+    def currentData(self, params: dict[str, str | float | None]):
         """Jsonrpc callback to receive channel subscription updates."""
         self.current_channel_data = params
         for channel_name, value in params.items():

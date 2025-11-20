@@ -122,7 +122,7 @@ class OpenEMSSensorEntity(SensorEntity):
         self._attr_extra_state_attributes = channel.orig_json
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> str | int | None:
         """Return the value of the sensor."""
         return self._channel.native_value
 
