@@ -132,7 +132,7 @@ class OpenEMSUpdateEntity(UpdateEntity):
         self._attr_installed_version = curr_ver
         self._attr_latest_version = new_ver if new_ver else curr_ver
         # reset potential update in progress indicators
-        self._attr_in_progress = self.in_progress and not self._attr_available
+        self._attr_in_progress = bool(self.in_progress) and not self._attr_available
         self._attr_update_percentage = None
 
     def _set_progress_percentage(self, percentage: int) -> None:

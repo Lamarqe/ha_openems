@@ -26,7 +26,7 @@ class ConnectionType(TypedDict):
     path: str
 
 
-CONN_TYPES: dict[str:ConnectionType] = {
+CONN_TYPES: dict[str, ConnectionType] = {
     CONN_TYPE_DIRECT_EDGE: {
         "scheme": "ws",
         "host": None,
@@ -67,7 +67,7 @@ def connection_url(type: str, host: str | None = None) -> URL:
         url_host = host
     return URL.build(
         scheme=default_params["scheme"],
-        host=url_host,
+        host="" if url_host is None else url_host,
         port=default_params["port"],
         path=default_params["path"],
     )

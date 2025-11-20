@@ -37,7 +37,7 @@ async def async_setup_entry(
         # ==================== TODO REMOVE_LATER_START ============================
         # remove duplicate (non-binary) sensors if they exist
         entity_registry = er.async_get(hass)
-        er_device = device_registry.async_get_device(device["identifiers"])
+        er_device = device_registry.async_get_device(device.get("identifiers"))
         ha_entities = (
             er.async_entries_for_device(entity_registry, er_device.id, True)
             if er_device
@@ -130,7 +130,10 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
     @property
     def is_on(self) -> int | None:
         """Return the binary state of the sensor."""
-        return self._channel.native_value
+        if isinstance(self._channel.native_value, int):
+            return self._channel.native_value
+
+        return None
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
