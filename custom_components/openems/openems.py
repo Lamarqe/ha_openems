@@ -608,6 +608,7 @@ class OpenEMSEdge:
             loop = asyncio.get_event_loop()
             self._fetch_task = loop.create_task(self._update_subscriptions_forever())
             self._active_subscriptions = []
+            self._count = 0
 
         def stop(self):
             """Stop the updater."""
@@ -635,10 +636,13 @@ class OpenEMSEdge:
                                 await self._edge.backend.rpc_server.subscribeEdges(
                                     edges=[self._edge.id]
                                 )
+                                self._count = 0
+                            else:
+                                self._count += 1
 
                             subscribe_call = OpenEMSBackend.wrap_jsonrpc(
                                 "subscribeChannels",
-                                count=0,
+                                count=self._count,
                                 channels=subscribe_in_progress_channels,
                             )
                             await self._edge.backend.rpc_server.edgeRpc(
@@ -808,7 +812,13 @@ class OpenEMSEdge:
         """Jsonrpc callback to receive channel subscription updates."""
         self.current_channel_data = params
         for channel_name, value in params.items():
-            for channel in self._registered_channels[channel_name]:
+            registered_channels = self._registered_channels.get(channel_name)
+            if not registered_channels:
+                _LOGGER.debug(
+                    "Received data update for unsubscribed channel: %s", channel_name
+                )
+                continue
+            for channel in registered_channels:
                 channel.handle_data_update(channel_name, value)
 
     def register_channel(self, channel_names: set[str], handler: OpenEMSChannel):
