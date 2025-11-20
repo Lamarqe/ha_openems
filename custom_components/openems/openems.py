@@ -9,7 +9,6 @@ from datetime import time
 import json
 import logging
 import math
-from numbers import Number
 import os
 import re
 from typing import Any
@@ -119,7 +118,9 @@ class OpenEMSChannel:
     """Class representing a sensor of an OpenEMS component."""
 
     # Use with platform sensor
-    def __init__(self, component, channel_json) -> None:
+    def __init__(
+        self, component: OpenEMSComponent, channel_json: dict[str, Any]
+    ) -> None:
         """Initialize the channel."""
         name = channel_json["id"]
         unit = channel_json["unit"]
@@ -135,8 +136,8 @@ class OpenEMSChannel:
         self.component: OpenEMSComponent = component
         self.name: str = name
         self.unit: str = unit
-        self.options: dict = options
-        self.orig_json: list | None = channel_json
+        self.options: dict[int, str] = options
+        self.orig_json: dict[str, Any] = channel_json
         self.callback: Callable | None = None
         self._current_value: Any = None
 
@@ -146,11 +147,15 @@ class OpenEMSChannel:
             self._current_value = value
             self.notify_ha()
 
-    def handle_data_update(self, channel_name, value) -> None:
+    def handle_data_update(self, channel_name, value: float | None) -> None:
         """Handle a data update from the backend."""
-        if value in self.options:
-            value = self.options[value]
-        self.handle_current_value(value)
+        if value is not None:
+            if isinstance(value, int) and value in self.options:
+                enum_value = self.options[value]
+                self.handle_current_value(enum_value)
+                return
+        else:
+            self.handle_current_value(None)
 
     @property
     def native_value(self) -> Any | None:
@@ -204,7 +209,7 @@ class OpenEMSProperty(OpenEMSChannel):
             for channel_name in channel_names:
                 channel: OpenEMSProperty = next(
                     chan
-                    for chan in self.component.channels
+                    for chan in self.component.properties
                     if chan.name == channel_name
                 )
                 properties.append(
@@ -228,19 +233,18 @@ class OpenEMSEnumProperty(OpenEMSProperty):
         """Return the current option."""
         return self._current_value
 
-    def handle_data_update(self, channel_name, value):
+    def handle_data_update(self, channel_name, value: str | None):
         """Handle a data update from the backend."""
-        if isinstance(value, str) and value in self.options:
-            new_val = value
+        if value is not None and value in self.options:
+            self.handle_current_value(value)
         else:
-            new_val = None
-        self.handle_current_value(new_val)
+            self.handle_current_value(None)
 
 
 class OpenEMSTimeProperty(OpenEMSProperty):
     """Class representing a enum property of an OpenEMS component."""
 
-    def handle_data_update(self, channel_name, value):
+    def handle_data_update(self, channel_name, value: str | None):
         """Handle a data update from the backend."""
         if value is None:
             new_val = None
@@ -276,22 +280,23 @@ class OpenEMSNumberProperty(OpenEMSProperty):
     ) -> None:
         """Initialize the number channel."""
         super().__init__(component, channel_json)
-        self.multiplier_def: Template = None
-        self.lower_limit_def: Template = None
-        self.upper_limit_def: Template = None
-
         self.multiplier: float = 1.0
         self.lower_limit: float = 0
         self.upper_limit: float = 100000
+
+        self.multiplier_def: Template = Template(str(self.multiplier))
+        self.lower_limit_def: Template = Template(str(self.lower_limit))
+        self.upper_limit_def: Template = Template(str(self.upper_limit))
+
         self.step: float = 1.0
-        self.reference_channels: dict[str, Any] = {}
+        self.reference_channels: dict[str, str | None] = {}
 
     @property
-    def native_value(self) -> Number | None:
+    def native_value(self) -> float | None:
         """Return the value of the number entity."""
         return self._current_value
 
-    def handle_data_update(self, channel_name, value):
+    def handle_data_update(self, channel_name, value: str | None):
         """Handle a data update from the backend."""
         channel_reference = channel_name.replace("/", SLASH_ESC)
         if channel_reference in self.reference_channels:
@@ -300,12 +305,16 @@ class OpenEMSNumberProperty(OpenEMSProperty):
                 if self._update_config():
                     # config vars changed. Update the entity in HA
                     self.notify_ha()
-        else:
-            if isinstance(value, Number):
-                new_val = self.multiplier * value
-            else:
+            return
+
+        if value is not None:
+            try:
+                new_val = self.multiplier * float(value)
+            except (TypeError, ValueError):
                 new_val = None
-            self.handle_current_value(new_val)
+        else:
+            new_val = None
+        self.handle_current_value(new_val)
 
     def _update_config(self) -> bool:
         """Calculate the new multiplier, limits and step after references changed.
@@ -376,7 +385,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
 
         return False
 
-    async def update_value(self, new_value: Number) -> None:
+    async def update_value(self, new_value: float) -> None:
         """Handle value change request from Home Assisant."""
         await super().update_value(new_value / self.multiplier)
 
@@ -403,7 +412,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
             # no external references. Calculate the result immediately
             self.upper_limit = float(self.upper_limit_def.render())
 
-    def _prepare_ref_value(self, expr) -> tuple[Template, set[str]]:
+    def _prepare_ref_value(self, expr) -> tuple[Template, bool]:
         """Parse a template string into a template and channels contained."""
         has_reference = False
 
@@ -415,7 +424,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
                 # if the reference starts with $, treat the component like a variable,
                 # to be looked up in the component properties
                 # replace all linked channels with their values
-                comp_ref = self.component.properties[comp_ref[1:]]
+                comp_ref = self.component.json_properties[comp_ref[1:]]
 
             # prepare value containers of required channels
             linked_channel = comp_ref + SLASH_ESC + channel
@@ -445,9 +454,9 @@ class OpenEMSBooleanProperty(OpenEMSProperty):
         """Return true if switch is on."""
         return self._current_value
 
-    def handle_data_update(self, channel_name, value):
+    def handle_data_update(self, channel_name, value: str | None):
         """Handle a data update from the backend."""
-        if isinstance(value, int):
+        if value is not None and isinstance(value, int):
             new_val = bool(value)
         else:
             new_val = None
@@ -463,7 +472,7 @@ class OpenEMSComponent:
         self.name: str = name
         self.alias = json_def.get("_PropertyAlias")
         self.ref_values: dict = {}
-        self.properties: dict = json_def["properties"]
+        self.json_properties: dict = json_def["properties"]
         self.sensors: list[OpenEMSChannel] = []
         self.boolean_sensors: list[OpenEMSChannel] = []
         self.enum_properties: list[OpenEMSEnumProperty] = []
@@ -472,7 +481,7 @@ class OpenEMSComponent:
         self.time_properties: list[OpenEMSTimeProperty] = []
         self.create_entities: bool = False
 
-    async def init_channels(self, channels):
+    async def init_channels(self, channels: list[dict[str, Any]]):
         """Parse and initialize the components channels."""
         for channel_json in channels:
             if channel_json["id"].startswith("_Property"):
@@ -561,8 +570,15 @@ class OpenEMSComponent:
     def channels(self) -> list[OpenEMSChannel]:
         """Return all channels of the component (all platforms)."""
         return [
+            *self.properties,
             *self.sensors,
             *self.boolean_sensors,
+        ]
+
+    @property
+    def properties(self) -> list[OpenEMSProperty]:
+        """Return all properties of the component (all platforms)."""
+        return [
             *self.enum_properties,
             *self.number_properties,
             *self.boolean_properties,
@@ -640,7 +656,7 @@ class OpenEMSEdge:
         self._id: str = id
         self._component_config: dict[str, dict] = {}
         self.components: dict[str, OpenEMSComponent] = {}
-        self.current_channel_data: dict | None = None
+        self.current_channel_data: dict[str, Any] = {}
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
             self
         )
@@ -718,8 +734,11 @@ class OpenEMSEdge:
             if component in components:
                 components[component][channel] = value
 
-    async def get_channel_values_via_rest(self, channels: list[str]):
+    async def get_channel_values_via_rest(self, channels: list[str]) -> dict:
         """Read channel values via REST API."""
+        if self.backend.rest_base_url is None:
+            return {}
+
         auth = aiohttp.BasicAuth(self.backend.username, self.backend.password)
         values = []
 
@@ -775,10 +794,10 @@ class OpenEMSEdge:
         self.set_component_config(params["components"])
         # TODO: renew component channels and component info values
 
-    def currentData(self, params):
+    def currentData(self, params: dict[str, str]):
         """Jsonrpc callback to receive channel subscription updates."""
         self.current_channel_data = params
-        for channel_name, value in self.current_channel_data.items():
+        for channel_name, value in params.items():
             for channel in self._registered_channels[channel_name]:
                 channel.handle_data_update(channel_name, value)
 
@@ -813,7 +832,7 @@ class OpenEMSEdge:
         "Return the list of all subscribed channels."
         return self._registered_channels
 
-    async def get_channel_values_via_websocket(self, channels: list[str]):
+    async def get_channel_values_via_websocket(self, channels: list[str]) -> dict:
         """Read channels via dedicated websocket connection."""
 
         # create new connection and login
@@ -830,8 +849,8 @@ class OpenEMSEdge:
         )
 
         # prepare callback event and subscribe for the required data
-        data_received: asyncio.Event | None = asyncio.Event()
-        data = None
+        data_received: asyncio.Event = asyncio.Event()
+        data = {}
 
         def _handle_callback(**kwargs):
             if kwargs["payload"]["method"] != "currentData":
@@ -848,7 +867,7 @@ class OpenEMSEdge:
         subscribe_call = OpenEMSBackend.wrap_jsonrpc(
             "subscribeChannels", count=0, channels=channels
         )
-        await rpc_server.edgeRpc(edgeId=self._id, payload=subscribe_call)
+        await rpc_server.edgeRpc(edgeId=self._id, payload=subscribe_call)  # pyright: ignore[reportGeneralTypeIssues]
 
         # wait for the data. When received, close connection and return data
         await asyncio.wait_for(data_received.wait(), timeout=5)

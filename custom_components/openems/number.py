@@ -122,7 +122,7 @@ class OpenEMSNumberEntity(NumberEntity):
         return self._channel.step
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> float | None:
         """Return the value of the number entity."""
         return self._channel.native_value
 
