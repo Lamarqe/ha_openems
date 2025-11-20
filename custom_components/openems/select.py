@@ -40,7 +40,7 @@ async def async_setup_entry(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                options=list(channel.options.values()),
+                options=channel.options,
                 # remove "_Property" prefix
                 name=channel.name[9:],
                 translation_key=translation_key(channel),

@@ -230,7 +230,7 @@ class OpenEMSEnumProperty(OpenEMSProperty):
     def __init__(self, component, channel_json) -> None:
         """Initialize the channel."""
         super().__init__(component, channel_json)
-        self.options = channel_json["options"]
+        self.options: list[str] = channel_json["options"]
 
     @property
     def current_option(self) -> str | None:
