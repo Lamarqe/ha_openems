@@ -53,7 +53,7 @@ _LOGGER = logging.getLogger(__name__)
 class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
-    VERSION = 2
+    VERSION = 3
     MINOR_VERSION = 1
 
     def __init__(self) -> None:

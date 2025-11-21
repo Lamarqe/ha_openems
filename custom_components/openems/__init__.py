@@ -256,6 +256,30 @@ async def async_migrate_entry(
             return True
         return False
 
+    if config_entry.version == 2:
+        # update device identifiers, as they got corrected with v1.1.0.
+        device_registry = dr.async_get(hass)
+        for device in device_registry.devices.copy().values():
+            if (
+                config_entry.entry_id in device.config_entries
+                and len(identifiers := device.identifiers.pop()) == 3
+            ):
+                # 3-tuples (DOMAIN, edge_hostname, component_name) are illegal
+                # and changed to 2-tuples (DOMAIN, edge_hostname + " " + component_name)
+                device_registry.async_update_device(
+                    device_id=device.id,
+                    new_identifiers={
+                        (identifiers[0], identifiers[1] + " " + identifiers[2])
+                    },
+                )
+        hass.config_entries.async_update_entry(config_entry, version=3, minor_version=1)
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
+
+        return True
     return False
 
 
