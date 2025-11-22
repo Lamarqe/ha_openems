@@ -408,19 +408,22 @@ class OpenEMSNumberProperty(OpenEMSProperty):
 
     def set_limit_def(self, limit_def):
         """Initialize the limits of the number channel."""
-        self.lower_limit_def, has_references = self._prepare_ref_value(
+        self.lower_limit_def, lower_has_references = self._prepare_ref_value(
             limit_def["lower"]
         )
-        if not has_references:
+        if not lower_has_references:
             # no external references. Calculate the result immediately
             self.lower_limit = float(self.lower_limit_def.render())
 
-        self.upper_limit_def, has_references = self._prepare_ref_value(
+        self.upper_limit_def, upper_has_references = self._prepare_ref_value(
             limit_def["upper"]
         )
-        if not has_references:
+        if not upper_has_references:
             # no external references. Calculate the result immediately
             self.upper_limit = float(self.upper_limit_def.render())
+
+        if not (lower_has_references or upper_has_references):
+            self._update_config()
 
     def _prepare_ref_value(self, expr) -> tuple[Template, bool]:
         """Parse a template string into a template and channels contained."""
