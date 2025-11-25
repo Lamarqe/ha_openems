@@ -156,7 +156,7 @@ Parameter | Description
 ------ | ---------- 
 Host | The hostname or IP address of your Fenecon or OpenEMS system. E.g. `fems12345` or `192.168.1.100`
 Username | The username to access the system. Use `x` for local monitoring access. For FEMS online monitoring, your Email address is used as username
-Password | For local monitoring, common values are `user` or `owner`
+Password | For local monitoring of FEMS systems, common values are `user` (read-only access) or `owner` (write access)
 Connection Type<br> | Choose 1 of the 5 supported connection types:<br><li>FEMS local monitoring (port 80)</li><li>OpenEMS local monitoring (port 8082)</li><li>Direct edge Websocket connection (port 8085). This is the standard connection type and pre-selected by default</li><li>Fenecon online monitoring at portal.fenecon.de (hostname option will not be used)</li><li>Custom Websocket URL (hostname option will not be used)</li>
 Custom URL* | Custom Websocket URL, eg: `ws://192.168.1.100:8888/websocket`
 
