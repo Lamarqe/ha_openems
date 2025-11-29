@@ -4,17 +4,19 @@ from typing import TypedDict
 
 from yarl import URL
 
-DOMAIN = "openems"
+DOMAIN: str = "openems"
 
-CONF_EDGES = "edges"
-CONF_EDGE = "edge"
+CONF_EDGES: str = "edges"
+CONF_EDGE: str = "edge"
 
-CONN_TYPE_DIRECT_EDGE = "direct_edge"
-CONN_TYPE_LOCAL_FEMS = "local_fems"
-CONN_TYPE_LOCAL_OPENEMS = "local_openems"
-CONN_TYPE_WEB_FENECON = "web_fenecon"
-CONN_TYPE_CUSTOM_URL = "custom_url"
-CONN_TYPE_REST = "rest"
+CONN_TYPE_DIRECT_EDGE: str = "direct_edge"
+CONN_TYPE_LOCAL_FEMS: str = "local_fems"
+CONN_TYPE_LOCAL_OPENEMS: str = "local_openems"
+CONN_TYPE_WEB_FENECON: str = "web_fenecon"
+CONN_TYPE_CUSTOM_URL: str = "custom_url"
+CONN_TYPE_REST: str = "rest"
+
+QUERY_CONFIG_VIA_REST: bool = False
 
 
 class ConnectionType(TypedDict):
