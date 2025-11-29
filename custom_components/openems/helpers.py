@@ -7,7 +7,7 @@ from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
-from .const import DOMAIN
+from .const import DOMAIN, SLASH_ESC
 from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSProperty
 
 
@@ -109,4 +109,6 @@ def translation_key(channel: OpenEMSChannel) -> str:
         channel_name = channel.name[9:]
     else:
         channel_name = channel.name
-    return re.sub(r"\d+$", "", channel.component.name) + "/" + channel_name
+    return (
+        re.sub(r"\d+$", "", channel.component.name) + SLASH_ESC + channel_name
+    ).lower()

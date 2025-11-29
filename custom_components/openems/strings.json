@@ -42,7 +42,7 @@
   },
   "entity": {
     "sensor": {
-      "ctrlGridOptimizedCharge/DelayChargeState": {
+      "ctrlgridoptimizedcharge___slash___delaychargestate": {
         "state": {
           "Undefined": "Undefined",
           "Active limit": "Active limit",
@@ -56,7 +56,7 @@
           "Avoid charging with low power for more efficiency": "Avoid charging with low power for more efficiency"
         }
       },
-      "evcs/Status": {
+      "evcs___slash___status": {
         "state": {
           "Undefined": "Undefined",
           "Starting": "Starting",
@@ -70,26 +70,26 @@
       }
     },
     "select": {
-      "ctrlGridOptimizedCharge/DelayChargeRiskLevel": {
+      "ctrlgridoptimizedcharge___slash___delaychargerisklevel": {
         "state": {
           "LOW": "Low",
           "MEDIUM": "Medium",
           "HIGH": "High"
         }
       },
-      "ctrlEvcs/ChargeMode": {
+      "ctrlevcs___slash___chargemode": {
         "state": {
           "FORCE_CHARGE": "Force charge",
           "EXCESS_POWER": "Excess power"
         }
       },
-      "ctrlEvcs/Priority": {
+      "ctrlevcs___slash___priority": {
         "state": {
           "CAR": "Car",
           "STORAGE": "Storage"
         }
       },
-      "ctrlGridOptimizedCharge/Mode": {
+      "ctrlgridoptimizedcharge___slash___mode": {
         "state": {
           "OFF": "Off",
           "AUTOMATIC": "Automatic",

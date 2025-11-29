@@ -25,11 +25,11 @@ from .const import (
     CONN_TYPE_WEB_FENECON,
     CONN_TYPES,
     QUERY_CONFIG_VIA_REST,
+    SLASH_ESC,
     connection_url,
 )
 
 _LOGGER = logging.getLogger(__name__)
-SLASH_ESC = "___SLASH___"
 
 
 class OpenEMSConfig:
