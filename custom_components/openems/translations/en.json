@@ -42,56 +42,56 @@
         "select": {
             "ctrlevcs___slash___chargemode": {
                 "state": {
-                    "EXCESS_POWER": "Excess power",
-                    "FORCE_CHARGE": "Force charge"
+                    "excess_power": "Excess power",
+                    "force_charge": "Force charge"
                 }
             },
             "ctrlevcs___slash___priority": {
                 "state": {
-                    "CAR": "Car",
-                    "STORAGE": "Storage"
+                    "car": "Car",
+                    "storage": "Storage"
                 }
             },
             "ctrlgridoptimizedcharge___slash___delaychargerisklevel": {
                 "state": {
-                    "HIGH": "High",
-                    "LOW": "Low",
-                    "MEDIUM": "Medium"
+                    "high": "High",
+                    "low": "Low",
+                    "medium": "Medium"
                 }
             },
             "ctrlgridoptimizedcharge___slash___mode": {
                 "state": {
-                    "AUTOMATIC": "Automatic",
-                    "MANUAL": "Manual",
-                    "OFF": "Off"
+                    "automatic": "Automatic",
+                    "manual": "Manual",
+                    "off": "Off"
                 }
             }
         },
         "sensor": {
             "ctrlgridoptimizedcharge___slash___delaychargestate": {
                 "state": {
-                    "Active limit": "Active limit",
-                    "Avoid charging with low power for more efficiency": "Avoid charging with low power for more efficiency",
-                    "Delay charge part is disabled": "Delay charge part is disabled",
-                    "Delay charge was not started because there is no production or to less production": "Delay charge was not started because there is no production or to less production",
-                    "Limit cannot be adapted because of other constraints with higher priority": "Limit cannot be adapted because of other constraints with higher priority",
-                    "No active limitation": "No active limitation",
-                    "No remaining capacity": "No remaining capacity",
-                    "No remaining time": "No remaining time",
-                    "Target minute not calculated": "Target minute not calculated",
-                    "Undefined": "Undefined"
+                    "active_limit": "Active limit",
+                    "avoid_charging_with_low_power_for_more_efficiency": "Avoid charging with low power for more efficiency",
+                    "delay_charge_part_is_disabled": "Delay charge part is disabled",
+                    "delay_charge_was_not_started_because_there_is_no_production_or_to_less_production": "Delay charge was not started because there is no production or to less production",
+                    "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Limit cannot be adapted because of other constraints with higher priority",
+                    "no_active_limitation": "No active limitation",
+                    "no_remaining_capacity": "No remaining capacity",
+                    "no_remaining_time": "No remaining time",
+                    "target_minute_not_calculated": "Target minute not calculated",
+                    "undefined": "Undefined"
                 }
             },
             "evcs___slash___status": {
                 "state": {
-                    "Charging": "Ladevorgang aktiv",
-                    "Charging rejected": "Charging rejected",
-                    "Error": "Error",
-                    "Not ready for Charging": "Not ready for Charging",
-                    "Ready for Charging": "Ready for Charging",
-                    "Starting": "Starting",
-                    "The charging limit reached": "The charging limit reached",
-                    "Undefined": "Undefined"
+                    "charging": "Ladevorgang aktiv",
+                    "charging_rejected": "Charging rejected",
+                    "error": "Error",
+                    "not_ready_for_charging": "Not ready for Charging",
+                    "ready_for_charging": "Ready for Charging",
+                    "starting": "Starting",
+                    "the_charging_limit_reached": "The charging limit reached",
+                    "undefined": "Undefined"
                 }
             }
         }

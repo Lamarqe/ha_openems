@@ -149,6 +149,8 @@ class OpenEMSChannel:
 
     def handle_current_value(self, value: Any) -> None:
         """Handle a new entity value and notify Home Assistant."""
+        if isinstance(value, str):
+            value = value.lower().replace(" ", "_")
         if value != self._current_value:
             self._current_value = value
             self.notify_ha()

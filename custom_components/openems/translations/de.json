@@ -42,56 +42,56 @@
         "select": {
             "ctrlevcs___slash___chargemode": {
                 "state": {
-                    "EXCESS_POWER": "\u00dcberschuss",
-                    "FORCE_CHARGE": "Zielwert"
+                    "excess_power": "\u00dcberschuss",
+                    "force_charge": "Zielwert"
                 }
             },
             "ctrlevcs___slash___priority": {
                 "state": {
-                    "CAR": "Auto",
-                    "STORAGE": "Speicher"
+                    "car": "Auto",
+                    "storage": "Speicher"
                 }
             },
             "ctrlgridoptimizedcharge___slash___delaychargerisklevel": {
                 "state": {
-                    "HIGH": "Hoch",
-                    "LOW": "Gering",
-                    "MEDIUM": "Mittel"
+                    "high": "Hoch",
+                    "low": "Gering",
+                    "medium": "Mittel"
                 }
             },
             "ctrlgridoptimizedcharge___slash___mode": {
                 "state": {
-                    "AUTOMATIC": "Automatisch",
-                    "MANUAL": "Manuell",
-                    "OFF": "Aus"
+                    "automatic": "Automatisch",
+                    "manual": "Manuell",
+                    "off": "Aus"
                 }
             }
         },
         "sensor": {
             "ctrlgridoptimizedcharge___slash___delaychargestate": {
                 "state": {
-                    "Active limit": "Begrenzung aktiv",
-                    "Avoid charging with low power for more efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
-                    "Delay charge part is disabled": "Verz\u00f6gerte Ladung deaktiviert",
-                    "Delay charge was not started because there is no production or to less production": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
-                    "Limit cannot be adapted because of other constraints with higher priority": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
-                    "No active limitation": "Keine Begrenzung aktiv",
-                    "No remaining capacity": "Keine Kapazit\u00e4t verbleibend",
-                    "No remaining time": "Keine Zeit verbleibend",
-                    "Target minute not calculated": "Zielzeitpunkt nicht berechet",
-                    "Undefined": "Nicht definiert"
+                    "active_limit": "Begrenzung aktiv",
+                    "avoid_charging_with_low_power_for_more_efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
+                    "delay_charge_part_is_disabled": "Verz\u00f6gerte Ladung deaktiviert",
+                    "delay_charge_was_not_started_because_there_is_no_production_or_to_less_production": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
+                    "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
+                    "no_active_limitation": "Keine Begrenzung aktiv",
+                    "no_remaining_capacity": "Keine Kapazit\u00e4t verbleibend",
+                    "no_remaining_time": "Keine Zeit verbleibend",
+                    "target_minute_not_calculated": "Zielzeitpunkt nicht berechet",
+                    "undefined": "Nicht definiert"
                 }
             },
             "evcs___slash___status": {
                 "state": {
-                    "Charging": "Ladevorgang aktiv",
-                    "Charging rejected": "Laden verweigert",
-                    "Error": "Fehler",
-                    "Not ready for Charging": "Nicht bereit zum Laden",
-                    "Ready for Charging": "Bereit zum Laden",
-                    "Starting": "Starte...",
-                    "The charging limit reached": "Ladelimit erreicht",
-                    "Undefined": "Nicht definiert"
+                    "charging": "Ladevorgang aktiv",
+                    "charging_rejected": "Laden verweigert",
+                    "error": "Fehler",
+                    "not_ready_for_charging": "Nicht bereit zum Laden",
+                    "ready_for_charging": "Bereit zum Laden",
+                    "starting": "Starte...",
+                    "the_charging_limit_reached": "Ladelimit erreicht",
+                    "undefined": "Nicht definiert"
                 }
             }
         }
