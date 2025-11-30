@@ -4,7 +4,7 @@ from typing import TypedDict
 
 from yarl import URL
 
-SLASH_ESC = "___slash___"
+SLASH_ESC = "_s_l_a_s_h_"
 
 DOMAIN: str = "openems"
 

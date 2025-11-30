@@ -40,26 +40,26 @@
     },
     "entity": {
         "select": {
-            "ctrlevcs___slash___chargemode": {
+            "ctrlevcs_s_l_a_s_h_chargemode": {
                 "state": {
                     "excess_power": "Excess power",
                     "force_charge": "Force charge"
                 }
             },
-            "ctrlevcs___slash___priority": {
+            "ctrlevcs_s_l_a_s_h_priority": {
                 "state": {
                     "car": "Car",
                     "storage": "Storage"
                 }
             },
-            "ctrlgridoptimizedcharge___slash___delaychargerisklevel": {
+            "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
                 "state": {
                     "high": "High",
                     "low": "Low",
                     "medium": "Medium"
                 }
             },
-            "ctrlgridoptimizedcharge___slash___mode": {
+            "ctrlgridoptimizedcharge_s_l_a_s_h_mode": {
                 "state": {
                     "automatic": "Automatic",
                     "manual": "Manual",
@@ -68,7 +68,7 @@
             }
         },
         "sensor": {
-            "ctrlgridoptimizedcharge___slash___delaychargestate": {
+            "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
                 "state": {
                     "active_limit": "Active limit",
                     "avoid_charging_with_low_power_for_more_efficiency": "Avoid charging with low power for more efficiency",
@@ -82,7 +82,7 @@
                     "undefined": "Undefined"
                 }
             },
-            "evcs___slash___status": {
+            "evcs_s_l_a_s_h_status": {
                 "state": {
                     "charging": "Ladevorgang aktiv",
                     "charging_rejected": "Charging rejected",
