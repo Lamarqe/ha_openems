@@ -135,7 +135,10 @@ class OpenEMSChannel:
             and channel_json["category"] == "ENUM"
             and "options" in channel_json
         ):
-            options = {v: k for k, v in channel_json["options"].items()}
+            options = {
+                v: k.lower().replace(" ", "_")
+                for k, v in channel_json["options"].items()
+            }
         else:
             options = {}
 
@@ -149,8 +152,6 @@ class OpenEMSChannel:
 
     def handle_current_value(self, value: Any) -> None:
         """Handle a new entity value and notify Home Assistant."""
-        if isinstance(value, str):
-            value = value.lower().replace(" ", "_")
         if value != self._current_value:
             self._current_value = value
             self.notify_ha()
@@ -239,6 +240,9 @@ class OpenEMSEnumProperty(OpenEMSProperty):
         """Initialize the channel."""
         super().__init__(component, channel_json)
         self.options: list[str] = channel_json["options"]
+        self.options: list[str] = [
+            v.lower().replace(" ", "_") for v in channel_json["options"]
+        ]
 
     @property
     def current_option(self) -> str | None:
@@ -250,8 +254,18 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 
     def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
-        if value is not None and isinstance(value, str) and value in self.options:
-            self.handle_current_value(value)
+        if value is not None and isinstance(value, str):
+            value = value.lower().replace(" ", "_")
+            if value in self.options:
+                self.handle_current_value(value)
+            else:
+                _LOGGER.warning(
+                    "Received unknown value option for %s/%s: %s. Setting to status to Unknown",
+                    self.name,
+                    self.component.name,
+                    value,
+                )
+                self.handle_current_value(None)
         else:
             self.handle_current_value(None)
 
