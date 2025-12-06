@@ -262,6 +262,7 @@ async def async_migrate_entry(
         for device in device_registry.devices.copy().values():
             if (
                 config_entry.entry_id in device.config_entries
+                and device.identifiers
                 and len(identifiers := device.identifiers.pop()) == 3
             ):
                 # 3-tuples (DOMAIN, edge_hostname, component_name) are illegal
