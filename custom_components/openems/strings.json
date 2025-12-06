@@ -62,7 +62,7 @@
           "starting": "Starting",
           "not_ready_for_charging": "Not ready for Charging",
           "ready_for_charging": "Ready for Charging",
-          "charging": "Ladevorgang aktiv",
+          "charging": "Charging",
           "error": "Error",
           "charging_rejected": "Charging rejected",
           "the_charging_limit_reached": "The charging limit reached"

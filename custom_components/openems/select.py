@@ -40,7 +40,7 @@ async def async_setup_entry(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                options=channel.options,
+                options=list(channel.options.keys()),
                 # remove "_Property" prefix
                 name=channel.name[9:],
                 translation_key=translation_key(channel),
@@ -101,7 +101,7 @@ class OpenEMSSelectEntity(SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        await self._channel.update_value(option)
+        await self._channel.update_value(self._channel.options[option])
         self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:

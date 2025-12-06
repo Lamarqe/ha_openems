@@ -84,7 +84,7 @@
             },
             "evcs_s_l_a_s_h_status": {
                 "state": {
-                    "charging": "Ladevorgang aktiv",
+                    "charging": "Charging",
                     "charging_rejected": "Charging rejected",
                     "error": "Error",
                     "not_ready_for_charging": "Not ready for Charging",

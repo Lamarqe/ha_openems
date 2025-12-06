@@ -236,13 +236,13 @@ class OpenEMSEnumProperty(OpenEMSProperty):
     """Class representing a enum property of an OpenEMS component."""
 
     # Use with platform select
-    def __init__(self, component, channel_json) -> None:
+    def __init__(
+        self, component: OpenEMSComponent, options: list[str], channel_json: dict
+    ) -> None:
         """Initialize the channel."""
         super().__init__(component, channel_json)
-        self.options: list[str] = channel_json["options"]
-        self.options: list[str] = [
-            v.lower().replace(" ", "_") for v in channel_json["options"]
-        ]
+        # convert options to translatable strings and store originals in a lookup map
+        self.options: dict[str, str] = {v.lower().replace(" ", "_"): v for v in options}
 
     @property
     def current_option(self) -> str | None:
@@ -254,7 +254,9 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 
     def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
-        if value is not None and isinstance(value, str):
+        if value is None:
+            self.handle_current_value(None)
+        elif isinstance(value, str):
             value = value.lower().replace(" ", "_")
             if value in self.options:
                 self.handle_current_value(value)
@@ -267,7 +269,7 @@ class OpenEMSEnumProperty(OpenEMSProperty):
                 )
                 self.handle_current_value(None)
         else:
-            self.handle_current_value(None)
+            self.handle_current_value(value)
 
 
 class OpenEMSTimeProperty(OpenEMSProperty):
@@ -528,13 +530,15 @@ class OpenEMSComponent:
                         )
                         self.boolean_properties.append(prop)
                     case "STRING":
-                        if options := CONFIG.get_enum_options(
-                            self.name, channel_json["id"]
+                        if options_conf := (
+                            # options received from backend are preferred over configured options
+                            channel_json.pop("options", None)
+                            or CONFIG.get_enum_options(self.name, channel_json["id"])
                         ):
-                            channel_json["options"] = options
-                        if "options" in channel_json:
                             prop = OpenEMSEnumProperty(
-                                component=self, channel_json=channel_json
+                                component=self,
+                                options=options_conf,
+                                channel_json=channel_json,
                             )
                             self.enum_properties.append(prop)
                         elif CONFIG.is_time_property(self.name, channel_json["id"]):
