@@ -125,27 +125,25 @@ class OpenEMSChannel:
 
     # Use with platform sensor
     def __init__(
-        self, component: OpenEMSComponent, channel_json: dict[str, Any]
+        self,
+        component: OpenEMSComponent,
+        channel_json: dict[str, Any],
+        options: dict[str, int] | None = None,
     ) -> None:
         """Initialize the channel."""
         name = channel_json["id"]
         unit = channel_json["unit"]
+        self.options: dict[int, str] | None = None
         if (
             "category" in channel_json
             and channel_json["category"] == "ENUM"
-            and "options" in channel_json
+            and options is not None
         ):
-            options = {
-                v: k.lower().replace(" ", "_")
-                for k, v in channel_json["options"].items()
-            }
-        else:
-            options = {}
+            self.options = {v: k.lower().replace(" ", "_") for k, v in options.items()}
 
         self.component: OpenEMSComponent = component
         self.name: str = name
         self.unit: str = unit
-        self.options: dict[int, str] = options
         self.orig_json: dict[str, Any] = channel_json
         self.callback: Callable | None = None
         self._current_value: Any = None
@@ -159,9 +157,8 @@ class OpenEMSChannel:
     def handle_data_update(self, channel_name, value: str | float | None) -> None:
         """Handle a data update from the backend."""
         if value is not None and isinstance(value, int):
-            if value in self.options:
-                enum_value = self.options[value]
-                self.handle_current_value(enum_value)
+            if self.options is not None:
+                self.handle_current_value(self.options.get(value))
             else:
                 self.handle_current_value(value)
         else:
@@ -237,12 +234,14 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 
     # Use with platform select
     def __init__(
-        self, component: OpenEMSComponent, options: list[str], channel_json: dict
+        self, component: OpenEMSComponent, channel_json: dict, options: list[str]
     ) -> None:
         """Initialize the channel."""
         super().__init__(component, channel_json)
         # convert options to translatable strings and store originals in a lookup map
-        self.options: dict[str, str] = {v.lower().replace(" ", "_"): v for v in options}
+        self.property_options: dict[str, str] = {
+            v.lower().replace(" ", "_"): v for v in options
+        }
 
     @property
     def current_option(self) -> str | None:
@@ -258,7 +257,7 @@ class OpenEMSEnumProperty(OpenEMSProperty):
             self.handle_current_value(None)
         elif isinstance(value, str):
             value = value.lower().replace(" ", "_")
-            if value in self.options:
+            if value in self.property_options:
                 self.handle_current_value(value)
             else:
                 _LOGGER.warning(
@@ -521,6 +520,9 @@ class OpenEMSComponent:
     async def init_channels(self, channels: list[dict[str, Any]]):
         """Parse and initialize the components channels."""
         for channel_json in channels:
+            options_backend: dict[str, int] | list[str] | None = channel_json.pop(
+                "options", None
+            )
             if channel_json["id"].startswith("_Property"):
                 # scan type and convert to property
                 match channel_json["type"]:
@@ -530,15 +532,17 @@ class OpenEMSComponent:
                         )
                         self.boolean_properties.append(prop)
                     case "STRING":
-                        if options_conf := (
+                        options = (
                             # options received from backend are preferred over configured options
-                            channel_json.pop("options", None)
-                            or CONFIG.get_enum_options(self.name, channel_json["id"])
-                        ):
+                            options_backend
+                            if isinstance(options_backend, list)
+                            else CONFIG.get_enum_options(self.name, channel_json["id"])
+                        )
+                        if options is not None:
                             prop = OpenEMSEnumProperty(
                                 component=self,
-                                options=options_conf,
                                 channel_json=channel_json,
+                                options=options,
                             )
                             self.enum_properties.append(prop)
                         elif CONFIG.is_time_property(self.name, channel_json["id"]):
@@ -575,7 +579,10 @@ class OpenEMSComponent:
                                 )
 
             else:
-                channel = OpenEMSChannel(component=self, channel_json=channel_json)
+                options = options_backend if isinstance(options_backend, dict) else None
+                channel = OpenEMSChannel(
+                    component=self, channel_json=channel_json, options=options
+                )
                 match channel_json["type"]:
                     case "BOOLEAN":
                         self.boolean_sensors.append(channel)
