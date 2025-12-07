@@ -251,6 +251,11 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 
         return None
 
+    @property
+    def current_value(self):
+        """Return the current value of the channel."""
+        return self.property_options.get(self._current_value)
+
     def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
         if value is None:
