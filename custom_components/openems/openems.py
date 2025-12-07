@@ -139,7 +139,7 @@ class OpenEMSChannel:
             and channel_json["category"] == "ENUM"
             and options is not None
         ):
-            self.options = {v: k.lower().replace(" ", "_") for k, v in options.items()}
+            self.options = {v: k for k, v in options.items()}
 
         self.component: OpenEMSComponent = component
         self.name: str = name
@@ -238,10 +238,7 @@ class OpenEMSEnumProperty(OpenEMSProperty):
     ) -> None:
         """Initialize the channel."""
         super().__init__(component, channel_json)
-        # convert options to translatable strings and store originals in a lookup map
-        self.property_options: dict[str, str] = {
-            v.lower().replace(" ", "_"): v for v in options
-        }
+        self.property_options: list[str] = options
 
     @property
     def current_option(self) -> str | None:
@@ -251,17 +248,11 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 
         return None
 
-    @property
-    def current_value(self):
-        """Return the current value of the channel."""
-        return self.property_options.get(self._current_value)
-
     def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
         if value is None:
             self.handle_current_value(None)
         elif isinstance(value, str):
-            value = value.lower().replace(" ", "_")
             if value in self.property_options:
                 self.handle_current_value(value)
             else:

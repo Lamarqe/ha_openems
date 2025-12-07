@@ -124,7 +124,14 @@ class OpenEMSSensorEntity(SensorEntity):
     @property
     def native_value(self) -> str | int | None:
         """Return the value of the sensor."""
-        return self._channel.native_value
+        val = self._channel.native_value
+        if val is None:
+            return None
+        if isinstance(val, str):
+            # self.entity_description.device_class == SensorDeviceClass.ENUM
+            return val.lower().replace(" ", "_")
+        # else:
+        return val
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

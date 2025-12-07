@@ -40,7 +40,8 @@ async def async_setup_entry(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                options=list(channel.property_options.keys()),
+                # convert option strings to snake_case to comply with HA translation keys
+                options=[v.lower().replace(" ", "_") for v in channel.property_options],
                 # remove "_Property" prefix
                 name=channel.name[9:],
                 translation_key=translation_key(channel),
@@ -97,12 +98,16 @@ class OpenEMSSelectEntity(SelectEntity):
     @property
     def current_option(self) -> str | None:
         """Return the current option."""
-        return self._channel.current_option
+        val = self._channel.current_option
+        return val.lower().replace(" ", "_") if val is not None else None
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        await self._channel.update_value(self._channel.property_options[option])
-        self.async_write_ha_state()
+        for property_option in self._channel.property_options:
+            if option == property_option.lower().replace(" ", "_"):
+                await self._channel.update_value(property_option)
+                self.async_write_ha_state()
+                return
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
