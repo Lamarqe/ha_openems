@@ -150,8 +150,7 @@ Here you find the grids frequency.\
 ### HACS
 
 1. Install HACS (https://hacs.xyz/docs/setup/download)
-2. Manually add [this repository](https://github.com/Lamarqe/ha_openems) to HACS
-3. Select and enable "Fenecon FEMS & OpenEMS" Integration
+2. Select and enable "Fenecon FEMS & OpenEMS" Integration
 
 ## Configuration
 Navigate to Settings -> Devices & Services -> Integrations. Click "Add Integration" and select "Fenecon FEMS & OpenEMS" from the list.
