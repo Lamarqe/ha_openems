@@ -2,6 +2,11 @@
 # ha_openems
 Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 
+[![releasebadge]][release]
+[![License][license-shield]](LICENSE.md)
+[![hainstall][hainstallbadge]][hainstall]
+[![hacs][hacsbadge]][hacs]
+
 ## Overview
 
 * The integration provides full read and write access to Fenecon and OpenEMS systems. Every property which is accessible or configurable via the regular UI is made available equally in the Home Assistant UI.
@@ -208,3 +213,12 @@ Futhermore, in case the connection details shall be adjusted, you can use the sa
 	- The developers take no responsibility for anything that happens to your equipment due to this integration. I.e., 
 		- Please be careful with controlling entities which are not enabled by default.
 		-  By default, only a few pre-configured channels are enabled per component. However, there is no limitation how many channels can be enabled in parallel. Please be careful about expanding to very large numbers (multiple hundreds).
+ 
+[license-shield]: https://img.shields.io/github/license/Lamarqe/ha_openems.svg?style=for-the-badge
+[release]: https://github.com/Lamarqe/ha_openems/releases
+[releasebadge]: https://img.shields.io/github/v/release/Lamarqe/ha_openems?style=for-the-badge
+[hainstall]: https://my.home-assistant.io/redirect/config_flow_start/?domain=openems
+[hainstallbadge]: https://img.shields.io/badge/dynamic/json?style=for-the-badge&logo=home-assistant&logoColor=ccc&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.openems.total
+[hacs]: https://hacs.xyz
+[hacsbadge]: https://img.shields.io/badge/HACS-Default-green.svg?style=for-the-badge
+
