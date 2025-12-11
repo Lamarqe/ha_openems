@@ -64,7 +64,7 @@ async def async_setup_entry(
                 device_class=device_class,
                 state_class=state_class,
                 native_unit_of_measurement=uom,
-                translation_key="translation_key",
+                translation_key=translation_key(channel),
             )
             entities.append(
                 OpenEMSSensorEntity(
