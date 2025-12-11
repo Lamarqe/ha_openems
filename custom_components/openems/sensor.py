@@ -19,6 +19,7 @@ from .const import DOMAIN
 from .helpers import (
     OpenEMSUnitClass,
     component_device,
+    to_snake_case,
     translation_key,
     unit_description,
 )
@@ -63,7 +64,7 @@ async def async_setup_entry(
                 device_class=device_class,
                 state_class=state_class,
                 native_unit_of_measurement=uom,
-                translation_key=translation_key(channel),
+                translation_key="translation_key",
             )
             entities.append(
                 OpenEMSSensorEntity(
@@ -129,7 +130,7 @@ class OpenEMSSensorEntity(SensorEntity):
             return None
         if isinstance(val, str):
             # self.entity_description.device_class == SensorDeviceClass.ENUM
-            return val.lower().replace(" ", "_")
+            return to_snake_case(val)
         # else:
         return val
 

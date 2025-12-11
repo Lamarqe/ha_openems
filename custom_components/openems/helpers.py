@@ -10,6 +10,8 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from .const import DOMAIN, SLASH_ESC
 from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSProperty
 
+SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
+
 
 @dataclass
 class OpenEMSUnitClass:
@@ -103,6 +105,11 @@ def find_channel_in_backend(
     return None
 
 
+def to_snake_case(name: str) -> str:
+    """Convert given name to snake_case."""
+    return SNAKE_REPLACE_PATTERN.sub("_", name).lower()
+
+
 def translation_key(channel: OpenEMSChannel) -> str:
     """Generate translation key for given channel."""
     if isinstance(channel, OpenEMSProperty):
@@ -110,5 +117,7 @@ def translation_key(channel: OpenEMSChannel) -> str:
     else:
         channel_name = channel.name
     return (
-        re.sub(r"\d+$", "", channel.component.name) + SLASH_ESC + channel_name
-    ).lower()
+        to_snake_case(re.sub(r"\d+$", "", channel.component.name))
+        + SLASH_ESC
+        + to_snake_case(channel_name)
+    )

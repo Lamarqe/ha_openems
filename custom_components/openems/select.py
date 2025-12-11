@@ -11,7 +11,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .__init__ import OpenEMSConfigEntry
-from .helpers import component_device, translation_key
+from .helpers import component_device, to_snake_case, translation_key
 from .openems import CONFIG, OpenEMSBackend, OpenEMSComponent, OpenEMSEnumProperty
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ async def async_setup_entry(
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
                 # convert option strings to snake_case to comply with HA translation keys
-                options=[v.lower().replace(" ", "_") for v in channel.property_options],
+                options=[to_snake_case(v) for v in channel.property_options],
                 # remove "_Property" prefix
                 name=channel.name[9:],
                 translation_key=translation_key(channel),
@@ -99,12 +99,12 @@ class OpenEMSSelectEntity(SelectEntity):
     def current_option(self) -> str | None:
         """Return the current option."""
         val = self._channel.current_option
-        return val.lower().replace(" ", "_") if val is not None else None
+        return to_snake_case(val) if val is not None else None
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         for property_option in self._channel.property_options:
-            if option == property_option.lower().replace(" ", "_"):
+            if option == to_snake_case(property_option):
                 await self._channel.update_value(property_option)
                 self.async_write_ha_state()
                 return
