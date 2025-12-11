@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+import copy
 from dataclasses import dataclass
 import logging
 from typing import ClassVar
@@ -136,21 +137,25 @@ async def async_setup_entry(
     config_entry: OpenEMSConfigEntry,
 ) -> bool:
     """Set up HA OpenEMS from a config entry."""
+    # 0. Copy config data because we will hand over ownership to backend
+    data_copy = copy.deepcopy(
+        config_entry.data.copy()  # copy() before deepcopy because its a mappingproxy
+    )
 
     # 1. Create API instance
-    if config_entry.data["user_input"][CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
-        conn_url = URL(config_entry.data["user_input"][CONF_URL])
+    if data_copy["user_input"][CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
+        conn_url = URL(data_copy["user_input"][CONF_URL])
     else:
         conn_url = connection_url(
-            config_entry.data["user_input"][CONF_TYPE],
-            config_entry.data["user_input"][CONF_HOST],
+            data_copy["user_input"][CONF_TYPE],
+            data_copy["user_input"][CONF_HOST],
         )
     backend = OpenEMSBackend(
         conn_url,
-        config_entry.data["user_input"][CONF_USERNAME],
-        config_entry.data["user_input"][CONF_PASSWORD],
+        data_copy["user_input"][CONF_USERNAME],
+        data_copy["user_input"][CONF_PASSWORD],
     )
-    edge_id = config_entry.data["user_input"][CONF_EDGE]
+    edge_id = data_copy["user_input"][CONF_EDGE]
     # 2. Trigger the API connection (and authentication)
     try:
         await asyncio.wait_for(backend.connect_to_server(), timeout=2)
@@ -167,15 +172,18 @@ async def async_setup_entry(
         ) from ex
 
     # 3. Reload component list in case explicit user request to reload (hass.is_running)
-    if hass.is_running or not config_entry.data["components"]:
+    if hass.is_running or not data_copy["components"]:
         components = await backend.read_edge_components(edge_id)
         entry_data = {
-            "user_input": config_entry.data["user_input"],
+            "user_input": data_copy["user_input"],
             "components": components,
         }
-        hass.config_entries.async_update_entry(entry=config_entry, data=entry_data)
+        hass.config_entries.async_update_entry(
+            entry=config_entry,
+            data=copy.deepcopy(entry_data),  # copy data because backend has ownership
+        )
     else:
-        backend.set_component_config(edge_id, config_entry.data["components"])
+        backend.set_component_config(edge_id, data_copy["components"])
 
     await backend.prepare_entities()
 
