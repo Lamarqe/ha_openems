@@ -17,10 +17,7 @@ decluttering_templates:
             type: heading
             icon: mdi:battery-lock
             heading_style: title
-            heading: >-
-              ${
-              device_model(device_id('switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled'))
-              }
+            heading: ${ device_model(device_id('switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled')) }
         - type: entities
           entities:
             - entity: switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
@@ -35,7 +32,7 @@ decluttering_templates:
           visibility:
             - condition: state
               entity: switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
-              state: "on"
+              state: 'on'
   evcs_template:
     default:
       - evcs_id: 0
@@ -79,20 +76,20 @@ decluttering_templates:
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
                   name: >-
                     [[[ return
-                    hass.localize("component.openems.entity.select.ctrlEvcs/ChargeMode.state.FORCE_CHARGE")
+                    hass.localize("component.openems.entity.select.ctrlevcs_s_l_a_s_h_chargemode.state.force_charge")
                     ]]]
                   icon: mdi:target
                   styles:
                     card:
                       - height: 80px
                   state:
-                    - value: FORCE_CHARGE
+                    - value: force_charge
                       color: red
                       styles:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
-                    - value: FORCE_CHARGE
-                      operator: "!="
+                    - value: force_charge
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -102,7 +99,7 @@ decluttering_templates:
                     action: call-service
                     service: select.select_option
                     data:
-                      option: FORCE_CHARGE
+                      option: force_charge
                       entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
                 - type: custom:button-card
                   show_name: true
@@ -110,20 +107,20 @@ decluttering_templates:
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
                   name: >-
                     [[[ return
-                    hass.localize("component.openems.entity.select.ctrlEvcs/ChargeMode.state.EXCESS_POWER")
+                    hass.localize("component.openems.entity.select.ctrlevcs_s_l_a_s_h_chargemode.state.excess_power")
                     ]]]
                   icon: mdi:auto-mode
                   styles:
                     card:
                       - height: 80px
                   state:
-                    - value: EXCESS_POWER
+                    - value: excess_power
                       color: green
                       styles:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
-                    - value: EXCESS_POWER
-                      operator: "!="
+                    - value: excess_power
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -133,7 +130,7 @@ decluttering_templates:
                     action: call-service
                     service: select.select_option
                     data:
-                      option: EXCESS_POWER
+                      option: excess_power
                       entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
             - type: entities
               entities:
@@ -143,7 +140,7 @@ decluttering_templates:
               visibility:
                 - condition: state
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
-                  state: FORCE_CHARGE
+                  state: force_charge
             - type: horizontal-stack
               cards:
                 - type: entities
@@ -155,7 +152,7 @@ decluttering_templates:
                   show_name: true
                   show_icon: true
                   entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
-                  name: "[[[ return hass.localize(\"ui.common.disable\") ]]]"
+                  name: '[[[ return hass.localize("ui.common.disable") ]]]'
                   icon: mdi:lock-reset
                   styles:
                     card:
@@ -175,7 +172,7 @@ decluttering_templates:
               visibility:
                 - condition: state
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
-                  state: EXCESS_POWER
+                  state: excess_power
             - type: horizontal-stack
               cards:
                 - type: custom:button-card
@@ -184,20 +181,20 @@ decluttering_templates:
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
                   name: >-
                     [[[ return
-                    hass.localize("component.openems.entity.select.ctrlEvcs/Priority.state.CAR")
+                    hass.localize("component.openems.entity.select.ctrlevcs_s_l_a_s_h_priority.state.car")
                     ]]]
                   icon: mdi:car-electric
                   styles:
                     card:
                       - height: 80px
                   state:
-                    - value: CAR
+                    - value: car
                       color: green
                       styles:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
-                    - value: CAR
-                      operator: "!="
+                    - value: car
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -207,7 +204,7 @@ decluttering_templates:
                     action: call-service
                     service: select.select_option
                     data:
-                      option: CAR
+                      option: car
                       entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
                 - type: custom:button-card
                   show_name: true
@@ -215,20 +212,20 @@ decluttering_templates:
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
                   name: >-
                     [[[ return
-                    hass.localize("component.openems.entity.select.ctrlEvcs/Priority.state.STORAGE")
+                    hass.localize("component.openems.entity.select.ctrlevcs_s_l_a_s_h_priority.state.storage")
                     ]]]
                   icon: mdi:battery-medium
                   styles:
                     card:
                       - height: 80px
                   state:
-                    - value: STORAGE
+                    - value: storage
                       color: green
                       styles:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
-                    - value: STORAGE
-                      operator: "!="
+                    - value: storage
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -238,12 +235,12 @@ decluttering_templates:
                     action: call-service
                     service: select.select_option
                     data:
-                      option: STORAGE
+                      option: storage
                       entity_id: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_priority
               visibility:
                 - condition: state
                   entity: select.[[system]]_ctrlevcs[[ctrlevcs_id]]_chargemode
-                  state: EXCESS_POWER
+                  state: excess_power
             - type: horizontal-stack
               cards:
                 - type: entities
@@ -255,7 +252,7 @@ decluttering_templates:
                   show_name: true
                   show_icon: true
                   entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
-                  name: "[[[ return hass.localize(\"ui.common.disable\") ]]]"
+                  name: '[[[ return hass.localize("ui.common.disable") ]]]'
                   icon: mdi:lock-reset
                   styles:
                     card:
@@ -276,7 +273,7 @@ decluttering_templates:
           visibility:
             - condition: state
               entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
-              state: "on"
+              state: 'on'
   optchrg_template:
     default:
       - ctrlgridoptimizedcharge_id: 0
@@ -295,15 +292,11 @@ decluttering_templates:
             type: heading
             icon: mdi:transmission-tower-import
             heading_style: title
-            heading: >-
-              ${
-              device_model(device_id('sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute'))
-              }
+            heading: ${ device_model(device_id('sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute')) }
         - type: entities
           entities:
             - entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargestate
-            - entity: >-
-                sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargemaximumchargelimit
+            - entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargemaximumchargelimit
             - type: custom:template-entity-row
               icon: mdi:clock
               entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute
@@ -320,20 +313,20 @@ decluttering_templates:
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
               name: >-
                 [[[ return
-                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/Mode.state.OFF")
+                hass.localize("component.openems.entity.select.ctrlgridoptimizedcharge_s_l_a_s_h_mode.state.off")
                 ]]]
               icon: mdi:power-standby
               styles:
                 card:
                   - height: 80px
               state:
-                - value: "OFF"
+                - value: 'off'
                   color: red
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: "OFF"
-                  operator: "!="
+                - value: 'off'
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -343,7 +336,7 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: "OFF"
+                  option: 'off'
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
             - type: custom:button-card
               show_name: true
@@ -351,20 +344,20 @@ decluttering_templates:
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
               name: >-
                 [[[ return
-                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/Mode.state.AUTOMATIC")
+                hass.localize("component.openems.entity.select.ctrlgridoptimizedcharge_s_l_a_s_h_mode.state.automatic")
                 ]]]
               icon: mdi:auto-mode
               styles:
                 card:
                   - height: 80px
               state:
-                - value: AUTOMATIC
+                - value: automatic
                   color: green
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: AUTOMATIC
-                  operator: "!="
+                - value: automatic
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -374,7 +367,7 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: AUTOMATIC
+                  option: automatic
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
             - type: custom:button-card
               show_name: true
@@ -382,20 +375,20 @@ decluttering_templates:
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
               name: >-
                 [[[ return
-                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/Mode.state.MANUAL")
+                hass.localize("component.openems.entity.select.ctrlgridoptimizedcharge_s_l_a_s_h_mode.state.manual")
                 ]]]
               icon: mdi:timeline-clock-outline
               styles:
                 card:
                   - height: 80px
               state:
-                - value: MANUAL
+                - value: manual
                   color: green
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: MANUAL
-                  operator: "!="
+                - value: manual
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -405,7 +398,7 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: MANUAL
+                  option: manual
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
         - type: horizontal-stack
           cards:
@@ -415,20 +408,20 @@ decluttering_templates:
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
               name: >-
                 [[[ return
-                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/DelayChargeRiskLevel.state.LOW")
+                hass.localize("component.openems.entity.select.ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel.state.low")
                 ]]]
               icon: mdi:speedometer-slow
               styles:
                 card:
                   - height: 80px
               state:
-                - value: LOW
+                - value: low
                   color: green
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: LOW
-                  operator: "!="
+                - value: low
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -438,7 +431,7 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: LOW
+                  option: low
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
             - type: custom:button-card
               show_name: true
@@ -446,20 +439,20 @@ decluttering_templates:
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
               name: >-
                 [[[ return
-                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/DelayChargeRiskLevel.state.MEDIUM")
+                hass.localize("component.openems.entity.select.ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel.state.medium")
                 ]]]
               icon: mdi:speedometer-medium
               styles:
                 card:
                   - height: 80px
               state:
-                - value: MEDIUM
+                - value: medium
                   color: black
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: MEDIUM
-                  operator: "!="
+                - value: medium
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -469,7 +462,7 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: MEDIUM
+                  option: medium
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
             - type: custom:button-card
               show_name: true
@@ -477,20 +470,20 @@ decluttering_templates:
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
               name: >-
                 [[[ return
-                hass.localize("component.openems.entity.select.ctrlGridOptimizedCharge/DelayChargeRiskLevel.state.HIGH")
+                hass.localize("component.openems.entity.select.ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel.state.high")
                 ]]]
               icon: mdi:speedometer
               styles:
                 card:
                   - height: 80px
               state:
-                - value: HIGH
+                - value: high
                   color: red
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: HIGH
-                  operator: "!="
+                - value: high
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -500,17 +493,16 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: HIGH
+                  option: high
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargerisklevel
           visibility:
             - condition: state
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
-              state: AUTOMATIC
+              state: automatic
         - type: entities
           entities:
             - entity: time.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_manualtargettime
           visibility:
             - condition: state
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
-              state: MANUAL
-
+              state: manual
