@@ -949,6 +949,10 @@ class OpenEMSEdge:
         await self.backend.rpc_server.edgeRpc(edgeId=self._id, payload=edge_call)
 
 
+class EdgeNotInitializedError(Exception):
+    """Exception raised when edge is not initialized yet."""
+
+
 class OpenEMSBackend:
     """Class which represents a connection to an OpenEMS backend."""
 
@@ -974,7 +978,14 @@ class OpenEMSBackend:
         self.rpc_server.edgeRpc = self.edgeRpc
         self.multi_edge = True
         self._reconnect_task = None
-        self.the_edge: OpenEMSEdge | None = None
+        self._edge: OpenEMSEdge | None = None
+
+    @property
+    def the_edge(self) -> OpenEMSEdge:
+        """Return the edge or raise an exception if not initialized."""
+        if self._edge is None:
+            raise EdgeNotInitializedError
+        return self._edge
 
     @staticmethod
     def wrap_jsonrpc(method, **params):
@@ -1062,9 +1073,9 @@ class OpenEMSBackend:
 
     def set_component_config(self, edge_id, components: dict) -> OpenEMSEdge:
         """Prepare edge and all its components."""
-        self.the_edge = OpenEMSEdge(self, edge_id)
-        self.the_edge.set_component_config(components)
-        return self.the_edge
+        self._edge = OpenEMSEdge(self, edge_id)
+        self._edge.set_component_config(components)
+        return self._edge
 
     async def prepare_entities(self):
         """Parse json config of all edges."""
@@ -1076,5 +1087,5 @@ class OpenEMSBackend:
 
     async def read_edge_components(self, edge_id: str) -> dict:
         """Request config of an edge."""
-        self.the_edge = OpenEMSEdge(self, edge_id)
-        return await self.the_edge.read_components()
+        self._edge = OpenEMSEdge(self, edge_id)
+        return await self._edge.read_components()
