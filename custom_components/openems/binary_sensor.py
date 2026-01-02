@@ -2,6 +2,9 @@
 
 from dataclasses import dataclass
 import logging
+from typing import Any
+
+import voluptuous as vol
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
@@ -11,10 +14,14 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import (
+    AddEntitiesCallback,
+    EntityPlatform,
+    async_get_current_platform,
+)
 
-from .__init__ import OpenEMSConfigEntry
-from .const import DOMAIN
+from . import OpenEMSConfigEntry
+from .const import ATTR_VALUE, DOMAIN
 from .helpers import component_device, translation_key
 from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
 
@@ -95,6 +102,14 @@ async def async_setup_entry(
         if component.create_entities:
             _create_sensor_entities(component)
 
+    # prepare service call
+    platform: EntityPlatform = async_get_current_platform()
+    platform.async_register_entity_service(
+        name="update_value",
+        schema={vol.Required(ATTR_VALUE): vol.Coerce(bool)},
+        func="update_value",
+    )
+
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.SENSOR.value] = (
         _create_sensor_entities
@@ -134,6 +149,12 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
             return self._channel.native_value
 
         return None
+
+    async def update_value(self, **kwargs: Any) -> None:
+        """Service callback to change value via REST call."""
+        val: bool = bool(kwargs[ATTR_VALUE])
+
+        await self._channel.update_value(val)
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

@@ -1,11 +1,26 @@
 update_component_config:
+  target:
+    entity:
+      integration: openems
+      domain:
+        - number
   fields:
-    entity_id:
-      required: true
-      selector:
-        entity:
-          integration: openems
     value:
       required: true
       selector:
-        object:
+        text:
+
+update_value:
+  target:
+    entity:
+      integration: openems
+      domain:
+        - sensor
+        - binary_sensor
+      supported_features:
+        - openems.OpenEMSEntityFeature.WRITE
+  fields:
+    value:
+      required: true
+      selector:
+        text:

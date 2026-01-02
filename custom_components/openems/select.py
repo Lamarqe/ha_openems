@@ -10,7 +10,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .__init__ import OpenEMSConfigEntry
+from . import OpenEMSConfigEntry
 from .helpers import component_device, to_snake_case, translation_key
 from .openems import CONFIG, OpenEMSBackend, OpenEMSComponent, OpenEMSEnumProperty
 

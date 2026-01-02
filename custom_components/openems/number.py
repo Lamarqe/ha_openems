@@ -2,6 +2,9 @@
 
 from dataclasses import dataclass
 import logging
+from typing import Any
+
+import voluptuous as vol
 
 from homeassistant.components.number import (
     NumberEntity,
@@ -11,9 +14,14 @@ from homeassistant.components.number import (
 from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    EntityPlatform,
+    async_get_current_platform,
+)
 
-from .__init__ import OpenEMSConfigEntry
+from . import OpenEMSConfigEntry
+from .const import ATTR_VALUE
 from .helpers import (
     DeviceInfo,
     OpenEMSUnitClass,
@@ -74,6 +82,14 @@ async def async_setup_entry(
         if component.create_entities:
             _create_number_entities(component)
 
+    # prepare service call
+    platform: EntityPlatform = async_get_current_platform()
+    platform.async_register_entity_service(
+        name="update_component_config",
+        schema={vol.Required(ATTR_VALUE): vol.Coerce(float)},
+        func="update_component_config",
+    )
+
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.NUMBER.value] = (
         _create_number_entities
@@ -130,6 +146,11 @@ class OpenEMSNumberEntity(NumberEntity):
         """Change the current value."""
         await self._channel.update_value(value)
         self.async_write_ha_state()
+
+    async def update_component_config(self, **kwargs: Any) -> None:
+        """Service callback to change value while ignoring limits."""
+        val: float = float(kwargs[ATTR_VALUE])
+        await self.async_set_native_value(val)
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

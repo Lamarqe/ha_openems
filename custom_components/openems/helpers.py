@@ -1,16 +1,31 @@
 """OpenEMS Helper methods eg for Entity creation."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from enum import IntFlag
 import re
+from typing import ClassVar
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .const import DOMAIN, SLASH_ESC
 from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSProperty
 
 SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
+
+
+@dataclass
+class RuntimeData:
+    """Data class to store all relevant runtime data."""
+
+    backend: OpenEMSBackend
+    add_component_callbacks: ClassVar[dict[str, Callable]] = {}
+
+
+type OpenEMSConfigEntry = ConfigEntry[RuntimeData]
 
 
 @dataclass
@@ -21,6 +36,13 @@ class OpenEMSUnitClass:
     sensor_device_class: SensorDeviceClass | None = None
     number_device_class: NumberDeviceClass | None = None
     state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT
+
+
+class OpenEMSEntityFeature(IntFlag):
+    """Supported features of the climate entity."""
+
+    READ = 1
+    WRITE = 2
 
 
 def unit_description(unit: str) -> OpenEMSUnitClass:
@@ -77,6 +99,19 @@ def unit_description(unit: str) -> OpenEMSUnitClass:
             sensor_type.sensor_device_class = SensorDeviceClass.TEMPERATURE
             sensor_type.number_device_class = NumberDeviceClass.TEMPERATURE
     return sensor_type
+
+
+def supported_features(channel: OpenEMSChannel) -> OpenEMSEntityFeature | None:
+    """Derive supported features for given channel."""
+    match channel.orig_json.get("accessMode", ""):
+        case "RO":
+            return OpenEMSEntityFeature.READ
+        case "RW":
+            return OpenEMSEntityFeature.READ | OpenEMSEntityFeature.WRITE
+        case "WO":
+            return OpenEMSEntityFeature.WRITE
+        case _:
+            return None
 
 
 def component_device(component: OpenEMSComponent) -> DeviceInfo:

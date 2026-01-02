@@ -205,6 +205,12 @@ class OpenEMSChannel:
         self.callback = None
         self.component.edge.unregister_channel(self)
 
+    async def update_value(self, new_value: float | bool):
+        """Handle value change request from Home Assisant."""
+        # Note: This is not a component property.
+        # This means the value change request must be sent via REST.
+        raise NotImplementedError
+
 
 class OpenEMSProperty(OpenEMSChannel):
     """Class representing a property of an OpenEMS component."""
@@ -268,8 +274,9 @@ class OpenEMSEnumProperty(OpenEMSProperty):
 
 
 class OpenEMSTimeProperty(OpenEMSProperty):
-    """Class representing a enum property of an OpenEMS component."""
+    """Class representing a time property of an OpenEMS component."""
 
+    # Use with platform time
     def handle_data_update(self, channel_name, value: str | float | None):
         """Handle a data update from the backend."""
         if not isinstance(value, str):

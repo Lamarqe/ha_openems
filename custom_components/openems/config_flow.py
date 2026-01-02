@@ -33,7 +33,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .__init__ import OpenEMSConfigEntry
+from . import OpenEMSConfigEntry
 from .const import (
     CONF_EDGE,
     CONF_EDGES,

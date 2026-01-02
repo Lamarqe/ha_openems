@@ -3,19 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
 import copy
-from dataclasses import dataclass
 import logging
-from typing import ClassVar
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
-import voluptuous as vol
 from yarl import URL
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_ENTITY_ID,
     CONF_HOST,
     CONF_PASSWORD,
     CONF_TYPE,
@@ -23,13 +17,9 @@ from homeassistant.const import (
     CONF_USERNAME,
     Platform,
 )
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import (
-    config_validation as cv,
-    device_registry as dr,
-    entity_registry as er,
-)
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
@@ -39,11 +29,15 @@ from .const import (
     CONF_EDGE,
     CONN_TYPE_CUSTOM_URL,
     CONN_TYPE_DIRECT_EDGE,
-    DOMAIN,
     connection_url,
 )
-from .helpers import component_device, find_channel_in_backend
-from .openems import CONFIG, OpenEMSBackend, OpenEMSProperty
+from .helpers import (
+    OpenEMSConfigEntry,
+    OpenEMSEntityFeature,
+    RuntimeData,
+    component_device,
+)
+from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,79 +51,10 @@ _PLATFORMS: list[Platform] = [
     Platform.UPDATE,
 ]
 
-type OpenEMSConfigEntry = ConfigEntry[RuntimeData]
-
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up services."""
-
-    async def service_update_component_config(service_call: ServiceCall) -> None:
-        entity_reg = er.async_get(hass)
-        entity_id = service_call.data.get(ATTR_ENTITY_ID)
-        if not entity_id:
-            _LOGGER.error("No entity found in service call")
-            return
-
-        value = service_call.data.get("value")
-        entry: er.RegistryEntry | None = entity_reg.async_get(entity_id)
-        if not entry or not entry.config_entry_id:
-            _LOGGER.error("No proper entry found in registry for entity %s", entity_id)
-            return
-
-        if entry.platform != DOMAIN:
-            _LOGGER.error(
-                "Update_component_config was called for entity %s. Must be called with openems entity, not %s",
-                entity_id,
-                entry.platform,
-            )
-            return
-
-        config_entry: OpenEMSConfigEntry | None = hass.config_entries.async_get_entry(
-            entry.config_entry_id
-        )
-        if not config_entry:
-            _LOGGER.error(
-                "No config entry found for entity %s with config_entry_id %s",
-                entity_id,
-                entry.config_entry_id,
-            )
-            return
-
-        backend: OpenEMSBackend = config_entry.runtime_data.backend
-        channel = find_channel_in_backend(backend, entry.unique_id)
-        if not channel or not isinstance(channel, OpenEMSProperty):
-            _LOGGER.error(
-                "No property channel found in backend for entity %s with unique_id %s",
-                entity_id,
-                entry.unique_id,
-            )
-            return
-
-        try:
-            await channel.update_value(value)
-        except AttributeError:
-            _LOGGER.error(
-                "Entity %s is not a property and cannot be updated",
-                entity_id,
-            )
-
-    hass.services.async_register(
-        DOMAIN,
-        "update_component_config",
-        service_update_component_config,
-        schema=vol.Schema(
-            {vol.Required(ATTR_ENTITY_ID): cv.entity_id, vol.Required("value"): object}
-        ),
-    )
+    """Set up services (if any)."""
     return True
-
-
-@dataclass
-class RuntimeData:
-    """Data class to store all relevant runtime data."""
-
-    backend: OpenEMSBackend
-    add_component_callbacks: ClassVar[dict[str, Callable]] = {}
 
 
 async def async_setup_entry(

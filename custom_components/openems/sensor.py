@@ -2,6 +2,9 @@
 
 from dataclasses import dataclass
 import logging
+from typing import Any
+
+import voluptuous as vol
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -12,13 +15,18 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import (
+    AddEntitiesCallback,
+    EntityPlatform,
+    async_get_current_platform,
+)
 
-from .__init__ import OpenEMSConfigEntry
-from .const import DOMAIN
+from . import OpenEMSConfigEntry
+from .const import ATTR_VALUE, DOMAIN
 from .helpers import (
     OpenEMSUnitClass,
     component_device,
+    supported_features,
     to_snake_case,
     translation_key,
     unit_description,
@@ -90,6 +98,14 @@ async def async_setup_entry(
         if component.create_entities:
             _create_sensor_entities(component)
 
+    # prepare service call
+    platform: EntityPlatform = async_get_current_platform()
+    platform.async_register_entity_service(
+        name="update_value",
+        schema={vol.Required(ATTR_VALUE): vol.Coerce(float)},
+        func="update_value",
+    )
+
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.SENSOR.value] = (
         _create_sensor_entities
@@ -120,6 +136,7 @@ class OpenEMSSensorEntity(SensorEntity):
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info
         self._attr_should_poll = False
+        self._attr_supported_features = supported_features(channel)
         self._attr_extra_state_attributes = channel.orig_json
 
     @property
@@ -133,6 +150,12 @@ class OpenEMSSensorEntity(SensorEntity):
             return to_snake_case(val)
         # else:
         return val
+
+    async def update_value(self, **kwargs: Any) -> None:
+        """Service callback to change value via REST call."""
+        val: float = float(kwargs[ATTR_VALUE])
+
+        await self._channel.update_value(val)
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
