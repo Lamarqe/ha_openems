@@ -52,11 +52,6 @@ _PLATFORMS: list[Platform] = [
 ]
 
 
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up services (if any)."""
-    return True
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: OpenEMSConfigEntry,

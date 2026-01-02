@@ -39,7 +39,7 @@ class OpenEMSUnitClass:
 
 
 class OpenEMSEntityFeature(IntFlag):
-    """Supported features of the climate entity."""
+    """Supported features of openems sensor entities."""
 
     READ = 1
     WRITE = 2
