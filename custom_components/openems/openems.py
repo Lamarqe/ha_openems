@@ -207,9 +207,37 @@ class OpenEMSChannel:
 
     async def update_value(self, new_value: float | bool):
         """Handle value change request from Home Assisant."""
+        backend = self.component.edge.backend
         # Note: This is not a component property.
         # This means the value change request must be sent via REST.
-        raise NotImplementedError
+        if backend.rest_base_url is None:
+            return
+
+        auth = aiohttp.BasicAuth(backend.username, backend.password)
+
+        url = backend.rest_base_url.joinpath("channel", self.component.name, self.name)
+        data = {"value": new_value}
+        try:
+            async with (
+                aiohttp.ClientSession(raise_for_status=False, auth=auth) as session,
+                session.post(url, json=data) as resp,
+            ):
+                if resp.status != 200:
+                    _LOGGER.error(
+                        "Error during REST call to update channel %s/%s: HTTP %d: %s",
+                        self.component.name,
+                        self.name,
+                        resp.status,
+                        resp.reason,
+                    )
+        except aiohttp.ClientError as exc:
+            _LOGGER.error(
+                "Cannot send REST update command via URL %s for channel %s/%s: %s",
+                str(backend.rest_base_url),
+                self.component.name,
+                self.name,
+                str(exc),
+            )
 
 
 class OpenEMSProperty(OpenEMSChannel):
@@ -714,6 +742,8 @@ class OpenEMSEdge:
             self
         )
         self.hostname: str = ""
+        self.rest_mode: str | None = None
+        self.rest_port: int | None = None
         self._registered_channels: dict[str, set[OpenEMSChannel]] = {}
 
     async def read_components(self) -> dict:
@@ -773,10 +803,16 @@ class OpenEMSEdge:
                     continue
 
         config_channels = ["_host/Hostname"]
-        if self.backend.rest_base_url:
-            # optimize for performance by creating a regex
-            config_channels.append("|".join(alias_components) + "/_PropertyAlias")
-            data = await self.get_channel_values_via_rest(config_channels)
+        if QUERY_CONFIG_VIA_REST:
+            if self.backend.rest_base_url:
+                # optimize for performance by creating a regex
+                config_channels.append("|".join(alias_components) + "/_PropertyAlias")
+                data = await self.get_channel_values_via_rest(config_channels)
+            else:
+                _LOGGER.error(
+                    "REST access not available, cannot read component info via REST"
+                )
+                data = {}
         else:
             config_channels.extend(c + "/_PropertyAlias" for c in alias_components)
             data = await self.get_channel_values_via_websocket(config_channels)
@@ -826,6 +862,9 @@ class OpenEMSEdge:
                 await component.init_channels(contents["channels"])
                 # create the entities within a service which linked to the edge device
                 self.components[name] = component
+            if contents["FactoryId"].startswith("Controller.Api.Rest"):
+                self.rest_mode = contents["FactoryId"][19:]
+                self.rest_port = contents["properties"]["port"]
 
     def set_unavailable(self):
         """Set all active entities to unavailable and clear the subscription indicator."""
@@ -968,14 +1007,12 @@ class OpenEMSBackend:
         self.ws_url: URL = ws_url
         self.username: str = username
         self.password: str = password
-        use_rest: bool = (
-            # Only if REST is explicitly enabled
-            QUERY_CONFIG_VIA_REST
-            # Fenecon Web portal does not support REST API access
-            and ws_url.host != CONN_TYPES[CONN_TYPE_WEB_FENECON]["host"]
-        )
+        # Fenecon Web portal does not support REST API access
+        # TODO: refactor into OpenEMSEdge
+        # TODO: create new class OpenEMSConfigEntryData
+        rest_possible: bool = ws_url.host != CONN_TYPES[CONN_TYPE_WEB_FENECON]["host"]
         self.rest_base_url: URL | None = (
-            connection_url(CONN_TYPE_REST, ws_url.host) if use_rest else None
+            connection_url(CONN_TYPE_REST, ws_url.host) if rest_possible else None
         )
 
         self.rpc_server = jsonrpc_websocket.Server(
