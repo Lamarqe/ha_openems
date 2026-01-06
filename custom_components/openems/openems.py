@@ -4,32 +4,37 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-import contextlib
 from datetime import time
 import json
 import logging
 import math
 import os
 import re
-from typing import Any
-import uuid
+from typing import Any, NamedTuple
 
 import aiohttp
 from jinja2 import Template
 import jsonrpc_base
-import jsonrpc_websocket
 from yarl import URL
 
 from .const import (
     CONN_TYPE_REST,
     CONN_TYPE_WEB_FENECON,
     CONN_TYPES,
-    QUERY_CONFIG_VIA_REST,
     SLASH_ESC,
     connection_url,
+    wrap_jsonrpc,
 )
+from .entry_data import OpenEMSWebSocketConnection
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class RestDetails(NamedTuple):
+    """Details about the REST connection."""
+
+    mode: str
+    url: URL
 
 
 class OpenEMSConfig:
@@ -207,15 +212,23 @@ class OpenEMSChannel:
 
     async def update_value(self, new_value: float | bool):
         """Handle value change request from Home Assisant."""
-        backend = self.component.edge.backend
+        edge = self.component.edge
+        backend = edge.backend
         # Note: This is not a component property.
         # This means the value change request must be sent via REST.
-        if backend.rest_base_url is None:
+        if not edge.rest or edge.rest.mode != "ReadWrite":
+            _LOGGER.error(
+                "Cannot update channel %s/%s: No REST write app found",
+                self.component.name,
+                self.name,
+            )
             return
 
-        auth = aiohttp.BasicAuth(backend.username, backend.password)
+        auth = aiohttp.BasicAuth(
+            backend.connection.username, backend.connection.password
+        )
 
-        url = backend.rest_base_url.joinpath("channel", self.component.name, self.name)
+        url = edge.rest.url.joinpath("channel", self.component.name, self.name)
         data = {"value": new_value}
         try:
             async with (
@@ -233,7 +246,7 @@ class OpenEMSChannel:
         except aiohttp.ClientError as exc:
             _LOGGER.error(
                 "Cannot send REST update command via URL %s for channel %s/%s: %s",
-                str(backend.rest_base_url),
+                str(edge.rest.url),
                 self.component.name,
                 self.name,
                 str(exc),
@@ -548,7 +561,7 @@ class OpenEMSComponent:
         self.time_properties: list[OpenEMSTimeProperty] = []
         self.create_entities: bool = False
 
-    async def init_channels(self, channels: list[dict[str, Any]]):
+    def init_channels(self, channels: list[dict[str, Any]]):
         """Parse and initialize the components channels."""
         for channel_json in channels:
             options_backend: dict[str, int] | list[str] | None = channel_json.pop(
@@ -623,7 +636,7 @@ class OpenEMSComponent:
     async def update_config(self, channels: list[tuple[str, Any]]):
         """Send updateComponentConfig request to backend."""
         properties = [{"name": chan[0], "value": chan[1]} for chan in channels]
-        if not self.edge.backend.rpc_server.connected:
+        if not self.edge.backend.connection.rpc_server.connected:
             _LOGGER.error(
                 'No connection to backend. Cannot send "updateComponentConfig" message for component %s with properties: %s',
                 self.name,
@@ -631,7 +644,7 @@ class OpenEMSComponent:
             )
             return
 
-        envelope = OpenEMSBackend.wrap_jsonrpc(
+        envelope = wrap_jsonrpc(
             "updateComponentConfig", componentId=self.name, properties=properties
         )
         _LOGGER.debug(
@@ -639,7 +652,7 @@ class OpenEMSComponent:
             self.name,
             str(properties),
         )
-        await self.edge.backend.rpc_server.edgeRpc(
+        await self.edge.backend.connection.rpc_server.edgeRpc(
             edgeId=self.edge.id, payload=envelope
         )
 
@@ -694,25 +707,25 @@ class OpenEMSEdge:
                         self._edge.registered_channels.keys()
                     )
                     if (
-                        self._edge.backend.rpc_server.connected
+                        self._edge.backend.connection.rpc_server.connected
                         and subscribe_in_progress_channels != self._active_subscriptions
                     ):
                         try:
                             if not self._active_subscriptions:
                                 # no active subscription, so subscribe for the edge
-                                await self._edge.backend.rpc_server.subscribeEdges(
+                                await self._edge.backend.connection.rpc_server.subscribeEdges(
                                     edges=[self._edge.id]
                                 )
                                 self._count = 0
                             else:
                                 self._count += 1
 
-                            subscribe_call = OpenEMSBackend.wrap_jsonrpc(
+                            subscribe_call = wrap_jsonrpc(
                                 "subscribeChannels",
                                 count=self._count,
                                 channels=subscribe_in_progress_channels,
                             )
-                            await self._edge.backend.rpc_server.edgeRpc(
+                            await self._edge.backend.connection.rpc_server.edgeRpc(
                                 edgeId=self._edge.id, payload=subscribe_call
                             )
                             self._active_subscriptions = subscribe_in_progress_channels
@@ -731,143 +744,62 @@ class OpenEMSEdge:
                 _LOGGER.debug("SubscriptionUpdater end")
                 raise
 
-    def __init__(self, backend, id) -> None:
+    def __init__(
+        self, backend: OpenEMSBackend, id: str, component_config: dict[str, dict]
+    ) -> None:
         """Initialize the edge."""
         self.backend: OpenEMSBackend = backend
         self._id: str = id
-        self._component_config: dict[str, dict] = {}
-        self.components: dict[str, OpenEMSComponent] = {}
         self.current_channel_data: dict[str, Any] = {}
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
             self
         )
-        self.hostname: str = ""
-        self.rest_mode: str | None = None
-        self.rest_port: int | None = None
         self._registered_channels: dict[str, set[OpenEMSChannel]] = {}
-
-    async def read_components(self) -> dict:
-        """Read components of the edge."""
-
-        # read component list
-        edge_call = OpenEMSBackend.wrap_jsonrpc("getEdgeConfig")
-        r = await self.backend.rpc_server.edgeRpc(edgeId=self._id, payload=edge_call)
-        components = r["payload"]["result"]["components"]
-
-        # read properties of all channels of each component
-        await self._read_edge_channels(components)
-
-        # read info details from selected channels
-        await self._read_component_info_channels(components)
-
-        self._component_config = components
-        return self._component_config
-
-    async def _read_edge_channels(self, components):
-        # Load channels of each component
-        for componentId in list(components):
-            edge_component_call = OpenEMSBackend.wrap_jsonrpc(
-                "getChannelsOfComponent",
-                componentId=componentId,
-            )
-            try:
-                edge_call = OpenEMSBackend.wrap_jsonrpc(
-                    "componentJsonApi",
-                    componentId="_componentManager",
-                    payload=edge_component_call,
-                )
-                r = await self.backend.rpc_server.edgeRpc(
-                    edgeId=self._id,
-                    payload=edge_call,
-                )
-                components[componentId]["channels"] = r["payload"]["result"]["channels"]
-            except (
-                jsonrpc_base.jsonrpc.TransportError,
-                jsonrpc_base.jsonrpc.ProtocolError,
-            ):
-                _LOGGER.warning(
-                    "_read_edge_channels: could not read channels of component %s, skipping",
-                    componentId,
-                )
-                del components[componentId]
-
-    async def _read_component_info_channels(self, components: dict):
-        """Read hostname and all component names of an edge."""
-
-        # Look up all components which have a channel "_PropertyAlias"
-        alias_components = []
-        for comp_name, comp in components.items():
-            for chan in comp["channels"]:
-                if chan["id"] == "_PropertyAlias":
-                    alias_components.append(comp_name)
-                    continue
-
-        config_channels = ["_host/Hostname"]
-        if QUERY_CONFIG_VIA_REST:
-            if self.backend.rest_base_url:
-                # optimize for performance by creating a regex
-                config_channels.append("|".join(alias_components) + "/_PropertyAlias")
-                data = await self.get_channel_values_via_rest(config_channels)
-            else:
-                _LOGGER.error(
-                    "REST access not available, cannot read component info via REST"
-                )
-                data = {}
-        else:
-            config_channels.extend(c + "/_PropertyAlias" for c in alias_components)
-            data = await self.get_channel_values_via_websocket(config_channels)
-
-        # store component aliases and hostname in the json config of the component
-        for address, value in data.items():
-            component, channel = address.split("/")
-            if component in components:
-                components[component][channel] = value
-
-    async def get_channel_values_via_rest(self, channels: list[str]) -> dict:
-        """Read channel values via REST API."""
-        if self.backend.rest_base_url is None:
-            return {}
-
-        auth = aiohttp.BasicAuth(self.backend.username, self.backend.password)
-        values = []
-
-        for channel in channels:
-            url = self.backend.rest_base_url.joinpath("channel", channel)
-            async with (
-                aiohttp.ClientSession(raise_for_status=False, auth=auth) as session,
-                session.get(url) as resp,
-            ):
-                if resp.status != 200:
-                    continue
-                data = await resp.json()
-                if not isinstance(data, list):
-                    data = [data]
-                values.extend(data)
-
-        # convert the data format so it matches the websocket data response structure
-        retval = {}
-        for record in values:
-            retval[record["address"]] = record["value"]
-        return retval
-
-    async def prepare_entities(self):
-        """Parse json config and create class structures."""
-        self.hostname = self._component_config["_host"]["Hostname"]
+        self.hostname: str = component_config["_host"]["Hostname"]
         if self.backend.multi_edge:
             self.hostname += " " + self.id
 
-        for name, contents in self._component_config.items():
+        self.components: dict[str, OpenEMSComponent] = self._prepare_entities(
+            component_config
+        )
+        self.rest: RestDetails | None = self._prepare_rest(component_config)
+
+    def _prepare_entities(
+        self, component_config: dict[str, dict]
+    ) -> dict[str, OpenEMSComponent]:
+        """Parse json config and create class structures."""
+        components: dict[str, OpenEMSComponent] = {}
+        for name, contents in component_config.items():
             if "channels" in contents:
                 component: OpenEMSComponent = OpenEMSComponent(self, name, contents)
-                await component.init_channels(contents["channels"])
+                component.init_channels(contents["channels"])
                 # create the entities within a service which linked to the edge device
-                self.components[name] = component
-            if contents["FactoryId"].startswith("Controller.Api.Rest"):
-                self.rest_mode = contents["FactoryId"][19:]
-                self.rest_port = contents["properties"]["port"]
+                components[name] = component
+        return components
+
+    def _prepare_rest(self, component_config: dict[str, dict]) -> RestDetails | None:
+        # Fenecon Web portal does not support REST API access
+        if (
+            self.backend.connection.conn_url.host
+            == CONN_TYPES[CONN_TYPE_WEB_FENECON]["host"]
+        ):
+            return None
+        for comp_content in component_config.values():
+            if comp_content.get("factoryId", "").startswith("Controller.Api.Rest"):
+                rest_mode = comp_content["factoryId"][20:]
+                rest_url = connection_url(
+                    CONN_TYPE_REST, self.backend.connection.conn_url.host
+                )
+                rest_url = rest_url.with_port(
+                    int(comp_content["properties"].get("port", rest_url.port))
+                )
+                return RestDetails(rest_mode, rest_url)
+        # No REST App found
+        return None
 
     def set_unavailable(self):
         """Set all active entities to unavailable and clear the subscription indicator."""
+        # Note: This method is called by the connection logic on connection loss.
         for channel_name in self.current_channel_data:
             for channel in self._registered_channels[channel_name]:
                 channel.handle_data_update(channel_name, None)
@@ -877,14 +809,10 @@ class OpenEMSEdge:
         """Stop the connection to edge and all its subscriptions."""
         self._channel_subscription_updater.stop()
 
-    def set_component_config(self, params):
-        """Store the configuration which the edge sent us."""
-        self._component_config = params
-
     def edgeConfig(self, params):
         """Jsonrpc callback to receive edge config updates."""
-        self.set_component_config(params["components"])
         # TODO: renew component channels and component info values
+        # self._prepare_entities(params["components"])
 
     def currentData(self, params: dict[str, str | float | None]):
         """Jsonrpc callback to receive channel subscription updates."""
@@ -921,125 +849,48 @@ class OpenEMSEdge:
         return self._id
 
     @property
-    def config(self):
-        "Return the edge config."
-        return self._component_config
-
-    @property
     def registered_channels(self):
         "Return the list of all subscribed channels."
         return self._registered_channels
 
-    async def get_channel_values_via_websocket(self, channels: list[str]) -> dict:
-        """Read channels via dedicated websocket connection."""
-
-        # create new connection and login
-        rpc_server = jsonrpc_websocket.Server(
-            url=self.backend.ws_url,
-            session=None,
-            heartbeat=5,
-        )
-
-        await rpc_server.ws_connect()
-        _LOGGER.debug("wsocket component info request: login")
-        await rpc_server.authenticateWithPassword(
-            username=self.backend.username, password=self.backend.password
-        )
-
-        # prepare callback event and subscribe for the required data
-        data_received: asyncio.Event = asyncio.Event()
-        data = {}
-
-        def _handle_callback(**kwargs):
-            if kwargs["payload"]["method"] != "currentData":
-                # ignore
-                return
-
-            nonlocal data
-            data = kwargs["payload"]["params"]
-            data_received.set()
-
-        rpc_server.edgeRpc = _handle_callback
-        await rpc_server.subscribeEdges(edges=[self._id])
-
-        subscribe_call = OpenEMSBackend.wrap_jsonrpc(
-            "subscribeChannels", count=0, channels=channels
-        )
-        await rpc_server.edgeRpc(edgeId=self._id, payload=subscribe_call)  # pyright: ignore[reportGeneralTypeIssues]
-
-        # wait for the data. When received, close connection and return data
-        await asyncio.wait_for(data_received.wait(), timeout=5)
-        await rpc_server.close()
-
-        return data
-
     async def get_system_update_state(self) -> dict:
         """Read getSystemUpdateState response."""
-        system_update_state_call = OpenEMSBackend.wrap_jsonrpc("getSystemUpdateState")
-        edge_call = OpenEMSBackend.wrap_jsonrpc(
+        system_update_state_call = wrap_jsonrpc("getSystemUpdateState")
+        edge_call = wrap_jsonrpc(
             "componentJsonApi", componentId="_host", payload=system_update_state_call
         )
-        result = await self.backend.rpc_server.edgeRpc(
+        result = await self.backend.connection.rpc_server.edgeRpc(
             edgeId=self._id, payload=edge_call
         )
         return result["payload"]["result"]
 
     async def execute_system_update(self) -> None:
         """Trigger executeSystemUpdate request."""
-        system_update_state_call = OpenEMSBackend.wrap_jsonrpc(
-            "executeSystemUpdate", isDebug=False
-        )
-        edge_call = OpenEMSBackend.wrap_jsonrpc(
+        system_update_state_call = wrap_jsonrpc("executeSystemUpdate", isDebug=False)
+        edge_call = wrap_jsonrpc(
             "componentJsonApi", componentId="_host", payload=system_update_state_call
         )
-        await self.backend.rpc_server.edgeRpc(edgeId=self._id, payload=edge_call)
-
-
-class EdgeNotInitializedError(Exception):
-    """Exception raised when edge is not initialized yet."""
+        await self.backend.connection.rpc_server.edgeRpc(
+            edgeId=self._id, payload=edge_call
+        )
 
 
 class OpenEMSBackend:
     """Class which represents a connection to an OpenEMS backend."""
 
-    def __init__(self, ws_url: URL, username: str, password: str) -> None:
+    def __init__(
+        self,
+        connection: OpenEMSWebSocketConnection,
+        edge_id: str,
+        multi_edge: bool,
+        components: dict[str, dict],
+    ) -> None:
         """Create a new OpenEMSBackend object."""
-        self.ws_url: URL = ws_url
-        self.username: str = username
-        self.password: str = password
-        # Fenecon Web portal does not support REST API access
-        # TODO: refactor into OpenEMSEdge
-        # TODO: create new class OpenEMSConfigEntryData
-        rest_possible: bool = ws_url.host != CONN_TYPES[CONN_TYPE_WEB_FENECON]["host"]
-        self.rest_base_url: URL | None = (
-            connection_url(CONN_TYPE_REST, ws_url.host) if rest_possible else None
-        )
+        self.connection = connection
+        self.multi_edge = multi_edge
 
-        self.rpc_server = jsonrpc_websocket.Server(
-            self.ws_url, session=None, heartbeat=5
-        )
-        self.rpc_server_task: asyncio.Task | None = None
-        self.rpc_server.edgeRpc = self.edgeRpc
-        self.multi_edge = True
-        self._reconnect_task = None
-        self._edge: OpenEMSEdge | None = None
-
-    @property
-    def the_edge(self) -> OpenEMSEdge:
-        """Return the edge or raise an exception if not initialized."""
-        if self._edge is None:
-            raise EdgeNotInitializedError
-        return self._edge
-
-    @staticmethod
-    def wrap_jsonrpc(method, **params):
-        """Wrap a method call with paramters into a jsonrpc call."""
-        envelope = {}
-        envelope["jsonrpc"] = "2.0"
-        envelope["method"] = method
-        envelope["params"] = params
-        envelope["id"] = str(uuid.uuid4())
-        return envelope
+        connection.rpc_server.edgeRpc = self.edgeRpc
+        self.the_edge = OpenEMSEdge(self, edge_id, components)
 
     def edgeRpc(self, **kwargs):
         """Handle an edge jsonrpc callback and call the respective method of the edge object."""
@@ -1058,78 +909,12 @@ class OpenEMSBackend:
         # call the edge method
         method(params)
 
-    async def _reconnect_forever(self):
-        while True:
-            # check for an existing connection
-            if self.rpc_server_task:
-                with contextlib.suppress(
-                    jsonrpc_base.jsonrpc.TransportError,
-                    jsonrpc_base.jsonrpc.ProtocolError,
-                ):
-                    await self.rpc_server_task
-                # connection lost
-                _LOGGER.info("Connection to backend %s lost", self.the_edge.hostname)
-                self.rpc_server_task = None
-                self.the_edge.set_unavailable()
-                await asyncio.sleep(10)
-
-            try:
-                await self.connect_to_server()
-                _LOGGER.debug("Reconnected to backend %s", self.the_edge.hostname)
-                # connected. Lets login
-                await self.login_to_server()
-                _LOGGER.info(
-                    "Connection to backend %s reestablished", self.the_edge.hostname
-                )
-            except (
-                jsonrpc_base.jsonrpc.TransportError,
-                jsonrpc_base.jsonrpc.ProtocolError,
-            ):
-                await asyncio.sleep(10)
-
-    async def connect_to_server(self):
-        "Establish websocket connection."
-        self.rpc_server_task = await self.rpc_server.ws_connect()
-
-    async def login_to_server(self):
-        "Authenticate with username and password."
-        if not self.rpc_server.connected:
-            raise ConnectionError
-        retval = await self.rpc_server.authenticateWithPassword(
-            username=self.username, password=self.password
-        )
-        if user_dict := retval.get("user"):
-            self.multi_edge = user_dict["hasMultipleEdges"]
-        return retval
-
     def start(self):
-        """Start a tasks which checks for connection losses tries to reconnect afterwards."""
-        self._reconnect_task = asyncio.create_task(self._reconnect_forever())
+        """Start to subscribe for updates to the edge."""
+        self.connection.enable_reconnect(self.the_edge.set_unavailable)
 
     async def stop(self):
         """Close the connection to the backend and all internal connection objects."""
-        if self._reconnect_task:
-            self._reconnect_task.cancel()
-            self._reconnect_task = None
-        await self.rpc_server.close()
+        await self.connection.stop()
         if self.the_edge:
             self.the_edge.stop()
-
-    def set_component_config(self, edge_id, components: dict) -> OpenEMSEdge:
-        """Prepare edge and all its components."""
-        self._edge = OpenEMSEdge(self, edge_id)
-        self._edge.set_component_config(components)
-        return self._edge
-
-    async def prepare_entities(self):
-        """Parse json config of all edges."""
-        await self.the_edge.prepare_entities()
-
-    async def read_edges(self) -> dict:
-        """Request list of all edges."""
-        return await self.rpc_server.getEdges(page=0, limit=20, searchParams={})
-
-    async def read_edge_components(self, edge_id: str) -> dict:
-        """Request config of an edge."""
-        self._edge = OpenEMSEdge(self, edge_id)
-        return await self._edge.read_components()

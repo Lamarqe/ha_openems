@@ -7,33 +7,20 @@ import copy
 import logging
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
-from yarl import URL
 
-from homeassistant.const import (
-    CONF_HOST,
-    CONF_PASSWORD,
-    CONF_TYPE,
-    CONF_URL,
-    CONF_USERNAME,
-    Platform,
-)
+from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
-from homeassistant.helpers.typing import ConfigType
 
-from .const import (
-    CONF_EDGE,
-    CONN_TYPE_CUSTOM_URL,
-    CONN_TYPE_DIRECT_EDGE,
-    connection_url,
-)
+from .const import CONF_EDGE, CONN_TYPE_DIRECT_EDGE
+from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from .helpers import (
     OpenEMSConfigEntry,
-    OpenEMSEntityFeature,
+    OpenEMSEntityFeature,  # noqa: F401
     RuntimeData,
     component_device,
 )
@@ -62,38 +49,33 @@ async def async_setup_entry(
         config_entry.data.copy()  # copy() before deepcopy because its a mappingproxy
     )
 
-    # 1. Create API instance
-    if data_copy["user_input"][CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
-        conn_url = URL(data_copy["user_input"][CONF_URL])
-    else:
-        conn_url = connection_url(
-            data_copy["user_input"][CONF_TYPE],
-            data_copy["user_input"][CONF_HOST],
-        )
-    backend = OpenEMSBackend(
-        conn_url,
-        data_copy["user_input"][CONF_USERNAME],
-        data_copy["user_input"][CONF_PASSWORD],
-    )
-    edge_id = data_copy["user_input"][CONF_EDGE]
-    # 2. Trigger the API connection (and authentication)
     try:
-        await asyncio.wait_for(backend.connect_to_server(), timeout=2)
+        # 1. Create connection instance
+        connection = OpenEMSWebSocketConnection(data_copy["user_input"])
+
+        edge_id = data_copy["user_input"][CONF_EDGE]
+        # 2. Trigger the API connection (and authentication)
+        await asyncio.wait_for(connection.connect_to_server(), timeout=2)
+
     except (TransportError, TimeoutError) as ex:
+        await connection.stop()
         raise ConfigEntryNotReady(
-            f"Timeout while connecting to {backend.ws_url.host}"
+            f"Error while connecting to {connection.conn_url.host}"
         ) from ex
     # login
     try:
-        await backend.login_to_server()
+        login_response: dict = await connection.login_to_server()
     except ProtocolError as ex:
+        await connection.stop()
         raise ConfigEntryAuthFailed(
-            f"Wrong user / password for {backend.ws_url.host}"
+            f"Wrong user / password for {connection.conn_url.host}"
         ) from ex
 
     # 3. Reload component list in case explicit user request to reload (hass.is_running)
     if hass.is_running or not data_copy["components"]:
-        components = await backend.read_edge_components(edge_id)
+        config_reader = OpenEMSConfigReader(connection, edge_id)
+
+        components = await config_reader.read_edge_components()
         entry_data = {
             "user_input": data_copy["user_input"],
             "components": components,
@@ -103,11 +85,13 @@ async def async_setup_entry(
             data=copy.deepcopy(entry_data),  # copy data because backend has ownership
         )
     else:
-        backend.set_component_config(edge_id, data_copy["components"])
+        components = data_copy["components"]
 
-    await backend.prepare_entities()
+    # 4. Prepare HA entity strucutures from config entry data
+    multi_edge = OpenEMSConfigReader.parse_login_response(login_response)
+    backend = OpenEMSBackend(connection, edge_id, multi_edge, components)
 
-    # 4. Read and set config options
+    # 5. Read and set config options
     for component_name, is_enabled in config_entry.options.items():
         if component := backend.the_edge.components.get(component_name):
             component.create_entities = is_enabled
