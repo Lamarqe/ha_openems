@@ -4,39 +4,41 @@ import asyncio
 from collections.abc import Callable
 import contextlib
 import logging
+from typing import TypedDict
 
 import jsonrpc_base
 import jsonrpc_websocket
 from yarl import URL
 
-from .const import (
-    CONF_HOST,
-    CONF_PASSWORD,
-    CONF_TYPE,
-    CONF_URL,
-    CONF_USERNAME,
-    CONN_TYPE_CUSTOM_URL,
-    connection_url,
-    wrap_jsonrpc,
-)
+from .const import CONN_TYPE_CUSTOM_URL, connection_url, wrap_jsonrpc
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class ConnectionProperties(TypedDict):
+    "Type containing the websocket connection paramters."
+
+    host: str
+    password: str
+    type: str
+    url: str
+    username: str
 
 
 class OpenEMSWebSocketConnection:
     """Class to manage a websocket connection to an OpenEMS system."""
 
-    def __init__(self, user_input) -> None:
+    def __init__(self, conn_props: ConnectionProperties) -> None:
         """Initialize OpenEMS websocket connection management."""
-        if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
-            self.conn_url = URL(user_input[CONF_URL])
+        if conn_props["type"] == CONN_TYPE_CUSTOM_URL:
+            self.conn_url = URL(conn_props["url"])
         else:
             self.conn_url = connection_url(
-                user_input[CONF_TYPE],
-                user_input[CONF_HOST],
+                conn_props["type"],
+                conn_props["host"],
             )
-        self.username: str = user_input[CONF_USERNAME]
-        self.password: str = user_input[CONF_PASSWORD]
+        self.username: str = conn_props["username"]
+        self.password: str = conn_props["password"]
 
         self.rpc_server = jsonrpc_websocket.Server(
             self.conn_url, session=None, heartbeat=5

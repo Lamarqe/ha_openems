@@ -9,9 +9,17 @@ from typing import ClassVar
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_TYPE,
+    CONF_URL,
+    CONF_USERNAME,
+)
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 
 from .const import DOMAIN, SLASH_ESC
+from .entry_data import ConnectionProperties
 from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSProperty
 
 SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
@@ -155,4 +163,15 @@ def translation_key(channel: OpenEMSChannel) -> str:
         to_snake_case(re.sub(r"\d+$", "", channel.component.name))
         + SLASH_ESC
         + to_snake_case(channel_name)
+    )
+
+
+def map_user_input(user_input: dict[str, str]) -> ConnectionProperties:
+    """Map user input to connection parameters."""
+    return ConnectionProperties(
+        host=user_input[CONF_HOST],
+        password=user_input[CONF_PASSWORD],
+        type=user_input[CONF_TYPE],
+        url=user_input[CONF_URL],
+        username=user_input[CONF_USERNAME],
     )

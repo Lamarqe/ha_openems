@@ -23,6 +23,7 @@ from .helpers import (
     OpenEMSEntityFeature,  # noqa: F401
     RuntimeData,
     component_device,
+    map_user_input,
 )
 from .openems import CONFIG, OpenEMSBackend
 
@@ -51,7 +52,7 @@ async def async_setup_entry(
 
     try:
         # 1. Create connection instance
-        connection = OpenEMSWebSocketConnection(data_copy["user_input"])
+        connection = OpenEMSWebSocketConnection(map_user_input(data_copy["user_input"]))
 
         edge_id = data_copy["user_input"][CONF_EDGE]
         # 2. Trigger the API connection (and authentication)

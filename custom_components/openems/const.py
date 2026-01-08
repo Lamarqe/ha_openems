@@ -1,6 +1,6 @@
 """Constants for the HA OpenEMS integration."""
 
-from typing import Final, TypedDict
+from typing import TypedDict
 import uuid
 
 from yarl import URL
@@ -13,13 +13,6 @@ ATTR_VALUE: str = "value"
 
 CONF_EDGES: str = "edges"
 CONF_EDGE: str = "edge"
-
-# Ugly double definition to avoid circular imports. Must match homeassistant/const.py
-CONF_HOST: Final = "host"
-CONF_PASSWORD: Final = "password"
-CONF_TYPE: Final = "type"
-CONF_URL: Final = "url"
-CONF_USERNAME: Final = "username"
 
 CONN_TYPE_DIRECT_EDGE: str = "direct_edge"
 CONN_TYPE_LOCAL_FEMS: str = "local_fems"

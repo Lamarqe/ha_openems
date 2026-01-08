@@ -33,7 +33,6 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from . import OpenEMSConfigEntry
 from .const import (
     CONF_EDGE,
     CONF_EDGES,
@@ -45,6 +44,7 @@ from .const import (
     DOMAIN,
 )
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from .helpers import OpenEMSConfigEntry, map_user_input
 from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
@@ -175,18 +175,12 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_URL] = "url_not_absolute"
                 return self._show_form(user_input, errors)
 
-        else:
-            try:
-                connection = OpenEMSWebSocketConnection(user_input)
-            except ValueError as e:
-                errors[CONF_HOST] = str(e)
-                return self._show_form(user_input, errors)
+        try:
+            connection = OpenEMSWebSocketConnection(map_user_input(user_input))
+        except ValueError as e:
+            errors[CONF_HOST] = str(e)
+            return self._show_form(user_input, errors)
 
-        # backend = OpenEMSBackend(
-        #    conn_url,
-        #    user_input[CONF_USERNAME],
-        #    user_input[CONF_PASSWORD],
-        # )
         try:
             self._config_data = user_input
             try:
@@ -229,7 +223,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 config_reader.set_edge_id(edge_id)
                 return await self._create_or_update_entry(config_reader, False)
 
-            except (KeyError, jsonrpc_base.jsonrpc.ProtocolError):
+            except (TimeoutError, KeyError, jsonrpc_base.jsonrpc.ProtocolError):
                 _LOGGER.exception("Cannot read edge components")
                 errors[CONF_BASE] = "cannot_read_components"
                 return self._show_form(user_input, errors)
@@ -250,7 +244,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         # read edge components to validate it is correctly running
         # and to initialize entry options
         components = await asyncio.wait_for(
-            config_reader.read_edge_components(), timeout=10
+            config_reader.read_edge_components(), timeout=20
         )
         entry_data = {"user_input": self._config_data, "components": components}
 
@@ -295,7 +289,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._config_data[CONF_EDGE] = user_input[CONF_EDGES]
             connection: OpenEMSWebSocketConnection = OpenEMSWebSocketConnection(
-                self._config_data
+                map_user_input(self._config_data)
             )
             try:
                 await connection.connect_to_server()
@@ -304,7 +298,11 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                     connection, user_input[CONF_EDGES]
                 )
                 return await self._create_or_update_entry(config_reader, True)
-            except (jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError):
+            except (
+                jsonrpc_base.TransportError,
+                jsonrpc_base.jsonrpc.ProtocolError,
+                TimeoutError,
+            ):
                 _LOGGER.exception("Error during processing the selected edge")
                 errors[CONF_EDGES] = "error_processing_edge"
             finally:
