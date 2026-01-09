@@ -21,7 +21,7 @@ from homeassistant.helpers.entity_platform import (
 )
 
 from . import OpenEMSConfigEntry
-from .const import ATTR_VALUE, DOMAIN
+from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers import component_device, translation_key
 from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
 
@@ -152,9 +152,11 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
 
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""
-        val: bool = bool(kwargs[ATTR_VALUE])
-
-        await self._channel.update_value(val)
+        await self._channel.update_value(
+            float(kwargs[ATTR_VALUE]),
+            kwargs.get(ATTR_UPDATE_CYCLE),  # pyright: ignore[reportArgumentType]
+            kwargs.get(ATTR_TIMEOUT),  # pyright: ignore[reportArgumentType]
+        )
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

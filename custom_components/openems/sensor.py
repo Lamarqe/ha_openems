@@ -22,7 +22,7 @@ from homeassistant.helpers.entity_platform import (
 )
 
 from . import OpenEMSConfigEntry
-from .const import ATTR_VALUE, DOMAIN
+from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers import (
     OpenEMSUnitClass,
     component_device,
@@ -102,7 +102,11 @@ async def async_setup_entry(
     platform: EntityPlatform = async_get_current_platform()
     platform.async_register_entity_service(
         name="update_value",
-        schema={vol.Required(ATTR_VALUE): vol.Coerce(float)},
+        schema={
+            vol.Required(ATTR_VALUE): vol.Coerce(float),
+            vol.Optional(ATTR_UPDATE_CYCLE, default=30): vol.Coerce(int),
+            vol.Optional(ATTR_TIMEOUT, default=0): vol.Coerce(int),
+        },
         func="update_value",
     )
 
@@ -153,9 +157,11 @@ class OpenEMSSensorEntity(SensorEntity):
 
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""
-        val: float = float(kwargs[ATTR_VALUE])
-
-        await self._channel.update_value(val)
+        await self._channel.update_value(
+            float(kwargs[ATTR_VALUE]),
+            kwargs.get(ATTR_UPDATE_CYCLE),  # pyright: ignore[reportArgumentType]
+            kwargs.get(ATTR_TIMEOUT),  # pyright: ignore[reportArgumentType]
+        )
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

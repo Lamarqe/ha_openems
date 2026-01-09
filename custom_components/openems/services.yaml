@@ -8,7 +8,7 @@ update_component_config:
     value:
       required: true
       selector:
-        text:
+        number:
 
 update_value:
   target:
@@ -23,4 +23,16 @@ update_value:
     value:
       required: true
       selector:
-        text:
+        number:
+    timeout:
+      required: true
+      default: 0
+      selector:
+        number:
+          unit_of_measurement: seconds
+    update_cycle:
+      required: true
+      default: 30
+      selector:
+        number:
+          unit_of_measurement: seconds

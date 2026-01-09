@@ -5,10 +5,8 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from datetime import time
-import json
 import logging
 import math
-import os
 import re
 from typing import Any, NamedTuple
 
@@ -17,6 +15,7 @@ from jinja2 import Template
 import jsonrpc_base
 from yarl import URL
 
+from .config import OpenEMSConfig
 from .const import (
     CONN_TYPE_REST,
     CONN_TYPE_WEB_FENECON,
@@ -35,91 +34,6 @@ class RestDetails(NamedTuple):
 
     mode: str
     url: URL
-
-
-class OpenEMSConfig:
-    """Load additional config options from json files."""
-
-    def __init__(self) -> None:
-        """Initialize and read json files."""
-        path = os.path.dirname(__file__)
-        with open(
-            path + "/config/default_channels.json", encoding="utf-8"
-        ) as channel_file:
-            self.default_channels = json.load(channel_file)
-        with open(path + "/config/enum_options.json", encoding="utf-8") as enum_file:
-            self.enum_options = json.load(enum_file)
-        with open(path + "/config/time_options.json", encoding="utf-8") as time_file:
-            self.time_options = json.load(time_file)
-        with open(
-            path + "/config/number_properties.json", encoding="utf-8"
-        ) as number_file:
-            self.number_properties = json.load(number_file)
-        with open(
-            path + "/config/component_update_groups.json", encoding="utf-8"
-        ) as groups_file:
-            self.update_groups = json.load(groups_file)
-
-    def _get_config_property(self, dict, property, component_name, channel_name):
-        """Return dict property for a given component/channel."""
-        for component_conf in dict:
-            comp_regex = component_conf["component_regexp"]
-            if re.fullmatch(comp_regex, component_name):
-                for channel in component_conf["channels"]:
-                    if channel["id"] == channel_name:
-                        return channel.get(property)
-        return None
-
-    def get_enum_options(self, component_name, channel_name) -> list[str] | None:
-        """Return option string list for a given component/channel."""
-        return self._get_config_property(
-            self.enum_options, "options", component_name, channel_name
-        )
-
-    def is_time_property(self, component_name, channel_name) -> list[str] | None:
-        """Return True if given component/channel is marked as time."""
-        return self._get_config_property(
-            self.time_options, "is_time", component_name, channel_name
-        )
-
-    def get_number_limit(self, component_name, channel_name) -> dict | None:
-        """Return limit definition for a given component/channel."""
-        return self._get_config_property(
-            self.number_properties, "limit", component_name, channel_name
-        )
-
-    def get_number_multiplier(self, component_name, channel_name) -> dict | None:
-        """Return multiplier for a given component/channel."""
-        return self._get_config_property(
-            self.number_properties, "multiplier", component_name, channel_name
-        )
-
-    def is_component_enabled(self, comp_name: str) -> bool:
-        """Return if there is at least one channel enabled by default."""
-        for entry in self.default_channels:
-            if re.fullmatch(entry["component_regexp"], comp_name):
-                return True
-
-        return False
-
-    def is_channel_enabled(self, comp_name, chan_name) -> bool:
-        """Return True if the channel is enabled by default."""
-        for entry in self.default_channels:
-            if re.fullmatch(entry["component_regexp"], comp_name):
-                if chan_name in entry["channels"]:
-                    return True
-
-        return False
-
-    def update_group_members(self, comp_name, chan_name) -> tuple[list[str], Any]:
-        """Return list of all update group members and the condition value."""
-        for entry in self.update_groups:
-            if re.fullmatch(entry["component_regexp"], comp_name):
-                for rule in entry["rules"]:
-                    if rule["channel"] == chan_name:
-                        return rule["requires"], rule.get("when")
-
-        return [], None
 
 
 CONFIG: OpenEMSConfig = OpenEMSConfig()
@@ -152,6 +66,7 @@ class OpenEMSChannel:
         self.orig_json: dict[str, Any] = channel_json
         self.callback: Callable | None = None
         self._current_value: Any = None
+        self._rest_update_task: asyncio.Task | None = None
 
     def handle_current_value(self, value: Any) -> None:
         """Handle a new entity value and notify Home Assistant."""
@@ -208,9 +123,14 @@ class OpenEMSChannel:
     def unregister_callback(self):
         """Remove callback."""
         self.callback = None
+        if self._rest_update_task is not None:
+            self._rest_update_task.cancel()
+            self._rest_update_task = None
         self.component.edge.unregister_channel(self)
 
-    async def update_value(self, new_value: float | bool):
+    async def update_value(
+        self, new_value: float | bool, update_cycle: int, timeout: int
+    ):
         """Handle value change request from Home Assisant."""
         edge = self.component.edge
         backend = edge.backend
@@ -224,33 +144,68 @@ class OpenEMSChannel:
             )
             return
 
-        auth = aiohttp.BasicAuth(
-            backend.connection.username, backend.connection.password
-        )
+        # clean up a previously running cyclic update task
+        if self._rest_update_task is not None:
+            self._rest_update_task.cancel()
+            self._rest_update_task = None
 
+        # prepare REST URL and data
         url = edge.rest.url.joinpath("channel", self.component.name, self.name)
         data = {"value": new_value}
-        try:
-            async with (
-                aiohttp.ClientSession(raise_for_status=False, auth=auth) as session,
-                session.post(url, json=data) as resp,
-            ):
-                if resp.status != 200:
-                    _LOGGER.error(
-                        "Error during REST call to update channel %s/%s: HTTP %d: %s",
-                        self.component.name,
-                        self.name,
-                        resp.status,
-                        resp.reason,
-                    )
-        except aiohttp.ClientError as exc:
-            _LOGGER.error(
-                "Cannot send REST update command via URL %s for channel %s/%s: %s",
-                str(edge.rest.url),
-                self.component.name,
-                self.name,
-                str(exc),
+
+        async def _rest_update_cyclic():
+            """Send REST update command cyclically."""
+            while True:
+                await _rest_update_oneshot()
+                await asyncio.sleep(update_cycle)
+
+        async def _rest_update_oneshot():
+            """Send REST update command."""
+            auth = aiohttp.BasicAuth(
+                backend.connection.username, backend.connection.password
             )
+            try:
+                async with (
+                    aiohttp.ClientSession(raise_for_status=False, auth=auth) as session,
+                    session.post(url, json=data) as resp,
+                ):
+                    if resp.status != 200:
+                        _LOGGER.error(
+                            "Error during REST call to update channel %s/%s: HTTP %d: %s",
+                            self.component.name,
+                            self.name,
+                            resp.status,
+                            resp.reason,
+                        )
+            except aiohttp.ClientError as exc:
+                _LOGGER.error(
+                    "Cannot send REST update command via URL %s for channel %s/%s: %s",
+                    str(url),
+                    self.component.name,
+                    self.name,
+                    str(exc),
+                )
+
+        if update_cycle <= 0:
+            # one shot
+            await _rest_update_oneshot()
+        else:
+            # schedule cyclically
+            my_timeout = timeout if timeout > 0 else None
+            self._rest_update_task = asyncio.create_task(_rest_update_cyclic())
+            try:
+                await asyncio.wait_for(self._rest_update_task, timeout=my_timeout)
+            except TimeoutError:
+                self._rest_update_task = None
+            except asyncio.CancelledError:
+                # another update task took over. Dont touch the task reference.
+                pass
+
+        _LOGGER.info(
+            "Update value service task completed for channel %s/%s",
+            self.component.name,
+            self.name,
+        )
 
 
 class OpenEMSProperty(OpenEMSChannel):

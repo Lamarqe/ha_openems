@@ -10,6 +10,8 @@ SLASH_ESC = "_s_l_a_s_h_"
 DOMAIN: str = "openems"
 
 ATTR_VALUE: str = "value"
+ATTR_TIMEOUT: str = "timeout"
+ATTR_UPDATE_CYCLE: str = "update_cycle"
 
 CONF_EDGES: str = "edges"
 CONF_EDGE: str = "edge"
