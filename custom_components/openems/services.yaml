@@ -17,6 +17,8 @@ update_value:
       domain:
         - sensor
         - binary_sensor
+      supported_features:
+        - openems.OpenEMSEntityFeature.WRITE
   fields:
     value:
       required: true
