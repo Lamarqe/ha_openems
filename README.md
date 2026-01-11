@@ -147,7 +147,7 @@ Here you find the grids frequency.\
 <img src="screenshots/meter.jpg" width="400"/>
 
 ### REST Write App
-Use the service update_value to cyclically send REST commands to the backend:
+Use the service **update_value** to cyclically send REST commands to the backend:
 <table>
   <tr><th>Parameter</th><th>Meaning</th><th>Default value</th></tr>
   <tr><td>entity</td><td>The channel to update</td><td></td></tr>
