@@ -19,6 +19,7 @@ Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 * Works with Fenecon and OpenEMS single and multi-edge systems.
 * Advanced configuration options to support non-standard connection types.
 * FEMS update discovery and installation option
+* Access to REST write App (if installed)
 
 ## Table of contents
 
@@ -144,6 +145,18 @@ Here you will find the current state of your SG ready connected heatpump.\
 #### meter*
 Here you find the grids frequency.\
 <img src="screenshots/meter.jpg" width="400"/>
+
+### REST Write App
+Use the service update_value to cyclically send REST commands to the backend:
+<table>
+  <tr><th>Parameter</th><th>Meaning</th><th>Default value</th></tr>
+  <tr><td>entity</td><td>The channel to update</td><td></td></tr>
+  <tr><td>value</td><td>The new target value</td><td></td></tr>
+  <tr><td>timeout</td><td>Duration until when cyclic updates will be sent.<br> Use 0 for sending values until the next service call for the same entity.</td><td>0</td></tr>
+  <tr><td>update cycle</td><td>Cycle in which a new request will be sent.<br> This is necessary because by default, FEMS will reset REST value requests after 60 seconds by default </td><td>30</td></tr>
+</table>
+
+_Note: Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant._
 
 ## Installation
 
