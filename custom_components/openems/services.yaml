@@ -14,6 +14,8 @@ rest_write_sensor:
     entity:
       integration: openems
       domain: sensor
+      supported_features:
+        - openems.OpenEMSEntityFeature.WRITE
   fields:
     value:
       required: true
@@ -37,6 +39,8 @@ rest_write_binary_sensor:
     entity:
       integration: openems
       domain: binary_sensor
+      supported_features:
+        - openems.OpenEMSEntityFeature.WRITE
   fields:
     value:
       required: true
