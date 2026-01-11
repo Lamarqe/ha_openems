@@ -153,7 +153,7 @@ Use the service **update_value** to cyclically send REST commands to the backend
   <tr><td>entity</td><td>The channel to update</td><td></td></tr>
   <tr><td>value</td><td>The new target value</td><td></td></tr>
   <tr><td>timeout</td><td>Duration until when cyclic updates will be sent.<br> Use 0 for sending values until the next service call for the same entity.</td><td>0</td></tr>
-  <tr><td>update cycle</td><td>Cycle in which a new request will be sent.<br> This is necessary because by default, FEMS will reset REST value requests after 60 seconds by default </td><td>30</td></tr>
+  <tr><td>update cycle</td><td>Cycle in which a new request will be sent.<br> This is necessary because by default, FEMS will reset REST value requests after 60 seconds by default. Setting update cycle to 0 will trigger a single REST call only.<br> </td><td>30</td></tr>
 </table>
 
 _Note: Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant._
