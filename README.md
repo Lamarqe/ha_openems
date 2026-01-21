@@ -127,6 +127,23 @@ variables:
 **Card screenshot** (German version)\
 ![image](screenshots/ess.jpg)
 
+#### Heating Element
+**Sample Card config**
+```
+type: custom:decluttering-card
+template: heating_template
+variables:
+  - system: fems12345
+  - ctrlioheatingelement_id: 0
+```
+
+**Card variables**
+* `system`: Set to your FEMS/OpenEMS system name
+* `ctrlioheatingelement_id`: Set to your heating element AppID. Eg `0` if the component is called `ctrlioheatingelement0`. Default value: 0
+
+**Card screenshot** (German version)\
+![image](screenshots/heatingelement.png)
+
 ### Additional commonly used components
 
 #### BatteryInverter*
