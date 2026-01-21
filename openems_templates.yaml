@@ -1,4 +1,130 @@
 decluttering_templates:
+  heating_template:
+    default:
+      - ctrlioheatingelement_id: 0
+    card:
+      type: grid
+      square: false
+      columns: 1
+      cards:
+        - type: heading
+          icon: mdi:heating-coil
+          heading: Heizstab
+          heading_style: title
+          badges:
+            - type: entity
+              show_state: true
+              show_icon: true
+              entity: sensor.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_status
+              color: state
+        - type: entities
+          entities:
+            - entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_defaultlevel
+              name: Level
+          state_color: false
+          visibility:
+            - condition: state
+              entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+              state: manual_on
+        - type: entities
+          entities:
+            - entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_defaultlevel
+              name: Level
+            - entity: time.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_endtime
+              name: Endzeit
+            - entity: number.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mintime
+              name: Mindestlaufzeit [h]
+          state_color: false
+          visibility:
+            - condition: state
+              entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+              state: automatic
+        - type: horizontal-stack
+          cards:
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+              name: Aus
+              icon: mdi:power-standby
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: manual_off
+                  color: red
+                  styles:
+                    card:
+                      - background-color: rgba(255,0,0,0.1)
+                - value: manual_off
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: manual_off
+                  entity_id: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+              name: Automatisch
+              icon: mdi:auto-mode
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: automatic
+                  color: green
+                  styles:
+                    card:
+                      - background-color: rgba(0,100,255,0.1)
+                - value: automatic
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: automatic
+                  entity_id: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+              name: An
+              icon: mdi:power
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: manual_on
+                  color: green
+                  styles:
+                    card:
+                      - background-color: rgba(0,255,0,0.1)
+                - value: manual_on
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: manual_on
+                  entity_id: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
   ess_template:
     default:
       - ctrlemergencycapacityreserve_id: 0
