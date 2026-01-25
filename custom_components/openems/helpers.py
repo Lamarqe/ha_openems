@@ -169,9 +169,9 @@ def translation_key(channel: OpenEMSChannel) -> str:
 def map_user_input(user_input: dict[str, str]) -> ConnectionProperties:
     """Map user input to connection parameters."""
     return ConnectionProperties(
-        host=user_input[CONF_HOST],
+        host=user_input.get(CONF_HOST),
         password=user_input[CONF_PASSWORD],
         type=user_input[CONF_TYPE],
-        url=user_input[CONF_URL],
+        url=user_input.get(CONF_URL),
         username=user_input[CONF_USERNAME],
     )

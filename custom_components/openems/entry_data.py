@@ -18,10 +18,10 @@ _LOGGER = logging.getLogger(__name__)
 class ConnectionProperties(TypedDict):
     "Type containing the websocket connection paramters."
 
-    host: str
+    host: str | None
     password: str
     type: str
-    url: str
+    url: str | None
     username: str
 
 
@@ -31,7 +31,8 @@ class OpenEMSWebSocketConnection:
     def __init__(self, conn_props: ConnectionProperties) -> None:
         """Initialize OpenEMS websocket connection management."""
         if conn_props["type"] == CONN_TYPE_CUSTOM_URL:
-            self.conn_url = URL(conn_props["url"])
+            url_prop: str = conn_props["url"]  # type: ignore[assignment]
+            self.conn_url = URL(url_prop)
         else:
             self.conn_url = connection_url(
                 conn_props["type"],
