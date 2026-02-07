@@ -52,6 +52,20 @@
                     "storage": "Storage"
                 }
             },
+            "ctrlevsesingle_s_l_a_s_h_mode": {
+                "state": {
+                    "force": "Fast",
+                    "minimum": "Minimal",
+                    "surplus": "PV",
+                    "zero": "Off"
+                }
+            },
+            "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+                "state": {
+                    "force_single_phase": "1-phase",
+                    "force_three_phase": "3-phase"
+                }
+            },
             "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
                 "state": {
                     "high": "High",
@@ -76,18 +90,38 @@
             "ctrlioheatingelement_s_l_a_s_h_mode": {
                 "state": {
                     "automatic": "Automatic",
-                    "manual_on": "On",
-                    "manual_off": "Off"
+                    "manual_off": "Off",
+                    "manual_on": "On"
                 }
             },
             "ctrlioheatingelement_s_l_a_s_h_workmode": {
                 "state": {
-                    "time": "Guaranteed minimum time",
-                    "none": "Excess power only"
+                    "none": "Excess power only",
+                    "time": "Guaranteed minimum time"
                 }
             }
         },
         "sensor": {
+            "ctrlevsesingle_s_l_a_s_h_actualmode": {
+                "state": {
+                    "force": "Fast",
+                    "minimum": "Minimal",
+                    "surplus": "PV",
+                    "zero": "Off"
+                }
+            },
+            "ctrlevsesingle_s_l_a_s_h_statemachine": {
+                "state": {
+                    "charging": "Charging",
+                    "ev_connected": "EV connected",
+                    "ev_not_connected": "EV not connected",
+                    "finished_energy_session_limit": "Charging finished by energy limit",
+                    "finished_ev_stop": "Charging finished by EV",
+                    "phase_switch": "Manual Phaseswitch",
+                    "phase_switch_to_single_phase": "Switch to 1-phase",
+                    "phase_switch_to_three_phase": "Switch to 3-phase"
+                }
+            },
             "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
                 "state": {
                     "active_limit": "Active limit",

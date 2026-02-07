@@ -52,6 +52,20 @@
                     "storage": "Speicher"
                 }
             },
+            "ctrlevsesingle_s_l_a_s_h_mode": {
+                "state": {
+                    "force": "Schnellladen",
+                    "minimum": "Minimal Beladung mit PV-Überschuss",
+                    "surplus": "PV-Überschuss",
+                    "zero": "Keine Beladung"
+                }
+            },
+            "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+                "state": {
+                    "force_single_phase": "1-phasig",
+                    "force_three_phase": "3-phasig"
+                }
+            },
             "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
                 "state": {
                     "high": "Hoch",
@@ -88,6 +102,26 @@
             }
         },
         "sensor": {
+            "ctrlevsesingle_s_l_a_s_h_actualmode": {
+                "state": {
+                    "force": "Schnellladen",
+                    "minimum": "Minimal Beladung mit PV-Überschuss",
+                    "surplus": "PV-Überschuss",
+                    "zero": "Keine Beladung"
+                }
+            },
+            "ctrlevsesingle_s_l_a_s_h_statemachine": {
+                "state": {
+                    "charging": "Lädt",
+                    "ev_connected": "EV verbunden",
+                    "ev_not_connected": "EV nicht verbunden",
+                    "finished_energy_session_limit": "Ladevorgang beendet durch Energielimit",
+                    "finished_ev_stop": "Ladevorgang beendet durch EV",
+                    "phase_switch": "Manuelles Phasenwechseln",
+                    "phase_switch_to_single_phase": "Wechsel auf 1-phasig",
+                    "phase_switch_to_three_phase": "Wechsel auf 3-phasig"
+                }
+            },
             "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
                 "state": {
                     "active_limit": "Begrenzung aktiv",

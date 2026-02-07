@@ -1,5 +1,17 @@
 [
     {
+        "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+",
+        "channels": [
+            {
+                "id": "_PropertyManualEnergySessionLimit",
+                "limit": {
+                    "lower": "0",
+                    "upper": "100000"
+                }
+            }
+        ]
+    },
+    {
         "component_regexp": "ctrlEvcs\\d+",
         "channels": [
             {

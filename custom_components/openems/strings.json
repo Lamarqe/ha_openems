@@ -42,6 +42,26 @@
   },
   "entity": {
     "sensor": {
+      "ctrlevsesingle_s_l_a_s_h_actualmode": {
+        "state": {
+          "zero": "Off",
+          "minimum": "Minimal",
+					"surplus": "PV",
+					"force": "Fast"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_statemachine": {
+        "state": {
+          "ev_not_connected": "EV not connected",
+          "ev_connected": "EV connected",
+          "charging": "Charging",
+          "finished_ev_stop": "Charging finished by EV",
+          "finished_energy_session_limit": "Charging finished by energy limit",
+          "phase_switch_to_three_phase": "Switch to 3-phase",
+          "phase_switch_to_single_phase": "Switch to 1-phase",
+          "phase_switch": "Manual Phaseswitch"
+				}
+      },
       "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
         "state": {
           "undefined": "Undefined",
@@ -75,6 +95,20 @@
           "low": "Low",
           "medium": "Medium",
           "high": "High"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_mode": {
+        "state": {
+          "zero": "Off",
+          "minimum": "Minimal",
+					"surplus": "PV",
+					"force": "Fast"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+        "state": {
+          "force_single_phase": "1-phase",
+          "force_three_phase": "3-phase"
         }
       },
       "ctrlevcs_s_l_a_s_h_chargemode": {

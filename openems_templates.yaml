@@ -400,6 +400,259 @@ decluttering_templates:
             - condition: state
               entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
               state: 'on'
+  evse_template:
+      default:
+        - ctrlevse_id: single0
+      card:
+        type: vertical-stack
+        cards:
+          - type: custom:config-template-card
+            variables:
+              device_id: |
+                temp => {return this.hass.entities[temp].device_id}
+              device_model: |
+                temp => {return this.hass.devices[temp].model}
+            entities:
+              - sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode
+            card:
+              type: heading
+              icon: mdi:ev-station
+              heading_style: title
+              heading: >-
+                ${
+                device_model(device_id('sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode')) }
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_statemachine
+                show_header_toggle: false
+              - type: entities
+                entities:
+                  - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode
+                show_header_toggle: false
+              - type: horizontal-stack
+                cards:
+                  - type: custom:button-card
+                    show_name: true
+                    show_icon: true
+                    entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+                    name: >-
+                      [[[ return
+                      hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_mode.state.zero")
+                      ]]]
+                    icon: mdi:power-standby
+                    styles:
+                      card:
+                        - height: 80px
+                    state:
+                      - value: zero
+                        color: green
+                        styles:
+                          card:
+                            - background-color: var(--paper-item-icon-active-color)
+                      - value: zero
+                        operator: "!="
+                        styles:
+                          name:
+                            - filter: opacity(50%)
+                          icon:
+                            - filter: opacity(50%)
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: zero
+                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+                  - type: custom:button-card
+                    show_name: true
+                    show_icon: true
+                    entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+                    name: >-
+                      [[[ return
+                      hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_mode.state.surplus")
+                      ]]]
+                    icon: mdi:solar-power-variant
+                    styles:
+                      card:
+                        - height: 80px
+                    state:
+                      - value: surplus
+                        color: yellow
+                        styles:
+                          card:
+                            - background-color: var(--paper-item-icon-active-color)
+                      - value: surplus
+                        operator: "!="
+                        styles:
+                          name:
+                            - filter: opacity(50%)
+                          icon:
+                            - filter: opacity(50%)
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: surplus
+                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+                  - type: custom:button-card
+                    show_name: true
+                    show_icon: true
+                    entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+                    name: >-
+                      [[[ return
+                      hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_mode.state.minimum")
+                      ]]]
+                    icon: mdi:snail
+                    styles:
+                      card:
+                        - height: 80px
+                    state:
+                      - value: minimum
+                        color: blue
+                        styles:
+                          card:
+                            - background-color: var(--paper-item-icon-active-color)
+                      - value: minimum
+                        operator: "!="
+                        styles:
+                          name:
+                            - filter: opacity(50%)
+                          icon:
+                            - filter: opacity(50%)
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: minimum
+                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+                  - type: custom:button-card
+                    show_name: true
+                    show_icon: true
+                    entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+                    name: >-
+                      [[[ return
+                      hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_mode.state.force")
+                      ]]]
+                    icon: mdi:fast-forward-outline
+                    styles:
+                      card:
+                        - height: 80px
+                    state:
+                      - value: force
+                        color: red
+                        styles:
+                          card:
+                            - background-color: var(--paper-item-icon-active-color)
+                      - value: force
+                        operator: "!="
+                        styles:
+                          name:
+                            - filter: opacity(50%)
+                          icon:
+                            - filter: opacity(50%)
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: force
+                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
+              - type: entities
+                entities:
+                  - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_sessionenergy
+                show_header_toggle: false
+              - type: horizontal-stack
+                cards:
+                  - type: entities
+                    entities:
+                      - entity: number.[[system]]_ctrlevse[[ctrlevse_id]]_manualenergysessionlimit
+                        icon: mdi:arrow-collapse-down
+                    show_header_toggle: false
+                  - type: custom:button-card
+                    show_name: true
+                    show_icon: true
+                    entity: number.[[system]]_ctrlevse[[ctrlevse_id]]_manualenergysessionlimit
+                    name: "[[[ return hass.localize(\"ui.common.disable\") ]]]"
+                    icon: mdi:lock-reset
+                    styles:
+                      card:
+                        - width: 50px
+                        - font-size: 10px
+                    state:
+                      - value: 0
+                        styles:
+                          card:
+                            - filter: opacity(30%)
+                    tap_action:
+                      action: call-service
+                      service: openems.update_component_config
+                      data:
+                        entity_id: number.[[system]]_ctrlevse[[ctrlevse_id]]_manualenergysessionlimit
+                        value: 0
+              - type: horizontal-stack
+                cards:
+                  - type: custom:button-card
+                    show_name: true
+                    show_icon: true
+                    entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching
+                    name: >-
+                      [[[ return
+                      hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_phaseswitching.state.force_single_phase")
+                      ]]]
+                    icon: mdi:power-socket-de
+                    styles:
+                      card:
+                        - height: 80px
+                    state:
+                      - value: force_single_phase
+                        color: green
+                        styles:
+                          card:
+                            - background-color: var(--paper-item-icon-active-color)
+                      - value: force_single_phase
+                        operator: "!="
+                        styles:
+                          name:
+                            - filter: opacity(50%)
+                          icon:
+                            - filter: opacity(50%)
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: force_single_phase
+                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching
+                  - type: custom:button-card
+                    show_name: true
+                    show_icon: true
+                    entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching
+                    name: >-
+                      [[[ return
+                      hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_phaseswitching.state.force_three_phase")
+                      ]]]
+                    icon: mdi:ev-plug-type2
+                    styles:
+                      card:
+                        - height: 80px
+                    state:
+                      - value: force_three_phase
+                        color: blue
+                        styles:
+                          card:
+                            - background-color: var(--paper-item-icon-active-color)
+                      - value: force_three_phase
+                        operator: "!="
+                        styles:
+                          name:
+                            - filter: opacity(50%)
+                          icon:
+                            - filter: opacity(50%)
+                    tap_action:
+                      action: call-service
+                      service: select.select_option
+                      data:
+                        option: force_three_phase
+                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching´
   optchrg_template:
     default:
       - ctrlgridoptimizedcharge_id: 0

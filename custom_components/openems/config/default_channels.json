@@ -46,6 +46,17 @@
         ]
     },
     {
+        "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+",
+        "channels": [
+            "_PropertyMode",
+            "_PropertyManualEnergySessionLimit",
+            "_PropertyPhaseSwitching",
+						"ActualMode",
+						"StateMachine",
+						"SessionEnergy"						
+        ]
+    },
+    {
         "component_regexp": "ctrlEvcs\\d+",
         "channels": [
             "_PropertyChargeMode",
