@@ -43,8 +43,8 @@
                 "options": [
                     "ZERO",
                     "MINIMUM",
-										"SURPLUS",
-										"FORCE"
+                    "SURPLUS",
+                    "FORCE"
                 ]
             },
             {
