@@ -403,6 +403,7 @@ decluttering_templates:
   evse_template:
       default:
         - ctrlevse_id: single0
+        - evcs_id: 0          
       card:
         type: vertical-stack
         cards:
@@ -427,10 +428,6 @@ decluttering_templates:
                 entities:
                   - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_statemachine
                 show_header_toggle: false
-              - type: entities
-                entities:
-                  - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode
-                show_header_toggle: false
               - type: horizontal-stack
                 cards:
                   - type: custom:button-card
@@ -447,7 +444,7 @@ decluttering_templates:
                         - height: 80px
                     state:
                       - value: zero
-                        color: green
+                        color: blue
                         styles:
                           card:
                             - background-color: var(--paper-item-icon-active-color)
@@ -509,7 +506,7 @@ decluttering_templates:
                         - height: 80px
                     state:
                       - value: minimum
-                        color: blue
+                        color: green
                         styles:
                           card:
                             - background-color: var(--paper-item-icon-active-color)
@@ -559,6 +556,8 @@ decluttering_templates:
                         entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_mode
               - type: entities
                 entities:
+                  - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode
+                  - entity: sensor.[[system]]_evcs[[evcs_id]]_activepower
                   - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_sessionenergy
                 show_header_toggle: false
               - type: horizontal-stack
@@ -652,7 +651,7 @@ decluttering_templates:
                       service: select.select_option
                       data:
                         option: force_three_phase
-                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching´
+                        entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching
   optchrg_template:
     default:
       - ctrlgridoptimizedcharge_id: 0
