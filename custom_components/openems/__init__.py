@@ -16,7 +16,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
 
-from .const import CONF_EDGE, CONN_TYPE_DIRECT_EDGE
+from .const import CONF_EDGE, CONN_TYPE_DIRECT_EDGE, DOMAIN
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from .helpers import (
     OpenEMSConfigEntry,
@@ -227,3 +227,28 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
                 callback(component)
 
         component.create_entities = bool(entry.options.get(comp_name))
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: OpenEMSConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Handle user request to remove a (stale) device."""
+    backend: OpenEMSBackend = entry.runtime_data.backend
+    device_identifiers = next(iter(device_entry.identifiers))
+    if len(device_identifiers) != 2 or device_identifiers[0] != DOMAIN:
+        return True  # not our device, allow removal
+    component_identifiers = device_identifiers[1].split(" ", 1)
+    match len(component_identifiers):
+        case 1:
+            # main device of an edge, allow removal only if the hostname is wrong
+            return component_identifiers[0] != backend.the_edge.hostname
+        case 2:
+            # regular component identifier structure. allow removal...
+            return (
+                # ... if the hostname is wrong
+                component_identifiers[0] != backend.the_edge.hostname
+                # ... or the component is not part of the edge anymore
+                or component_identifiers[1] not in backend.the_edge.components
+            )
+        case _:
+            return True  # not our device, allow removal
