@@ -51,9 +51,9 @@
             "_PropertyMode",
             "_PropertyManualEnergySessionLimit",
             "_PropertyPhaseSwitching",
-						"ActualMode",
-						"StateMachine",
-						"SessionEnergy"						
+            "ActualMode",
+            "StateMachine",
+            "SessionEnergy"
         ]
     },
     {
