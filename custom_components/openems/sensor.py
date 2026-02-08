@@ -26,7 +26,6 @@ from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers import (
     OpenEMSUnitClass,
     component_device,
-    supported_features,
     to_snake_case,
     translation_key,
     unit_description,
@@ -140,7 +139,7 @@ class OpenEMSSensorEntity(SensorEntity):
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info
         self._attr_should_poll = False
-        self._attr_supported_features = supported_features(channel)
+        # self._attr_supported_features = supported_features(channel)
         self._attr_extra_state_attributes = channel.orig_json
 
     @property
