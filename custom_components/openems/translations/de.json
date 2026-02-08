@@ -62,6 +62,7 @@
             },
             "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
                 "state": {
+                    "disable": "Deaktiviert",
                     "force_single_phase": "1-phasig",
                     "force_three_phase": "3-phasig"
                 }

@@ -46,8 +46,8 @@
         "state": {
           "zero": "Off",
           "minimum": "Minimal",
-					"surplus": "PV",
-					"force": "Fast"
+          "surplus": "PV",
+          "force": "Fast"
         }
       },
       "ctrlevsesingle_s_l_a_s_h_statemachine": {
@@ -60,7 +60,7 @@
           "phase_switch_to_three_phase": "Switch to 3-phase",
           "phase_switch_to_single_phase": "Switch to 1-phase",
           "phase_switch": "Manual Phaseswitch"
-				}
+        }
       },
       "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
         "state": {
@@ -101,12 +101,13 @@
         "state": {
           "zero": "Off",
           "minimum": "Minimal",
-					"surplus": "PV",
-					"force": "Fast"
+          "surplus": "PV",
+          "force": "Fast"
         }
       },
       "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
         "state": {
+          "disable": "Disabled",
           "force_single_phase": "1-phase",
           "force_three_phase": "3-phase"
         }
