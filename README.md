@@ -3,7 +3,7 @@
 Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 
 [![releasebadge]][release]
-[![License][license-shield]](LICENSE.md)
+[![License][license-shield]](LICENSE)
 [![hainstall][hainstallbadge]][hainstall]
 [![hacs][hacsbadge]][hacs]
 
