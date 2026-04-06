@@ -1,9 +1,11 @@
 """Load additional config options from json files."""
 
 import json
-import os
+from pathlib import Path
 import re
 from typing import Any
+
+ENCODING = "utf-8"
 
 
 class OpenEMSConfig:
@@ -11,21 +13,17 @@ class OpenEMSConfig:
 
     def __init__(self) -> None:
         """Initialize and read json files."""
-        path = os.path.dirname(__file__)
-        with open(
-            path + "/config/default_channels.json", encoding="utf-8"
-        ) as channel_file:
+        path = Path(__file__).parent / "config"
+        with (path / "default_channels.json").open(encoding=ENCODING) as channel_file:
             self.default_channels = json.load(channel_file)
-        with open(path + "/config/enum_options.json", encoding="utf-8") as enum_file:
+        with (path / "enum_options.json").open(encoding=ENCODING) as enum_file:
             self.enum_options = json.load(enum_file)
-        with open(path + "/config/time_options.json", encoding="utf-8") as time_file:
+        with (path / "time_options.json").open(encoding=ENCODING) as time_file:
             self.time_options = json.load(time_file)
-        with open(
-            path + "/config/number_properties.json", encoding="utf-8"
-        ) as number_file:
+        with (path / "number_properties.json").open(encoding=ENCODING) as number_file:
             self.number_properties = json.load(number_file)
-        with open(
-            path + "/config/component_update_groups.json", encoding="utf-8"
+        with (path / "component_update_groups.json").open(
+            encoding=ENCODING
         ) as groups_file:
             self.update_groups = json.load(groups_file)
 

@@ -124,13 +124,13 @@ class OpenEMSUpdateEntity(UpdateEntity):
                 case _:
                     self._set_versions(None)
 
-        except (jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError):
+        except jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError:
             self._set_versions(None)
 
     def _set_versions(self, curr_ver: str | None, new_ver: str | None = None) -> None:
         self._attr_available = bool(curr_ver)
         self._attr_installed_version = curr_ver
-        self._attr_latest_version = new_ver if new_ver else curr_ver
+        self._attr_latest_version = new_ver or curr_ver
         # reset potential update in progress indicators
         self._attr_in_progress = bool(self.in_progress) and not self._attr_available
         self._attr_update_percentage = None
