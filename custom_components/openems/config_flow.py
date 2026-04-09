@@ -223,7 +223,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 config_reader.set_edge_id(edge_id)
                 return await self._create_or_update_entry(config_reader, False)
 
-            except (TimeoutError, KeyError, jsonrpc_base.jsonrpc.ProtocolError):
+            except TimeoutError, KeyError, jsonrpc_base.jsonrpc.ProtocolError:
                 _LOGGER.exception("Cannot read edge components")
                 errors[CONF_BASE] = "cannot_read_components"
                 return self._show_form(user_input, errors)
@@ -330,7 +330,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: OpenEMSConfigEntry,
     ) -> OpenEMSOptionsFlow:
-        """Options callback for Reolink."""
+        """Options callback for OpenEMS."""
         return OpenEMSOptionsFlow()
 
 

@@ -30,11 +30,11 @@ from .openems import CONFIG, OpenEMSBackend
 _LOGGER = logging.getLogger(__name__)
 
 _PLATFORMS: list[Platform] = [
-    Platform.SENSOR,
     Platform.BINARY_SENSOR,
-    Platform.SWITCH,
-    Platform.SELECT,
     Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
     Platform.TIME,
     Platform.UPDATE,
 ]
