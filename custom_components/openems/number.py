@@ -20,10 +20,10 @@ from homeassistant.helpers.entity_platform import (
     async_get_current_platform,
 )
 
-from . import OpenEMSConfigEntry
 from .const import ATTR_VALUE
-from .helpers import (
+from .helpers_ha import (
     DeviceInfo,
+    OpenEMSConfigEntry,
     OpenEMSUnitClass,
     component_device,
     translation_key,

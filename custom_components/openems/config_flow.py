@@ -44,7 +44,7 @@ from .const import (
     DOMAIN,
 )
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
-from .helpers import OpenEMSConfigEntry, map_user_input
+from .helpers_ha import OpenEMSConfigEntry, map_user_input
 from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)

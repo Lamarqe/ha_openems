@@ -26,6 +26,8 @@ class OpenEMSConfig:
             encoding=ENCODING
         ) as groups_file:
             self.update_groups = json.load(groups_file)
+        with (path / "combined_sensors.json").open(encoding=ENCODING) as combined_file:
+            self.combined_sensors = json.load(combined_file)
 
     def _get_config_property(self, dict, property, component_name, channel_name):
         """Return dict property for a given component/channel."""
@@ -87,3 +89,11 @@ class OpenEMSConfig:
                         return rule["requires"], rule.get("when")
 
         return [], None
+
+    def get_combined_sensors(self, comp_name) -> list[dict]:
+        """Return list of combined sensors for given component."""
+        for entry in self.combined_sensors:
+            if re.fullmatch(entry["component_regexp"], comp_name):
+                return entry["combined_sensors"]
+
+        return []

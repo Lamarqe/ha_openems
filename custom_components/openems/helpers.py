@@ -1,177 +1,30 @@
-"""OpenEMS Helper methods eg for Entity creation."""
+"""Helper methods which are independent of openems and HA classes."""
 
-from collections.abc import Callable
-from dataclasses import dataclass
-from enum import IntFlag
-import re
-from typing import ClassVar
+import uuid
 
-from homeassistant.components.number import NumberDeviceClass
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_HOST,
-    CONF_PASSWORD,
-    CONF_TYPE,
-    CONF_URL,
-    CONF_USERNAME,
-)
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from yarl import URL
 
-from .const import DOMAIN, SLASH_ESC
-from .entry_data import ConnectionProperties
-from .openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent, OpenEMSProperty
-
-SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
+from .const import CONN_TYPES, ConnectionType
 
 
-@dataclass
-class RuntimeData:
-    """Data class to store all relevant runtime data."""
-
-    backend: OpenEMSBackend
-    add_component_callbacks: ClassVar[dict[str, Callable]] = {}
-
-
-type OpenEMSConfigEntry = ConfigEntry[RuntimeData]
-
-
-@dataclass
-class OpenEMSUnitClass:
-    """Describe the Unit and its Nature."""
-
-    unit: str
-    sensor_device_class: SensorDeviceClass | None = None
-    number_device_class: NumberDeviceClass | None = None
-    state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT
-
-
-class OpenEMSEntityFeature(IntFlag):
-    """Supported features of openems sensor entities."""
-
-    READ = 1
-    WRITE = 2
-
-
-def unit_description(unit: str) -> OpenEMSUnitClass:
-    """Correct unit and derive SensorDeviceClass and SensorStateClass."""
-    # reference:  openems/io.openems.common/src/io/openems/common/channel/Unit.java
-    sensor_type: OpenEMSUnitClass = OpenEMSUnitClass(unit=unit)
-    match unit:
-        case "kWh" | "Wh":
-            sensor_type.sensor_device_class = SensorDeviceClass.ENERGY
-            sensor_type.number_device_class = NumberDeviceClass.ENERGY
-            sensor_type.state_class = SensorStateClass.TOTAL
-        case "Wh_Σ":
-            sensor_type.unit = "Wh"
-            sensor_type.sensor_device_class = SensorDeviceClass.ENERGY
-            sensor_type.number_device_class = NumberDeviceClass.ENERGY
-            sensor_type.state_class = SensorStateClass.TOTAL_INCREASING
-        case "W" | "mW" | "kW":
-            sensor_type.sensor_device_class = SensorDeviceClass.POWER
-            sensor_type.number_device_class = NumberDeviceClass.POWER
-        case "A" | "mA":
-            sensor_type.sensor_device_class = SensorDeviceClass.CURRENT
-            sensor_type.number_device_class = NumberDeviceClass.CURRENT
-        case "Hz" | "mHz":
-            sensor_type.sensor_device_class = SensorDeviceClass.FREQUENCY
-            sensor_type.number_device_class = NumberDeviceClass.FREQUENCY
-        case "sec_Σ":
-            sensor_type.unit = "s"
-            sensor_type.sensor_device_class = SensorDeviceClass.DURATION
-            sensor_type.number_device_class = NumberDeviceClass.DURATION
-        case "h" | "min" | "s" | "ms":
-            sensor_type.sensor_device_class = SensorDeviceClass.DURATION
-            sensor_type.number_device_class = NumberDeviceClass.DURATION
-        case "sec":
-            sensor_type.unit = "s"
-            sensor_type.sensor_device_class = SensorDeviceClass.DURATION
-            sensor_type.number_device_class = NumberDeviceClass.DURATION
-        case "%":
-            sensor_type.sensor_device_class = SensorDeviceClass.BATTERY
-            sensor_type.number_device_class = NumberDeviceClass.BATTERY
-        case "V" | "mV":
-            sensor_type.sensor_device_class = SensorDeviceClass.VOLTAGE
-            sensor_type.number_device_class = NumberDeviceClass.VOLTAGE
-        case "bar" | "mbar":
-            sensor_type.sensor_device_class = SensorDeviceClass.PRESSURE
-            sensor_type.number_device_class = NumberDeviceClass.PRESSURE
-        case "var":
-            sensor_type.sensor_device_class = SensorDeviceClass.REACTIVE_POWER
-            sensor_type.number_device_class = NumberDeviceClass.REACTIVE_POWER
-        case "VA":
-            sensor_type.sensor_device_class = SensorDeviceClass.APPARENT_POWER
-            sensor_type.number_device_class = NumberDeviceClass.APPARENT_POWER
-        case "C":
-            sensor_type.unit = "°C"
-            sensor_type.sensor_device_class = SensorDeviceClass.TEMPERATURE
-            sensor_type.number_device_class = NumberDeviceClass.TEMPERATURE
-    return sensor_type
-
-
-def supported_features(channel: OpenEMSChannel) -> OpenEMSEntityFeature | None:
-    """Derive supported features for given channel."""
-    match channel.orig_json.get("accessMode", ""):
-        case "RO":
-            return OpenEMSEntityFeature.READ
-        case "RW":
-            return OpenEMSEntityFeature.READ | OpenEMSEntityFeature.WRITE
-        case "WO":
-            return OpenEMSEntityFeature.WRITE
-        case _:
-            return None
-
-
-def component_device(component: OpenEMSComponent) -> DeviceInfo:
-    """Provide the device of an OpenEMSComponent."""
-    return DeviceInfo(
-        name=component.edge.hostname + " " + component.name,
-        model=component.alias,
-        identifiers={(DOMAIN, component.edge.hostname + " " + component.name)},
-        via_device=(DOMAIN, component.edge.hostname),
-        entry_type=DeviceEntryType.SERVICE,
+def connection_url(type: str, host: str | None = None) -> URL:
+    "Construct URL for the given type and host."
+    default_params: ConnectionType = CONN_TYPES[type]
+    if not (url_host := default_params["host"]):
+        url_host = host
+    return URL.build(
+        scheme=default_params["scheme"],
+        host="" if url_host is None else url_host,
+        port=default_params["port"],
+        path=default_params["path"],
     )
 
 
-def find_channel_in_backend(
-    backend: OpenEMSBackend, unique_id: str
-) -> OpenEMSChannel | None:
-    """Search for a unique ID in a backend and return the channel when found."""
-    component: OpenEMSComponent
-    for component in backend.the_edge.components.values():
-        channel: OpenEMSChannel
-        for channel in component.channels:
-            if channel.unique_id() == unique_id:
-                # found it, return it.
-                return channel
-    # not found.
-    return None
-
-
-def to_snake_case(name: str) -> str:
-    """Convert given name to snake_case."""
-    return SNAKE_REPLACE_PATTERN.sub("_", name).lower()
-
-
-def translation_key(channel: OpenEMSChannel) -> str:
-    """Generate translation key for given channel."""
-    if isinstance(channel, OpenEMSProperty):
-        channel_name = channel.name[9:]
-    else:
-        channel_name = channel.name
-    return (
-        to_snake_case(re.sub(r"\d+$", "", channel.component.name))
-        + SLASH_ESC
-        + to_snake_case(channel_name)
-    )
-
-
-def map_user_input(user_input: dict[str, str]) -> ConnectionProperties:
-    """Map user input to connection parameters."""
-    return ConnectionProperties(
-        host=user_input.get(CONF_HOST),
-        password=user_input[CONF_PASSWORD],
-        type=user_input[CONF_TYPE],
-        url=user_input.get(CONF_URL),
-        username=user_input[CONF_USERNAME],
-    )
+def wrap_jsonrpc(method: str, **params):
+    """Wrap a method call with paramters into a jsonrpc call."""
+    envelope = {}
+    envelope["jsonrpc"] = "2.0"
+    envelope["method"] = method
+    envelope["params"] = params
+    envelope["id"] = str(uuid.uuid4())
+    return envelope

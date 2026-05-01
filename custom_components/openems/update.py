@@ -20,8 +20,8 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import OpenEMSConfigEntry
 from .const import DOMAIN
+from .helpers_ha import OpenEMSConfigEntry
 from .openems import OpenEMSBackend, OpenEMSEdge
 
 SCAN_INTERVAL = timedelta(hours=12)

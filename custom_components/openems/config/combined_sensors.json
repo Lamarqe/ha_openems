@@ -1,0 +1,17 @@
+[
+  {
+    "component_regexp": "battery\\d+",
+    "combined_sensors": [
+      {
+        "id": "VoltageDifference",
+        "template": "{{MaxCellVoltage}} - {{MinCellVoltage}}",
+        "unit_of_measurement": "mV"
+      },
+      {
+        "id": "Tower{tId}Module{mId}CellVoltageDifference",
+        "template": "[{{Tower{tId}Module{mId}Cell{cId}Voltage}}] | max - [{{Tower{tId}Module{mId}Cell{cId}Voltage}}] | min",
+        "unit_of_measurement": "mV"
+      }
+    ]
+  }
+]

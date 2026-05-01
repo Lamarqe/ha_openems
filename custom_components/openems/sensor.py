@@ -21,16 +21,23 @@ from homeassistant.helpers.entity_platform import (
     async_get_current_platform,
 )
 
-from . import OpenEMSConfigEntry
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
-from .helpers import (
+from .helpers_ha import (
+    OpenEMSConfigEntry,
     OpenEMSUnitClass,
     component_device,
     to_snake_case,
     translation_key,
     unit_description,
 )
-from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
+from .openems import (
+    CONFIG,
+    OpenEMSBackend,
+    OpenEMSChannel,
+    OpenEMSComponent,
+    OpenEMSDataHandler,
+    OpenEMSDerivedChannel,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,6 +83,34 @@ async def async_setup_entry(
             entities.append(
                 OpenEMSSensorEntity(
                     channel,
+                    entity_description,
+                    device,
+                )
+            )
+
+        derived_channel: OpenEMSDerivedChannel
+        derived_channel_list: list[OpenEMSDerivedChannel] = component.derived_sensors
+        for derived_channel in derived_channel_list:
+            unit_desc: OpenEMSUnitClass = unit_description(derived_channel.unit)
+            device_class = unit_desc.sensor_device_class
+            state_class = unit_desc.state_class
+            uom = unit_desc.unit
+
+            enable_by_default = CONFIG.is_channel_enabled(
+                component.name, derived_channel.name
+            )
+            entity_description = OpenEMSSensorDescription(
+                key=derived_channel.unique_id(),
+                entity_registry_enabled_default=enable_by_default,
+                name=derived_channel.name,
+                device_class=device_class,
+                state_class=state_class,
+                native_unit_of_measurement=uom,
+                translation_key=translation_key(derived_channel),
+            )
+            entities.append(
+                OpenEMSSensorEntity(
+                    derived_channel,
                     entity_description,
                     device,
                 )
@@ -129,21 +164,22 @@ class OpenEMSSensorEntity(SensorEntity):
 
     def __init__(
         self,
-        channel: OpenEMSChannel,
+        channel: OpenEMSDataHandler,
         entity_description,
         device_info: DeviceInfo,
     ) -> None:
         """Initialize the sensor."""
-        self._channel: OpenEMSChannel = channel
+        self._channel: OpenEMSDataHandler = channel
         self.entity_description = entity_description
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info
         self._attr_should_poll = False
         # self._attr_supported_features = supported_features(channel)
-        self._attr_extra_state_attributes = channel.orig_json
+        if isinstance(channel, OpenEMSChannel):
+            self._attr_extra_state_attributes = channel.orig_json
 
     @property
-    def native_value(self) -> str | int | None:
+    def native_value(self) -> str | float | int | None:
         """Return the value of the sensor."""
         val = self._channel.native_value
         if val is None:
@@ -156,11 +192,12 @@ class OpenEMSSensorEntity(SensorEntity):
 
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""
-        await self._channel.update_value(
-            float(kwargs[ATTR_VALUE]),
-            kwargs.get(ATTR_UPDATE_CYCLE),  # pyright: ignore[reportArgumentType]
-            kwargs.get(ATTR_TIMEOUT),  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(self._channel, OpenEMSChannel):
+            await self._channel.update_value(
+                float(kwargs[ATTR_VALUE]),
+                kwargs.get(ATTR_UPDATE_CYCLE),  # pyright: ignore[reportArgumentType]
+                kwargs.get(ATTR_TIMEOUT),  # pyright: ignore[reportArgumentType]
+            )
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

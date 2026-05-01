@@ -11,8 +11,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import OpenEMSConfigEntry
-from .helpers import component_device, translation_key
+from .helpers_ha import OpenEMSConfigEntry, component_device, translation_key
 from .openems import CONFIG, OpenEMSBackend, OpenEMSBooleanProperty, OpenEMSComponent
 
 _LOGGER = logging.getLogger(__name__)

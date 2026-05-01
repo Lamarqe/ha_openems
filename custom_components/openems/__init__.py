@@ -18,7 +18,7 @@ from homeassistant.helpers.storage import Store
 
 from .const import CONF_EDGE, CONN_TYPE_DIRECT_EDGE, DOMAIN
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
-from .helpers import (
+from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSEntityFeature,  # noqa: F401
     RuntimeData,
