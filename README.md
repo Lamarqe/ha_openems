@@ -151,7 +151,10 @@ A pre-configured dashboard [battery_diagnosis_dashboard_fems12345.yaml](battery_
 <img src="screenshots/battery_diagnosis_dashboard.jpg" width="800"/>
 
 Before using the default dashboard (by copying the files content and pasting it into the dashboard raw yaml editor), please replace all occurences of the string "fems12345" with the ID of your personal FEMS or openems system.
-Furthermore, the dashboard uses the following entities which are to the majority not enabled by default. Before using the dashboard, please enable the components and entities as described in the Configuration chapter further below in this manual.
+
+Furthermore, the dashboard uses the following entities which are to the majority not enabled by default. Before using the dashboard, please enable the components and entities as described in the Configuration chapter further below in this manual. 
+
+The dashboard also makes use of the [Mushroom](https://github.com/piitaya/lovelace-mushroom) and [Button card](https://github.com/custom-cards/button-card) UI widgets. In order to use these, please install via HACS.
 
 Entities to be enabled, used within the default dashboard configuration:
 - **_sum**
