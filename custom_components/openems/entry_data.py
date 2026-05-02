@@ -10,7 +10,8 @@ import jsonrpc_base
 import jsonrpc_websocket
 from yarl import URL
 
-from .const import CONN_TYPE_CUSTOM_URL, connection_url, wrap_jsonrpc
+from .const import CONN_TYPE_CUSTOM_URL
+from .helpers import connection_url, wrap_jsonrpc
 
 _LOGGER = logging.getLogger(__name__)
 

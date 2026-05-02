@@ -20,9 +20,8 @@ from homeassistant.helpers.entity_platform import (
     async_get_current_platform,
 )
 
-from . import OpenEMSConfigEntry
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
-from .helpers import component_device, translation_key
+from .helpers_ha import OpenEMSConfigEntry, component_device, translation_key
 from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
 
 _LOGGER = logging.getLogger(__name__)
