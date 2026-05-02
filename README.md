@@ -144,6 +144,25 @@ variables:
 **Card screenshot** (German version)\
 ![image](screenshots/heatingelement.png)
 
+### Detailed battery diagnosis dashboard (component: battery*)
+The integration is supports calculation of additional information, derived from other sensors, which are not provided by FEMS by default.
+By that, ΔU calculations for the entire battery system and indiviual battery modules are provided.
+A pre-configured dashboard [battery_diagnosis_dashboard_fems12345.yaml](battery_diagnosis_dashboard_fems12345.yaml) can be used as a starting point for a personal dashboard configuration:
+<img src="screenshots/battery_diagnosis_dashboard.jpg" width="800"/>
+
+Before using the default dashboard (by copying the files content and pasting it into the dashboard raw yaml editor), please replace all occurences of the string "fems12345" with the ID of your personal FEMS or openems system.
+Furthermore, the dashboard uses the following entities which are to the majority not enabled by default. Before using the dashboard, please enable the components and entities as described in the Configuration chapter further below in this manual.
+
+Entities to be enabled, used within the default dashboard configuration:
+- **_sum**
+  - `ConsumptionActiveEnergy`, `ConsumptionActivePower`, `ConsumptionActivePowerL1`, `ConsumptionActivePowerL2`, `ConsumptionActivePowerL3`, `EssActiveChargeEnergy`, `EssActiveDischargeEnergy`, `EssActivePower`, `EssActivePowerL1`, `EssActivePowerL1`, `EssActivePowerL3`, `EssDcChargeEnergy`, `EssDcDischargeEnergy`, `GridActivePower`, `GridActivePowerL1`, `GridActivePowerL2`, `GridActivePowerL3`, `GridBuyActiveEnergy`, `GridSellActiveEnergy`, `ProductionActiveEnergy`, `ProductionDcActualPower` 
+- **battery0**
+  - `Current`, `Level1CellUnderVoltage`, `Level2CellUnderVoltage`, `LowMinVoltageFault`, `LowMinVoltageFaultBatteryStopped`, `LowMinVoltageWarning`, `MaxCellTemperature`, `MaxCellVoltage`, `MinCellTemperature`, `MinCellVoltage`, `ModbusCommunicationFailed`, `RunFailed`, `Soc`, `Soh`, `StatusAlarm`, `StatusWarning`, `Tower0Level1CellUnderVoltage`, `Tower0Level2CellUnderVoltage`, `Tower0Module0CellVoltageDifference`, `Tower0Module1CellVoltageDifference`, `Tower0Module2CellVoltageDifference`, `Tower0Module3CellVoltageDifference`, `Tower0PackVoltage`, `Tower0StatusAlarm`, `Tower0StatusFault`, `Tower0StatusWarning`, `VoltageDifference`
+- **charger0**
+  - `ActualPower`
+- **charger1**
+  - `ActualPower`
+
 ### Additional commonly used components
 
 #### BatteryInverter*
