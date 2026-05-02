@@ -1,0 +1,423 @@
+views:
+  - title: FEMS Diagnose
+    path: fems-diagnose
+    type: sections
+    max_columns: 4
+    badges:
+      - type: custom:mushroom-chips-card
+        alignment: justify
+        chips:
+          - type: template
+            content: ΔU {{ states('sensor.fems12345_battery0_voltagedifference') }} mV
+            icon: mdi:chart-line
+            icon_color: grey
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Energiefluss
+            heading_style: title
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: heading
+            heading: Batterie
+            heading_style: title
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: grid
+            square: false
+            columns: 2
+            cards:
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_battery0_soh
+                primary: SoH
+                secondary: '{{ states(''sensor.fems12345_battery0_soh'') }} %'
+                icon: mdi:heart-pulse
+                features_position: bottom
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_battery0_tower0packvoltage
+                primary: Packspannung
+                secondary: '{{ states(''sensor.fems12345_battery0_tower0packvoltage'') }} mV'
+                icon: mdi:car-battery
+                fill_container: true
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_battery0_current
+                primary: Batteriestrom
+                secondary: '{{ states(''sensor.fems12345_battery0_current'') }} A'
+                icon: mdi:current-dc
+                fill_container: true
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_sum_essactivepower
+                primary: ESS-Leistung
+                secondary: '{{ states(''sensor.fems12345_sum_essactivepower'') }} W'
+                icon: mdi:flash
+                fill_container: true
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_battery0_soc
+                primary: SoC
+                secondary: '{{ states(''sensor.fems12345_battery0_soc'') }} %'
+                icon: mdi:battery
+                fill_container: true
+                icon_color: >-
+                  {% set soc = states('sensor.fems12345_battery0_soc') |
+                  float(0) %} {% if soc > 60 %} green {% elif soc > 30 %} amber
+                  {% else %} red {% endif %}
+          - type: grid
+            square: false
+            columns: 2
+            cards:
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_sum_productiondcactualpower
+                primary: PV Gesamt
+                secondary: '{{ states(''sensor.fems12345_sum_productiondcactualpower'') }} W'
+                icon: mdi:solar-power-variant
+                fill_container: true
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_charger0_actualpower
+                primary: PV String 1
+                secondary: '{{ states(''sensor.fems12345_charger0_actualpower'') }} W'
+                icon: mdi:solar-power
+                fill_container: true
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_charger1_actualpower
+                primary: PV String 2
+                secondary: '{{ states(''sensor.fems12345_charger1_actualpower'') }} W'
+                icon: mdi:solar-power
+                fill_container: true
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_sum_gridactivepower
+                primary: Netz
+                secondary: '{{ states(''sensor.fems12345_sum_gridactivepower'') }} W'
+                icon: mdi:transmission-tower
+                fill_container: true
+              - type: custom:mushroom-template-card
+                entity: sensor.fems12345_sum_consumptionactivepower
+                primary: Hausverbrauch
+                secondary: '{{ states(''sensor.fems12345_sum_consumptionactivepower'') }} W'
+                icon: mdi:home-lightning-bolt
+                fill_container: true
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: Diagnose
+            heading_style: title
+          - square: false
+            type: grid
+            columns: 2
+            cards:
+              - type: markdown
+                content: >-
+                  ℹ️ **Hinweis zur Zellspannungsdifferenz (ΔU)**   Die Bewertung
+                  basiert auf allgemeinen Erfahrungswerten und ist **keine
+                  offizielle FENECON-Diagnose**.   Höhere Werte können bei
+                  niedrigem Ladezustand oder unter Last normal sein.   👉 [Mehr
+                  zur
+                  ΔU-Interpretation](https://github.com/alpenfun/fems-diagnostics#-cell-voltage-spread-δu--δv-interpretation)
+              - type: entities
+                title: Zellgesundheit kompakt
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.fems12345_battery0_mincellvoltage
+                    name: Min. Zellspannung
+                  - entity: sensor.fems12345_battery0_maxcellvoltage
+                    name: Max. Zellspannung
+                  - entity: sensor.fems12345_battery0_voltagedifference
+                    name: Zellspannungsdifferenz
+                  - entity: sensor.fems12345_battery0_mincelltemperature
+                    name: Min. Zelltemperatur
+                  - entity: sensor.fems12345_battery0_maxcelltemperature
+                    name: Max. Zelltemperatur
+            grid_options:
+              columns: 24
+              rows: auto
+          - type: heading
+            heading: Moduldiagnose
+            heading_style: subtitle
+          - square: false
+            type: grid
+            columns: 7
+            cards:
+              - type: custom:button-card
+                entity: sensor.fems12345_battery0_tower0module0cellvoltagedifference
+                name: M0
+                show_state: true
+                state_display: |
+                  [[[
+                    const v = Number(entity.state);
+                    if (isNaN(v)) return 'n/v';
+                    return v.toFixed(0) + ' mV';
+                  ]]]
+                show_icon: true
+                size: 18px
+                color_type: card
+                state:
+                  - operator: '>='
+                    value: 50
+                    color: rgb(183, 28, 28)
+                    icon: mdi:alert-circle
+                  - operator: '>='
+                    value: 20
+                    color: rgb(245, 158, 11)
+                    icon: mdi:alert
+                  - operator: default
+                    color: rgb(46, 125, 50)
+                    icon: mdi:check-circle
+                styles:
+                  card:
+                    - height: 70px
+                    - border-radius: 10px
+                    - padding: 8px
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 20px 1fr
+                    - grid-template-rows: min-content min-content
+                  name:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 12px
+              - type: custom:button-card
+                entity: sensor.fems12345_battery0_tower0module1cellvoltagedifference
+                name: M1
+                show_state: true
+                state_display: |
+                  [[[
+                    const v = Number(entity.state);
+                    if (isNaN(v)) return 'n/v';
+                    return v.toFixed(0) + ' mV';
+                  ]]]
+                show_icon: true
+                size: 18px
+                color_type: card
+                state:
+                  - operator: '>='
+                    value: 50
+                    color: rgb(183, 28, 28)
+                    icon: mdi:alert-circle
+                  - operator: '>='
+                    value: 20
+                    color: rgb(245, 158, 11)
+                    icon: mdi:alert
+                  - operator: default
+                    color: rgb(46, 125, 50)
+                    icon: mdi:check-circle
+                styles:
+                  card:
+                    - height: 70px
+                    - border-radius: 10px
+                    - padding: 8px
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 20px 1fr
+                    - grid-template-rows: min-content min-content
+                  name:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 12px
+              - type: custom:button-card
+                entity: sensor.fems12345_battery0_tower0module2cellvoltagedifference
+                name: M2
+                show_state: true
+                state_display: |
+                  [[[
+                    const v = Number(entity.state);
+                    if (isNaN(v)) return 'n/v';
+                    return v.toFixed(0) + ' mV';
+                  ]]]
+                show_icon: true
+                size: 18px
+                color_type: card
+                state:
+                  - operator: '>='
+                    value: 50
+                    color: rgb(183, 28, 28)
+                    icon: mdi:alert-circle
+                  - operator: '>='
+                    value: 20
+                    color: rgb(245, 158, 11)
+                    icon: mdi:alert
+                  - operator: default
+                    color: rgb(46, 125, 50)
+                    icon: mdi:check-circle
+                styles:
+                  card:
+                    - height: 70px
+                    - border-radius: 10px
+                    - padding: 8px
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 20px 1fr
+                    - grid-template-rows: min-content min-content
+                  name:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 12px
+              - type: custom:button-card
+                entity: sensor.fems12345_battery0_tower0module3cellvoltagedifference
+                name: M3
+                show_state: true
+                state_display: |
+                  [[[
+                    const v = Number(entity.state);
+                    if (isNaN(v)) return 'n/v';
+                    return v.toFixed(0) + ' mV';
+                  ]]]
+                show_icon: true
+                size: 18px
+                color_type: card
+                state:
+                  - operator: '>='
+                    value: 50
+                    color: rgb(183, 28, 28)
+                    icon: mdi:alert-circle
+                  - operator: '>='
+                    value: 20
+                    color: rgb(245, 158, 11)
+                    icon: mdi:alert
+                  - operator: default
+                    color: rgb(46, 125, 50)
+                    icon: mdi:check-circle
+                styles:
+                  card:
+                    - height: 70px
+                    - border-radius: 10px
+                    - padding: 8px
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 20px 1fr
+                    - grid-template-rows: min-content min-content
+                  name:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 12px
+            grid_options:
+              columns: 24
+              rows: auto
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: Warnungen und kritische Zustände
+            heading_style: title
+          - type: grid
+            square: false
+            columns: 2
+            cards:
+              - type: entities
+                title: Kritische Zustände
+                show_header_toggle: false
+                entities:
+                  - entity: binary_sensor.fems12345_battery0_statusalarm
+                    name: Alarm
+                  - entity: binary_sensor.fems12345_battery0_tower0statusfault
+                    name: Fault
+                  - entity: binary_sensor.fems12345_battery0_lowminvoltagefault
+                    name: Unterspannungsfehler
+                  - entity: >-
+                      binary_sensor.fems12345_battery0_lowminvoltagefaultbatterystopped
+                    name: Batterie wegen Unterspannung gestoppt
+                  - entity: binary_sensor.fems12345_battery0_runfailed
+                    name: Batteriestart fehlgeschlagen
+                  - entity: binary_sensor.fems12345_battery0_modbuscommunicationfailed
+                    name: Modbus-Kommunikation fehlgeschlagen
+              - type: entities
+                title: Warnungen
+                show_header_toggle: false
+                entities:
+                  - entity: binary_sensor.fems12345_battery0_statuswarning
+                    name: Warning
+                  - entity: binary_sensor.fems12345_battery0_level1cellundervoltage
+                    name: Zellunterspannung Stufe 1
+                  - entity: binary_sensor.fems12345_battery0_level2cellundervoltage
+                    name: Zellunterspannung Stufe 2
+                  - entity: binary_sensor.fems12345_battery0_lowminvoltagewarning
+                    name: Unterspannungswarnung
+            grid_options:
+              columns: 24
+              rows: auto
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: Erweiterte technische Details
+            heading_style: title
+          - square: false
+            type: grid
+            columns: 3
+            cards:
+              - type: entities
+                title: Tower-spezifische Diagnose
+                show_header_toggle: false
+                entities:
+                  - entity: binary_sensor.fems12345_battery0_tower0statusalarm
+                    name: Tower 0 Alarm
+                  - entity: binary_sensor.fems12345_battery0_tower0statusfault
+                    name: Tower 0 Fault
+                  - entity: binary_sensor.fems12345_battery0_tower0statuswarning
+                    name: Tower 0 Warning
+                  - entity: >-
+                      binary_sensor.fems12345_battery0_tower0level1cellundervoltage
+                    name: Tower 0 Zellunterspannung Stufe 1
+                  - entity: >-
+                      binary_sensor.fems12345_battery0_tower0level2cellundervoltage
+                    name: Tower 0 Zellunterspannung Stufe 2
+              - type: entities
+                title: Phasenwerte
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.fems12345_sum_essactivepowerl1
+                    name: Batterieleistung L1
+                  - entity: sensor.fems12345_sum_essactivepowerl2
+                    name: Batterieleistung L2
+                  - entity: sensor.fems12345_sum_essactivepowerl3
+                    name: Batterieleistung L3
+                  - entity: sensor.fems12345_sum_gridactivepowerl1
+                    name: Netzleistung L1
+                  - entity: sensor.fems12345_sum_gridactivepowerl2
+                    name: Netzleistung L2
+                  - entity: sensor.fems12345_sum_gridactivepowerl3
+                    name: Netzleistung L3
+                  - entity: sensor.fems12345_sum_consumptionactivepowerl1
+                    name: Hausverbrauch L1
+                  - entity: sensor.fems12345_sum_consumptionactivepowerl2
+                    name: Hausverbrauch L2
+                  - entity: sensor.fems12345_sum_consumptionactivepowerl3
+                    name: Hausverbrauch L3
+              - type: entities
+                title: Energiezähler
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.fems12345_sum_productionactiveenergy
+                    name: PV-Ertrag
+                  - entity: sensor.fems12345_sum_consumptionactiveenergy
+                    name: Hausverbrauch Energie
+                  - entity: sensor.fems12345_sum_gridbuyactiveenergy
+                    name: Netzbezug
+                  - entity: sensor.fems12345_sum_gridsellactiveenergy
+                    name: Netzeinspeisung
+                  - entity: sensor.fems12345_sum_essactivechargeenergy
+                    name: AC-Ladeenergie
+                  - entity: sensor.fems12345_sum_essactivedischargeenergy
+                    name: AC-Entladeenergie
+                  - entity: sensor.fems12345_sum_essdcchargeenergy
+                    name: Batterie-Ladeenergie
+                  - entity: sensor.fems12345_sum_essdcdischargeenergy
+                    name: Batterie-Entladeenergie
+            grid_options:
+              columns: 36
+              rows: auto
