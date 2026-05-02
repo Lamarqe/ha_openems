@@ -19,7 +19,7 @@ from .config import OpenEMSConfig
 from .const import CONN_TYPE_REST, CONN_TYPE_WEB_FENECON, CONN_TYPES, SLASH_ESC
 from .entry_data import OpenEMSWebSocketConnection
 from .helpers import connection_url, wrap_jsonrpc
-from .helpers_openems import _prepare_ref_value, expand_sensor_def
+from .helpers_openems import expand_sensor_def, prepare_ref_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -237,7 +237,7 @@ class OpenEMSDerivedChannel(OpenEMSDataHandler):
         self.sensor_template: Template
         self.unit: str = combined_sensor_def["unit_of_measurement"]
         self.reference_channels: dict[str, str | float | None] = {}
-        self.sensor_template, sensor_references = _prepare_ref_value(
+        self.sensor_template, sensor_references = prepare_ref_value(
             combined_sensor_def["template"], component
         )
         self.reference_channels = dict.fromkeys(sensor_references)
@@ -497,7 +497,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
 
     def set_multiplier_def(self, multiplier_def):
         """Initialize the multiplier of the number channel."""
-        self.multiplier_def, multiplier_references = _prepare_ref_value(
+        self.multiplier_def, multiplier_references = prepare_ref_value(
             multiplier_def, self.component
         )
         if not multiplier_references:
@@ -509,7 +509,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
 
     def set_limit_def(self, limit_def):
         """Initialize the limits of the number channel."""
-        self.lower_limit_def, lower_references = _prepare_ref_value(
+        self.lower_limit_def, lower_references = prepare_ref_value(
             limit_def["lower"], self.component
         )
         if not lower_references:
@@ -519,7 +519,7 @@ class OpenEMSNumberProperty(OpenEMSProperty):
             for ref in lower_references:
                 self.reference_channels[ref] = None
 
-        self.upper_limit_def, upper_references = _prepare_ref_value(
+        self.upper_limit_def, upper_references = prepare_ref_value(
             limit_def["upper"], self.component
         )
         if not upper_references:

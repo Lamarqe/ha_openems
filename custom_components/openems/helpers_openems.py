@@ -1,4 +1,4 @@
-"""Helper methods using openems classes, eg for Channel creation."""
+"""Helper methods using openems classes, eg during channel creation."""
 
 import re
 from typing import TYPE_CHECKING
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .openems import OpenEMSComponent
 
 
-def _prepare_ref_value(
+def prepare_ref_value(
     expr: str, component: OpenEMSComponent
 ) -> tuple[Template, list[str]]:
     """Parse a template string into a template and channels contained."""
@@ -55,6 +55,7 @@ def expand_sensor_def(
         ref_pattern, num_subs = re.subn(r"\{(\w+)\}", r"(?P<\1>[^{}]+)", ref)
         pattern_matched |= num_subs > 0
         template_variables.append((ref, ref_pattern))
+    # if no variables need to be expanded, return the original sensor definition as a single item list
     if not pattern_matched:
         return [sensor_def]
 
@@ -78,11 +79,15 @@ def expand_sensor_def(
     # create new sensor defs for all found variable matches
     expanded_defs = []
     for key_tuple, values_list in target_defs.items():
+        # as the tuple cannot be used directly for string formatting,
+        # create a mapping of the variable names to the values
+        # initially populate the mapping with the key groups
         key_map = {}
-        for i in range(len(key_tuple)):
-            key_map[key_groups[i]] = key_tuple[i]
+        for i, key in enumerate(key_tuple):
+            key_map[key_groups[i]] = key
         expanded_id = sensor_def["id"].format(**key_map)
         expanded_template_vars = {}
+        # now merge the key map with the template groups and process the template with the combined map
         for template_var, _ in template_variables:
             expanded_template_vars[template_var] = []
             for values in values_list:
@@ -91,7 +96,7 @@ def expand_sensor_def(
                 expanded_template_vars[template_var].append(
                     template_var.format(**all_values)
                 )
-            # replace the list with a string representation of the list, to be used in the template
+            # replace the resulting list with a string representation of the content, to be used in the template
             expanded_template_vars[template_var] = (
                 "{{" + "}}, {{".join(expanded_template_vars[template_var]) + "}}"
             )
