@@ -105,12 +105,16 @@ async def async_setup_entry(
     platform: EntityPlatform = async_get_current_platform()
     platform.async_register_entity_service(
         name="update_value",
-        schema={vol.Required(ATTR_VALUE): vol.Coerce(bool)},
+        schema={
+            vol.Required(ATTR_VALUE): vol.Coerce(float),
+            vol.Optional(ATTR_UPDATE_CYCLE, default=30): vol.Coerce(int),
+            vol.Optional(ATTR_TIMEOUT, default=0): vol.Coerce(int),
+        },
         func="update_value",
     )
 
     # prepare callback for creating in new entities during options config flow
-    entry.runtime_data.add_component_callbacks[Platform.SENSOR.value] = (
+    entry.runtime_data.add_component_callbacks[Platform.BINARY_SENSOR.value] = (
         _create_sensor_entities
     )
 
