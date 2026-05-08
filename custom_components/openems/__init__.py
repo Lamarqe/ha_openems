@@ -7,11 +7,13 @@ import copy
 import logging
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
+import voluptuous as vol
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr, entity_registry as er
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
@@ -29,6 +31,8 @@ from .helpers_ha import (
 from .openems import CONFIG, OpenEMSBackend
 from .services import async_setup_services
 
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+
 _LOGGER = logging.getLogger(__name__)
 
 _PLATFORMS: list[Platform] = [
@@ -44,6 +48,13 @@ _PLATFORMS: list[Platform] = [
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the OpenEMS integration."""
+
+    try:
+        config = CONFIG_SCHEMA(config)
+    except vol.Invalid as err:
+        # Handle invalid configuration
+        _LOGGER.error("Invalid yaml configuration: %s", err)
+
     async_setup_services(hass)
     return True
 
