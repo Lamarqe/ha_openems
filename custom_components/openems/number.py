@@ -4,8 +4,6 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.components.number import (
     NumberEntity,
     NumberEntityDescription,
@@ -14,11 +12,7 @@ from homeassistant.components.number import (
 from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.entity_platform import (
-    AddConfigEntryEntitiesCallback,
-    EntityPlatform,
-    async_get_current_platform,
-)
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import ATTR_VALUE
 from .helpers_ha import (
@@ -81,14 +75,6 @@ async def async_setup_entry(
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_number_entities(component)
-
-    # prepare service call
-    platform: EntityPlatform = async_get_current_platform()
-    platform.async_register_entity_service(
-        name="update_component_config",
-        schema={vol.Required(ATTR_VALUE): vol.Coerce(float)},
-        func="update_component_config",
-    )
 
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.NUMBER.value] = (

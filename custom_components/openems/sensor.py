@@ -4,8 +4,6 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -15,11 +13,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import (
-    AddEntitiesCallback,
-    EntityPlatform,
-    async_get_current_platform,
-)
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import (
@@ -131,18 +125,6 @@ async def async_setup_entry(
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_sensor_entities(component)
-
-    # prepare service call
-    platform: EntityPlatform = async_get_current_platform()
-    platform.async_register_entity_service(
-        name="update_value",
-        schema={
-            vol.Required(ATTR_VALUE): vol.Coerce(float),
-            vol.Optional(ATTR_UPDATE_CYCLE, default=30): vol.Coerce(int),
-            vol.Optional(ATTR_TIMEOUT, default=0): vol.Coerce(int),
-        },
-        func="update_value",
-    )
 
     # prepare callback for creating in new entities during options config flow
     entry.runtime_data.add_component_callbacks[Platform.SENSOR.value] = (

@@ -2,21 +2,41 @@ update_component_config:
   target:
     entity:
       integration: openems
-      domain:
-        - number
+      domain: number
   fields:
     value:
       required: true
       selector:
         number:
 
-update_value:
+rest_write_sensor:
   target:
     entity:
       integration: openems
-      domain:
-        - sensor
-        - binary_sensor
+      domain: sensor
+  fields:
+    value:
+      required: true
+      selector:
+        number:
+    timeout:
+      required: true
+      default: 0
+      selector:
+        number:
+          unit_of_measurement: seconds
+    update_cycle:
+      required: true
+      default: 30
+      selector:
+        number:
+          unit_of_measurement: seconds
+
+rest_write_binary_sensor:
+  target:
+    entity:
+      integration: openems
+      domain: binary_sensor
   fields:
     value:
       required: true

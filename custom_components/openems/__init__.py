@@ -15,6 +15,7 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers.typing import ConfigType
 
 from .const import CONF_EDGE, CONN_TYPE_DIRECT_EDGE, DOMAIN
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
@@ -26,6 +27,7 @@ from .helpers_ha import (
     map_user_input,
 )
 from .openems import CONFIG, OpenEMSBackend
+from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +40,12 @@ _PLATFORMS: list[Platform] = [
     Platform.TIME,
     Platform.UPDATE,
 ]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the OpenEMS integration."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(
