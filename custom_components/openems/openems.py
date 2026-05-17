@@ -845,6 +845,7 @@ class OpenEMSEdge:
 
     def currentData(self, params: dict[str, str | float | None]):
         """Jsonrpc callback to receive channel subscription updates."""
+        self.backend.connection.notify_data_received()
         self.current_channel_data = params
         for channel_name, value in params.items():
             registered_handlers = self._registered_handlers.get(channel_name)

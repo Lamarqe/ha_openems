@@ -22,6 +22,8 @@ CONN_TYPE_REST: str = "rest"
 
 QUERY_CONFIG_VIA_REST: bool = False
 
+CURRENT_DATA_TIMEOUT_SECONDS = 60
+
 
 class ConnectionType(TypedDict):
     "Type containing the websocket connection paramters."

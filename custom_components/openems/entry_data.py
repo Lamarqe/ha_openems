@@ -4,13 +4,14 @@ import asyncio
 from collections.abc import Callable
 import contextlib
 import logging
+import time
 from typing import TypedDict
 
 import jsonrpc_base
 import jsonrpc_websocket
 from yarl import URL
 
-from .const import CONN_TYPE_CUSTOM_URL
+from .const import CONN_TYPE_CUSTOM_URL, CURRENT_DATA_TIMEOUT_SECONDS
 from .helpers import connection_url, wrap_jsonrpc
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ class OpenEMSWebSocketConnection:
         )
         self.rpc_server_task: asyncio.Task | None = None
         self._reconnect_task: asyncio.Task | None = None
+        self._last_data_received: float = time.time()
 
     async def connect_to_server(self):
         "Establish websocket connection."
@@ -66,20 +68,43 @@ class OpenEMSWebSocketConnection:
             self._reconnect_forever(connection_lost_callback)
         )
 
+    def notify_data_received(self) -> None:
+        """Store the timestamp of the last received data. Used for connection loss detection."""
+        self._last_data_received = time.time()
+
     async def _reconnect_forever(self, connection_lost_callback: Callable):
         while True:
             # check for an existing connection
             if self.rpc_server_task:
-                with contextlib.suppress(
-                    jsonrpc_base.jsonrpc.TransportError,
-                    jsonrpc_base.jsonrpc.ProtocolError,
-                ):
-                    await self.rpc_server_task
-                # connection lost
-                _LOGGER.info("Connection to host %s lost", self.conn_url.host)
-                self.rpc_server_task = None
-                connection_lost_callback()
-                await asyncio.sleep(10)
+                while True:
+                    with contextlib.suppress(
+                        jsonrpc_base.jsonrpc.TransportError,
+                        jsonrpc_base.jsonrpc.ProtocolError,
+                    ):
+                        await asyncio.wait([self.rpc_server_task], timeout=10)
+                        # check if data was received recently. If not, trigger reconnect.
+                        if (
+                            time.time() - self._last_data_received
+                            > CURRENT_DATA_TIMEOUT_SECONDS
+                        ):
+                            # treat the connection as lost.
+                            _LOGGER.info(
+                                "No data updates received from host %s for %d seconds. Triggering reconnect",
+                                self.conn_url.host,
+                                CURRENT_DATA_TIMEOUT_SECONDS,
+                            )
+                            await self.rpc_server.close()
+
+                        if self.rpc_server_task.done():
+                            # connection lost (either by missing tcp keepalive or by missing data updates).
+                            # Trigger reconnect.
+                            break
+
+            # connection lost
+            _LOGGER.info("Connection to host %s lost", self.conn_url.host)
+            self.rpc_server_task = None
+            connection_lost_callback()
+            await asyncio.sleep(10)
 
             try:
                 await self.connect_to_server()
@@ -92,6 +117,7 @@ class OpenEMSWebSocketConnection:
                 jsonrpc_base.jsonrpc.ProtocolError,
             ):
                 await asyncio.sleep(10)
+            self._last_data_received = time.time()
 
     async def stop(self):
         """Close the connection and stop the reconnect logic andg c."""
