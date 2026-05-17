@@ -8,6 +8,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -34,6 +35,11 @@ from .openems import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# Right after a restart, for some systems, the FEMS backend reports zero or unexplainably
+# small values for total amount channels. This settles typically after only a few seconds.
+# This parameter allows to ignore such values.
+IGNORE_DECREASING_IF_TOTAL_INCREASING = True
 
 
 async def async_setup_entry(
@@ -156,6 +162,7 @@ class OpenEMSSensorEntity(SensorEntity):
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info
         self._attr_should_poll = False
+        self.previous_increasing_value_not_null: float | None = None
         # self._attr_supported_features = supported_features(channel)
         if isinstance(channel, OpenEMSChannel):
             self._attr_extra_state_attributes = channel.orig_json
@@ -169,7 +176,24 @@ class OpenEMSSensorEntity(SensorEntity):
         if isinstance(val, str):
             # self.entity_description.device_class == SensorDeviceClass.ENUM
             return to_snake_case(val)
-        # else:
+
+        if self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING:
+            if (
+                IGNORE_DECREASING_IF_TOTAL_INCREASING
+                and val is not None
+                and self.previous_increasing_value_not_null is not None
+                and self.previous_increasing_value_not_null > val
+            ):
+                _LOGGER.debug(
+                    "Ignoring new backend value %s for %s since it is smaller than the previous value %.1f and state class is total_increasing",
+                    val,
+                    self.entity_id,
+                    self.previous_increasing_value_not_null,
+                )
+                return self.previous_increasing_value_not_null
+            # else:
+            self.previous_increasing_value_not_null = val
+
         return val
 
     async def update_value(self, **kwargs: Any) -> None:
