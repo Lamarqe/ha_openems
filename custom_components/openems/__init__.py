@@ -19,7 +19,7 @@ from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
-from .const import CONF_EDGE, CONN_TYPE_DIRECT_EDGE, DOMAIN
+from . import const as c
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from .helpers_ha import (
     OpenEMSConfigEntry,
@@ -31,7 +31,7 @@ from .helpers_ha import (
 from .openems import CONFIG, OpenEMSBackend
 from .services import async_setup_services
 
-CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+CONFIG_SCHEMA = cv.empty_config_schema(c.DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ async def async_setup_entry(
         # 1. Create connection instance
         connection = OpenEMSWebSocketConnection(map_user_input(data_copy["user_input"]))
 
-        edge_id = data_copy["user_input"][CONF_EDGE]
+        edge_id = data_copy["user_input"][c.CONF_EDGE]
         # 2. Trigger the API connection (and authentication)
         await asyncio.wait_for(connection.connect_to_server(), timeout=2)
 
@@ -112,9 +112,7 @@ async def async_setup_entry(
     backend = OpenEMSBackend(connection, edge_id, multi_edge, components)
 
     # 5. Read and set config options
-    for component_name, is_enabled in config_entry.options.items():
-        if component := backend.the_edge.components.get(component_name):
-            component.create_entities = is_enabled
+    backend.the_edge.set_config_options(config_entry.options)
 
     config_entry.runtime_data = RuntimeData(backend=backend)
     config_entry.async_on_unload(config_entry.add_update_listener(update_config))
@@ -147,8 +145,8 @@ async def async_migrate_entry(
                 "user_input": config_entry.data.copy(),
                 "components": components,
             }
-            new_data["user_input"][CONF_EDGE] = edge_id
-            new_data["user_input"][CONF_TYPE] = CONN_TYPE_DIRECT_EDGE
+            new_data["user_input"][c.CONF_EDGE] = edge_id
+            new_data["user_input"][CONF_TYPE] = c.CONN_TYPE_DIRECT_EDGE
             # delete config store data
             await store_conf.async_remove()
 
@@ -197,8 +195,8 @@ async def async_migrate_entry(
                 and device.identifiers
                 and len(identifiers := device.identifiers.pop()) == 3
             ):
-                # 3-tuples (DOMAIN, edge_hostname, component_name) are illegal
-                # and changed to 2-tuples (DOMAIN, edge_hostname + " " + component_name)
+                # 3-tuples (cn.DOMAIN, edge_hostname, component_name) are illegal
+                # and changed to 2-tuples (cn.DOMAIN, edge_hostname + " " + component_name)
                 device_registry.async_update_device(
                     device_id=device.id,
                     new_identifiers={
@@ -212,7 +210,24 @@ async def async_migrate_entry(
             config_entry.minor_version,
         )
 
+    if config_entry.version == 3:
+        old_options = dict(config_entry.options)
+        new_options = {
+            c.CONF_COMPONENTS: old_options,
+            c.CONF_ADVANCED_OPTIONS: {
+                c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+            },
+        }
+        hass.config_entries.async_update_entry(
+            config_entry, options=new_options, version=4, minor_version=1
+        )
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
         return True
+
     return False
 
 
@@ -226,8 +241,10 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     entity_registry = er.async_get(hass)
     device_registry = dr.async_get(hass)
 
+    backend.the_edge.set_advanced_options(entry.options[c.CONF_ADVANCED_OPTIONS])
+    components_options = entry.options[c.CONF_COMPONENTS]
     for comp_name, component in backend.the_edge.components.items():
-        if not entry.options.get(comp_name) and component.create_entities:
+        if not components_options.get(comp_name) and component.create_entities:
             # remove entities
             comp_device: DeviceInfo = component_device(component)
             device = device_registry.async_get_device(comp_device.get("identifiers"))
@@ -241,11 +258,11 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
             device_registry.async_remove_device(device.id)
 
         # process newly enabled components
-        if entry.options.get(comp_name) and not component.create_entities:
+        if components_options.get(comp_name) and not component.create_entities:
             for callback in entry.runtime_data.add_component_callbacks.values():
                 callback(component)
 
-        component.create_entities = bool(entry.options.get(comp_name))
+        component.create_entities = bool(components_options.get(comp_name))
 
 
 async def async_remove_config_entry_device(
@@ -254,7 +271,7 @@ async def async_remove_config_entry_device(
     """Handle user request to remove a (stale) device."""
     backend: OpenEMSBackend = entry.runtime_data.backend
     device_identifiers = next(iter(device_entry.identifiers))
-    if len(device_identifiers) != 2 or device_identifiers[0] != DOMAIN:
+    if len(device_identifiers) != 2 or device_identifiers[0] != c.DOMAIN:
         return True  # not our device, allow removal
     component_identifiers = device_identifiers[1].split(" ", 1)
     match len(component_identifiers):

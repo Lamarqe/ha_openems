@@ -16,7 +16,13 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
+from .const import (
+    ATTR_TIMEOUT,
+    ATTR_UPDATE_CYCLE,
+    ATTR_VALUE,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+    DOMAIN,
+)
 from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
@@ -35,11 +41,6 @@ from .openems import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-# Right after a restart, for some systems, the FEMS backend reports zero or unexplainably
-# small values for total amount channels. This settles typically after only a few seconds.
-# This parameter allows to ignore such values.
-IGNORE_DECREASING_IF_TOTAL_INCREASING = True
 
 
 async def async_setup_entry(
@@ -179,7 +180,7 @@ class OpenEMSSensorEntity(SensorEntity):
 
         if self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING:
             if (
-                IGNORE_DECREASING_IF_TOTAL_INCREASING
+                self._channel.component.edge.advanced_options[CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING]
                 and val is not None
                 and self.previous_increasing_value_not_null is not None
                 and self.previous_increasing_value_not_null > val

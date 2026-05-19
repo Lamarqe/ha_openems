@@ -33,16 +33,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .const import (
-    CONF_EDGE,
-    CONF_EDGES,
-    CONN_TYPE_CUSTOM_URL,
-    CONN_TYPE_DIRECT_EDGE,
-    CONN_TYPE_LOCAL_FEMS,
-    CONN_TYPE_LOCAL_OPENEMS,
-    CONN_TYPE_WEB_FENECON,
-    DOMAIN,
-)
+from . import const as c
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from .helpers_ha import OpenEMSConfigEntry, map_user_input
 from .openems import CONFIG, OpenEMSBackend
@@ -50,10 +41,10 @@ from .openems import CONFIG, OpenEMSBackend
 _LOGGER = logging.getLogger(__name__)
 
 
-class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
+class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
-    VERSION = 3
+    VERSION = 4
     MINOR_VERSION = 1
 
     def __init__(self) -> None:
@@ -90,15 +81,15 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(
                         CONF_TYPE,
-                        default=user_input.get(CONF_TYPE, CONN_TYPE_DIRECT_EDGE),
+                        default=user_input.get(CONF_TYPE, c.CONN_TYPE_DIRECT_EDGE),
                     ): SelectSelector(
                         SelectSelectorConfig(
                             options=[
-                                CONN_TYPE_LOCAL_FEMS,
-                                CONN_TYPE_LOCAL_OPENEMS,
-                                CONN_TYPE_DIRECT_EDGE,
-                                CONN_TYPE_WEB_FENECON,
-                                CONN_TYPE_CUSTOM_URL,
+                                c.CONN_TYPE_LOCAL_FEMS,
+                                c.CONN_TYPE_LOCAL_OPENEMS,
+                                c.CONN_TYPE_DIRECT_EDGE,
+                                c.CONN_TYPE_WEB_FENECON,
+                                c.CONN_TYPE_CUSTOM_URL,
                             ],
                             translation_key="connection_type",
                             multiple=False,
@@ -115,7 +106,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         return vol.Schema(
             {
                 vol.Required(
-                    CONF_EDGES,
+                    c.CONF_EDGES,
                     default=default_edge,
                 ): SelectSelector(
                     SelectSelectorConfig(
@@ -130,7 +121,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     def _validate_user_input_complete(self, user_input) -> bool:
-        return user_input.get(CONF_TYPE) == CONN_TYPE_CUSTOM_URL and not user_input.get(
+        return user_input.get(CONF_TYPE) == c.CONN_TYPE_CUSTOM_URL and not user_input.get(
             CONF_URL
         )
 
@@ -145,21 +136,21 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
 
         # preset connection type for non-advanced users
         if not self.show_advanced_options:
-            user_input[CONF_TYPE] = CONN_TYPE_DIRECT_EDGE
+            user_input[CONF_TYPE] = c.CONN_TYPE_DIRECT_EDGE
 
         if (
             user_input[CONF_TYPE]
             in [
-                CONN_TYPE_DIRECT_EDGE,
-                CONN_TYPE_LOCAL_FEMS,
-                CONN_TYPE_LOCAL_OPENEMS,
+                c.CONN_TYPE_DIRECT_EDGE,
+                c.CONN_TYPE_LOCAL_FEMS,
+                c.CONN_TYPE_LOCAL_OPENEMS,
             ]
             and not user_input.get(CONF_HOST, "").strip()
         ):
             errors[CONF_HOST] = "host_missing"
             return self._show_form(user_input, errors)
 
-        if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
+        if user_input[CONF_TYPE] == c.CONN_TYPE_CUSTOM_URL:
             if not user_input.get(CONF_URL):
                 errors[CONF_URL] = "custom_url_missing"
                 return self._show_form(user_input, errors)
@@ -206,7 +197,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 if multi_edge:
                     if self.source == SOURCE_RECONFIGURE:
                         default_edge = self._get_reconfigure_entry().data["user_input"][
-                            CONF_EDGE
+                            c.CONF_EDGE
                         ]
                     else:
                         default_edge = None
@@ -219,7 +210,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
 
                 # single edge backend, all required data has been received.
                 edge_id = next(iter(edges["edges"]))["id"]
-                self._config_data[CONF_EDGE] = edge_id
+                self._config_data[c.CONF_EDGE] = edge_id
                 config_reader.set_edge_id(edge_id)
                 return await self._create_or_update_entry(config_reader, False)
 
@@ -256,24 +247,30 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
 
         # no reconfigure. Create new entry instead
         # initialize options with default settings
-        options: dict[str, bool] = {}
+        components_options: dict[str, bool] = {}
         for component in components:
-            options[component] = CONFIG.is_component_enabled(component)
+            components_options[component] = CONFIG.is_component_enabled(component)
+        options: c.ConfigOptions = {
+            c.CONF_COMPONENTS: components_options,
+            c.CONF_ADVANCED_OPTIONS: {
+                c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+            },
+        }
 
         # Create meaningful entry title, alter strategy based on selected options
         title: str = ""
         if self._config_data[CONF_TYPE] in [
-            CONN_TYPE_DIRECT_EDGE,
-            CONN_TYPE_LOCAL_FEMS,
-            CONN_TYPE_LOCAL_OPENEMS,
+            c.CONN_TYPE_DIRECT_EDGE,
+            c.CONN_TYPE_LOCAL_FEMS,
+            c.CONN_TYPE_LOCAL_OPENEMS,
         ]:
             title = self._config_data[CONF_HOST]
-        elif self._config_data[CONF_TYPE] == CONN_TYPE_WEB_FENECON:
+        elif self._config_data[CONF_TYPE] == c.CONN_TYPE_WEB_FENECON:
             title = "FEMS Web: " + self._config_data[CONF_USERNAME]
         elif config_reader.connection.conn_url.host is not None:
             title = config_reader.connection.conn_url.host
         if multi_edge:
-            title += " " + self._config_data[CONF_EDGE]
+            title += " " + self._config_data[c.CONF_EDGE]
 
         return self.async_create_entry(title=title, data=entry_data, options=options)
 
@@ -287,7 +284,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
 
         edges_schema = self.cur_step.get("data_schema")
         if user_input is not None:
-            self._config_data[CONF_EDGE] = user_input[CONF_EDGES]
+            self._config_data[c.CONF_EDGE] = user_input[c.CONF_EDGES]
             connection: OpenEMSWebSocketConnection = OpenEMSWebSocketConnection(
                 map_user_input(self._config_data)
             )
@@ -295,7 +292,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 await connection.connect_to_server()
                 await connection.login_to_server()
                 config_reader: OpenEMSConfigReader = OpenEMSConfigReader(
-                    connection, user_input[CONF_EDGES]
+                    connection, user_input[c.CONF_EDGES]
                 )
                 return await self._create_or_update_entry(config_reader, True)
             except (
@@ -304,7 +301,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=DOMAIN):
                 TimeoutError,
             ):
                 _LOGGER.exception("Error during processing the selected edge")
-                errors[CONF_EDGES] = "error_processing_edge"
+                errors[c.CONF_EDGES] = "error_processing_edge"
             finally:
                 await connection.stop()
 
@@ -341,8 +338,18 @@ class OpenEMSOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage the OpenEMS options."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=["select_components", "advanced_options"],
+        )
+
+    async def async_step_select_components(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage component selection."""
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
+            options = {**self.config_entry.options, c.CONF_COMPONENTS: user_input}
+            return self.async_create_entry(data=options)
 
         backend: OpenEMSBackend = self.config_entry.runtime_data.backend
         schema: vol.Schema = vol.Schema({})
@@ -352,6 +359,31 @@ class OpenEMSOptionsFlow(OptionsFlow):
             schema = schema.extend({schema_entry: bool_selector})
 
         return self.async_show_form(
-            step_id="init",
+            step_id="select_components",
+            data_schema=schema,
+        )
+
+    async def async_step_advanced_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage advanced options."""
+        if user_input is not None:
+            options = {**self.config_entry.options, c.CONF_ADVANCED_OPTIONS: user_input}
+            return self.async_create_entry(data=options)
+
+        advanced = self.config_entry.options.get(c.CONF_ADVANCED_OPTIONS, {})
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+                    default=advanced.get(
+                        c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING, False
+                    ),
+                ): BooleanSelector(BooleanSelectorConfig()),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="advanced_options",
             data_schema=schema,
         )

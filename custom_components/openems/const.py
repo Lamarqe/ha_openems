@@ -12,6 +12,11 @@ ATTR_UPDATE_CYCLE: str = "update_cycle"
 
 CONF_EDGES: str = "edges"
 CONF_EDGE: str = "edge"
+CONF_COMPONENTS: str = "components"
+CONF_ADVANCED_OPTIONS: str = "advanced_options"
+CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: str = (
+    "ignore_decreasing_if_total_increasing"
+)
 
 CONN_TYPE_DIRECT_EDGE: str = "direct_edge"
 CONN_TYPE_LOCAL_FEMS: str = "local_fems"
@@ -23,6 +28,22 @@ CONN_TYPE_REST: str = "rest"
 QUERY_CONFIG_VIA_REST: bool = False
 
 CURRENT_DATA_TIMEOUT_SECONDS = 60
+
+
+class AdvancedOptions(TypedDict):
+    """Type containing the advanced options."""
+
+    # Right after a restart, for some systems, the FEMS backend reports zero or unexplainably
+    # small values for total amount channels. This settles typically after only a few seconds.
+    # This parameter allows to ignore such values.
+    ignore_decreasing_if_total_increasing: bool
+
+
+class ConfigOptions(TypedDict):
+    """Type containing the config entry options."""
+
+    components: dict[str, bool]
+    advanced_options: AdvancedOptions
 
 
 class ConnectionType(TypedDict):

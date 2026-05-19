@@ -151,6 +151,25 @@
             }
         }
     },
+    "options": {
+        "step": {
+            "init": {
+                "menu_options": {
+                    "select_components": "Select components",
+                    "advanced_options": "Advanced options"
+                }
+            },
+            "select_components": {
+                "title": "Select components"
+            },
+            "advanced_options": {
+                "title": "Advanced options",
+                "data": {
+                    "ignore_decreasing_if_total_increasing": "Ignore decreasing if total increasing"
+                }
+            }
+        }
+    },
     "selector": {
         "connection_type": {
             "options": {

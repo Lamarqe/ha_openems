@@ -16,7 +16,16 @@ import jsonrpc_base
 from yarl import URL
 
 from .config import OpenEMSConfig
-from .const import CONN_TYPE_REST, CONN_TYPE_WEB_FENECON, CONN_TYPES, SLASH_ESC
+from .const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_COMPONENTS,
+    CONN_TYPE_REST,
+    CONN_TYPE_WEB_FENECON,
+    CONN_TYPES,
+    SLASH_ESC,
+    AdvancedOptions,
+    ConfigOptions,
+)
 from .entry_data import OpenEMSWebSocketConnection
 from .helpers import connection_url, wrap_jsonrpc
 from .helpers_openems import expand_sensor_def, prepare_ref_value
@@ -779,6 +788,9 @@ class OpenEMSEdge:
         """Initialize the edge."""
         self.backend: OpenEMSBackend = backend
         self._id: str = id
+        self._advanced_options: AdvancedOptions = AdvancedOptions(
+            ignore_decreasing_if_total_increasing=False,
+        )
         self.current_channel_data: dict[str, Any] = {}
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
             self
@@ -903,6 +915,23 @@ class OpenEMSEdge:
         await self.backend.connection.rpc_server.edgeRpc(
             edgeId=self._id, payload=edge_call
         )
+
+    def set_config_options(self, options: ConfigOptions):
+        """Set config options for the edge and its components."""
+        for component_name, is_enabled in options.get(CONF_COMPONENTS, {}).items():
+            if component := self.components.get(component_name):
+                component.create_entities = is_enabled
+        if advanced_options := options.get(CONF_ADVANCED_OPTIONS):
+            self.set_advanced_options(advanced_options)
+
+    @property
+    def advanced_options(self) -> AdvancedOptions:
+        """Return the advanced options."""
+        return self._advanced_options
+
+    def set_advanced_options(self, advanced_options: AdvancedOptions):
+        """Set advanced config options for the edge."""
+        self._advanced_options = advanced_options
 
 
 class OpenEMSBackend:
