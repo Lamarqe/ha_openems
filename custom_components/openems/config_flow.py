@@ -28,6 +28,9 @@ from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -254,6 +257,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             c.CONF_COMPONENTS: components_options,
             c.CONF_ADVANCED_OPTIONS: {
                 c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+                c.CONF_FORWARD_INTERVAL: 0,
             },
         }
 
@@ -371,15 +375,19 @@ class OpenEMSOptionsFlow(OptionsFlow):
             options = {**self.config_entry.options, c.CONF_ADVANCED_OPTIONS: user_input}
             return self.async_create_entry(data=options)
 
-        advanced = self.config_entry.options.get(c.CONF_ADVANCED_OPTIONS, {})
+        advanced = self.config_entry.options[c.CONF_ADVANCED_OPTIONS]
         schema = vol.Schema(
             {
                 vol.Required(
                     c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-                    default=advanced.get(
-                        c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING, False
-                    ),
+                    default=advanced[c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING],
                 ): BooleanSelector(BooleanSelectorConfig()),
+                vol.Required(
+                    c.CONF_FORWARD_INTERVAL,
+                    default=advanced[c.CONF_FORWARD_INTERVAL],
+                ): NumberSelector(
+                    NumberSelectorConfig(min=0, max=3600, step=1, mode=NumberSelectorMode.BOX)
+                ),
             }
         )
 

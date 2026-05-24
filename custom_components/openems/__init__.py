@@ -216,6 +216,7 @@ async def async_migrate_entry(
             c.CONF_COMPONENTS: old_options,
             c.CONF_ADVANCED_OPTIONS: {
                 c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+                c.CONF_FORWARD_INTERVAL: 0,
             },
         }
         hass.config_entries.async_update_entry(

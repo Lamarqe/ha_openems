@@ -19,6 +19,7 @@ from .config import OpenEMSConfig
 from .const import (
     CONF_ADVANCED_OPTIONS,
     CONF_COMPONENTS,
+    CONF_FORWARD_INTERVAL,
     CONN_TYPE_REST,
     CONN_TYPE_WEB_FENECON,
     CONN_TYPES,
@@ -790,7 +791,9 @@ class OpenEMSEdge:
         self._id: str = id
         self._advanced_options: AdvancedOptions = AdvancedOptions(
             ignore_decreasing_if_total_increasing=False,
+            forward_interval=0,
         )
+        self._channel_data_forwarder: asyncio.Task | None = None
         self.current_channel_data: dict[str, Any] = {}
         self._channel_subscription_updater = self.OpenEmsEdgeChannelSubscriptionUpdater(
             self
@@ -849,16 +852,17 @@ class OpenEMSEdge:
     def stop(self):
         """Stop the connection to edge and all its subscriptions."""
         self._channel_subscription_updater.stop()
+        if self._channel_data_forwarder is not None:
+            self._channel_data_forwarder.cancel()
+            self._channel_data_forwarder = None
 
     def edgeConfig(self, params):
         """Jsonrpc callback to receive edge config updates."""
         # TODO: renew component channels and component info values
         # self._prepare_entities(params["components"])
 
-    def currentData(self, params: dict[str, str | float | None]):
-        """Jsonrpc callback to receive channel subscription updates."""
-        self.backend.connection.notify_data_received()
-        self.current_channel_data = params
+    def _forward_current_channel_data(self, params: dict[str, str | float | None]):
+        """Forward channel data to registered handlers."""
         for channel_name, value in params.items():
             registered_handlers = self._registered_handlers.get(channel_name)
             if not registered_handlers:
@@ -868,6 +872,21 @@ class OpenEMSEdge:
                 continue
             for handler in registered_handlers:
                 handler.handle_data_update(channel_name, value)
+
+    async def _forwarder_channel_data_forever(self, interval: int):
+        """Periodically forward the latest channel data snapshot to registered handlers."""
+        while True:
+            await asyncio.sleep(interval)
+            self._forward_current_channel_data(self.current_channel_data)
+
+    def currentData(self, params: dict[str, str | float | None]):
+        """Jsonrpc callback to receive channel subscription updates."""
+        self.backend.connection.notify_data_received()
+        self.current_channel_data = params
+
+        # forward data only when there is no forwarder, meaning no forward interval is set.
+        if self._channel_data_forwarder is None:
+            self._forward_current_channel_data(params)
 
     def register_channel(self, channel_names: set[str], handler: OpenEMSDataHandler):
         """Register a channel and its dependent channels for updates."""
@@ -931,6 +950,15 @@ class OpenEMSEdge:
 
     def set_advanced_options(self, advanced_options: AdvancedOptions):
         """Set advanced config options for the edge."""
+        new_interval = advanced_options[CONF_FORWARD_INTERVAL]
+        if new_interval != self._advanced_options[CONF_FORWARD_INTERVAL]:
+            if self._channel_data_forwarder is not None:
+                self._channel_data_forwarder.cancel()
+                self._channel_data_forwarder = None
+            if new_interval:
+                self._channel_data_forwarder = asyncio.get_event_loop().create_task(
+                    self._forwarder_channel_data_forever(new_interval)
+                )
         self._advanced_options = advanced_options
 
 
