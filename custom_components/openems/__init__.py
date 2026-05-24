@@ -113,9 +113,11 @@ async def async_setup_entry(
 
     # 5. Read and set config options
     # ==================== TODO REMOVE_LATER_START ============================
-    config_entry.options[c.CONF_FORWARD_INTERVAL] = config_entry.options.get(
-        c.CONF_FORWARD_INTERVAL, 0
-    )
+    options = copy.deepcopy(config_entry.options)
+    options[c.CONF_ADVANCED_OPTIONS][c.CONF_FORWARD_INTERVAL] = options[
+        c.CONF_ADVANCED_OPTIONS
+    ].get(c.CONF_FORWARD_INTERVAL, 0)
+    config_entry.options = options
     # ==================== TODO REMOVE_LATER_END ============================
     backend.the_edge.set_config_options(config_entry.options)
 
