@@ -112,6 +112,11 @@ async def async_setup_entry(
     backend = OpenEMSBackend(connection, edge_id, multi_edge, components)
 
     # 5. Read and set config options
+    # ==================== TODO REMOVE_LATER_START ============================
+    config_entry.options[c.CONF_FORWARD_INTERVAL] = config_entry.options.get(
+        c.CONF_FORWARD_INTERVAL, 0
+    )
+    # ==================== TODO REMOVE_LATER_END ============================
     backend.the_edge.set_config_options(config_entry.options)
 
     config_entry.runtime_data = RuntimeData(backend=backend)
