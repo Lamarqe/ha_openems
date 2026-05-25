@@ -218,13 +218,24 @@ Custom URL* | Custom Websocket URL, eg: `ws://192.168.1.100:8888/websocket`
 
 *Options _Connection Type_ and _Custom URL_ are visible only to users who enabled **Advanced Mode**: In the bottom left, select your username to go to your [User profile](https://my.home-assistant.io/redirect/profile), and enable Advanced mode.
 
+#### Advanced options
+In order to change advanced options, start the options flow by selecting the Configure option right next to the config entry name:
+
+<img src="screenshots/options_flow.jpg" width="400"/>
+Afterwards, a menu will show up. Here, select "advanced options. A dialog will appear which allows to change advanced options. The following options are available currently:
+
+Parameter | Description
+------ | ---------- 
+Ignore decreasing if total increasing | For entities which are reported with state class "Total increasing", drop values from the backend which are smaller than the current value.
+Limit data updates | In order to reduce the amout of recorder data and the overall system load, this option allows to reduce the update frequency of entity values. Value in seconds. Zero means, values are published immediately after being received (typically 1x per second).
+
 #### Selection of components and channels to be integrated
 After setting up the config entry, there is a [default list](https://github.com/Lamarqe/ha_openems/blob/main/custom_components/openems/config/default_channels.json) of entities which is enabled. Entities for channels outside of these components are initially not created. Other entities within the created components are disabled by default.
 
 In order to add or remove entities of additional or unwanted components, start the options flow by selecting the Configure option right next to the config entry name:
 
 <img src="screenshots/options_flow.jpg" width="400"/>
-Afterwards, a dialog will appear which allows to enable or disable each component in the configured system (screenshot shortened. Depending on your system configuration, there can be 20 to 50 components available in the list):
+Afterwards, a menu will show up. Choose the component selection option. A dialog will appear which allows to enable or disable each component in the configured system (screenshot shortened. Depending on your system configuration, there can be 20 to 50 components available in the list):
 
 <img src="screenshots/options_dialog.jpg" width="200"/>
 
