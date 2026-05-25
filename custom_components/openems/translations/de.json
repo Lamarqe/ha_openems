@@ -165,7 +165,11 @@
             "advanced_options": {
                 "title": "Erweiterte Optionen",
                 "data": {
-                    "ignore_decreasing_if_total_increasing": "Abnehmend ignorieren wenn Gesamt steigend"
+                    "ignore_decreasing_if_total_increasing": "Abnehmend ignorieren wenn Gesamt steigend",
+                    "forward_interval": "Updatefrequenz begrenzen (Sekunden)"
+                },
+                "data_description": {
+                    "forward_interval": "Intervall in Sekunden für die Veröffentlichung von Kanaldaten. 0 deaktiviert die Begrenzung."
                 }
             }
         }

@@ -167,7 +167,11 @@
       "advanced_options": {
         "title": "Advanced options",
         "data": {
-          "ignore_decreasing_if_total_increasing": "Ignore decreasing if total increasing"
+          "ignore_decreasing_if_total_increasing": "Ignore decreasing if total increasing",
+          "forward_interval": "Limit data updates (seconds)"
+        },
+        "data_description": {
+          "forward_interval": "Interval in seconds to publish channel data. Set to 0 to disable rate limits."
         }
       }
     }
