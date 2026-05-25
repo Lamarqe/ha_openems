@@ -465,10 +465,11 @@ class OpenEMSNumberProperty(OpenEMSProperty):
             upper_limit = 100000
         else:
             # assure upper limit is larger than lower limit
-            if upper_noscale < lower_noscale + 10:
+            if upper_noscale <= lower_noscale:
                 upper_noscale = lower_noscale + 10
                 _LOGGER.warning(
-                    "Upper limit, resulting from config too small. Adjusting to %d",
+                    "Upper limit of %s is too small, resulting from config. Adjusting to %d",
+                    self.name,
                     upper_noscale,
                 )
             lower_scaled = lower_noscale * multiplier
