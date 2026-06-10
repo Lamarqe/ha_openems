@@ -1,7 +1,5 @@
 """Config flow for the HA OpenEMS integration."""
 
-from __future__ import annotations
-
 import asyncio
 import logging
 from typing import Any
@@ -25,6 +23,7 @@ from homeassistant.const import (
     CONF_USERNAME,
 )
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import SectionConfig, section
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
@@ -58,50 +57,47 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         """Define the config flow input options."""
         if not user_input:
             user_input = {}
+        collapased = user_input.get(CONF_TYPE) == c.CONN_TYPE_DIRECT_EDGE
         schema: vol.Schema = vol.Schema(
-            {vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str}
-        )
-        if self.show_advanced_options:
-            schema = schema.extend(
-                {vol.Optional(CONF_HOST, default=user_input.get(CONF_HOST, "")): str}
-            )
-        else:
-            schema = schema.extend(
-                {vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str}
-            )
-        schema = schema.extend(
             {
+                vol.Optional(CONF_HOST, default=user_input.get(CONF_HOST, "")): str,
                 vol.Required(
                     CONF_USERNAME, default=user_input.get(CONF_USERNAME, "")
                 ): str,
                 vol.Required(
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
-            },
-        )
-        if self.show_advanced_options:
-            schema = schema.extend(
-                {
-                    vol.Required(
-                        CONF_TYPE,
-                        default=user_input.get(CONF_TYPE, c.CONN_TYPE_DIRECT_EDGE),
-                    ): SelectSelector(
-                        SelectSelectorConfig(
-                            options=[
-                                c.CONN_TYPE_LOCAL_FEMS,
-                                c.CONN_TYPE_LOCAL_OPENEMS,
-                                c.CONN_TYPE_DIRECT_EDGE,
-                                c.CONN_TYPE_WEB_FENECON,
-                                c.CONN_TYPE_CUSTOM_URL,
-                            ],
-                            translation_key="connection_type",
-                            multiple=False,
-                            mode=SelectSelectorMode.LIST,
-                        )
+                vol.Required(c.CONF_MORE_OPTIONS): section(
+                    vol.Schema(
+                        {
+                            vol.Required(
+                                CONF_TYPE,
+                                default=user_input.get(
+                                    CONF_TYPE, c.CONN_TYPE_DIRECT_EDGE
+                                ),
+                            ): SelectSelector(
+                                SelectSelectorConfig(
+                                    options=[
+                                        c.CONN_TYPE_DIRECT_EDGE,
+                                        c.CONN_TYPE_LOCAL_FEMS,
+                                        c.CONN_TYPE_LOCAL_OPENEMS,
+                                        c.CONN_TYPE_WEB_FENECON,
+                                        c.CONN_TYPE_CUSTOM_URL,
+                                    ],
+                                    translation_key="connection_type",
+                                    multiple=False,
+                                    mode=SelectSelectorMode.LIST,
+                                )
+                            ),
+                            vol.Optional(
+                                CONF_URL, default=user_input.get(CONF_URL, "")
+                            ): str,
+                        }
                     ),
-                    vol.Optional(CONF_URL, default=user_input.get(CONF_URL, "")): str,
-                }
-            )
+                    SectionConfig(collapsed=collapased),
+                ),
+            }
+        )
         return schema
 
     def _step_edges_data_schema(self, edge_response: dict, default_edge) -> vol.Schema:
@@ -124,9 +120,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         )
 
     def _validate_user_input_complete(self, user_input) -> bool:
-        return user_input.get(CONF_TYPE) == c.CONN_TYPE_CUSTOM_URL and not user_input.get(
-            CONF_URL
-        )
+        return user_input.get(
+            CONF_TYPE
+        ) == c.CONN_TYPE_CUSTOM_URL and not user_input.get(CONF_URL)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -134,12 +130,10 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
 
-        if not user_input:
-            return self._show_form(user_input, errors)
-
-        # preset connection type for non-advanced users
-        if not self.show_advanced_options:
-            user_input[CONF_TYPE] = c.CONN_TYPE_DIRECT_EDGE
+        if user_input is None:
+            return self._show_form(user_input=None, errors=errors)
+        more_options = user_input.pop(c.CONF_MORE_OPTIONS, {})
+        user_input.update(more_options)
 
         if (
             user_input[CONF_TYPE]
@@ -386,7 +380,9 @@ class OpenEMSOptionsFlow(OptionsFlow):
                     c.CONF_FORWARD_INTERVAL,
                     default=advanced[c.CONF_FORWARD_INTERVAL],
                 ): NumberSelector(
-                    NumberSelectorConfig(min=0, max=3600, step=1, mode=NumberSelectorMode.BOX)
+                    NumberSelectorConfig(
+                        min=0, max=3600, step=1, mode=NumberSelectorMode.BOX
+                    )
                 ),
             }
         )

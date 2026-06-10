@@ -18,6 +18,7 @@ CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: str = (
     "ignore_decreasing_if_total_increasing"
 )
 CONF_FORWARD_INTERVAL: str = "forward_interval"
+CONF_MORE_OPTIONS: str = "more_options"
 
 CONN_TYPE_DIRECT_EDGE: str = "direct_edge"
 CONN_TYPE_LOCAL_FEMS: str = "local_fems"
