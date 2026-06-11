@@ -167,10 +167,10 @@ class OpenEMSConfigReader:
 
     async def _read_edge_channels(self, components):
         """Load channels of each component."""
-        for componentId in list(components):
+        for component_id in list(components):
             edge_component_call = wrap_jsonrpc(
                 "getChannelsOfComponent",
-                componentId=componentId,
+                componentId=component_id,
             )
             try:
                 edge_call = wrap_jsonrpc(
@@ -182,16 +182,18 @@ class OpenEMSConfigReader:
                     edgeId=self.edge_id,
                     payload=edge_call,
                 )
-                components[componentId]["channels"] = r["payload"]["result"]["channels"]
+                components[component_id]["channels"] = r["payload"]["result"][
+                    "channels"
+                ]
             except (
                 jsonrpc_base.jsonrpc.TransportError,
                 jsonrpc_base.jsonrpc.ProtocolError,
             ):
                 _LOGGER.warning(
                     "_read_edge_channels: could not read channels of component %s, skipping",
-                    componentId,
+                    component_id,
                 )
-                del components[componentId]
+                del components[component_id]
 
     async def _read_component_info_channels(self, components: dict):
         """Read hostname and all component names of an edge."""

@@ -119,11 +119,6 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             }
         )
 
-    def _validate_user_input_complete(self, user_input) -> bool:
-        return user_input.get(
-            CONF_TYPE
-        ) == c.CONN_TYPE_CUSTOM_URL and not user_input.get(CONF_URL)
-
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -137,31 +132,40 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
         if (
             user_input[CONF_TYPE]
-            in [
+            in (
                 c.CONN_TYPE_DIRECT_EDGE,
                 c.CONN_TYPE_LOCAL_FEMS,
                 c.CONN_TYPE_LOCAL_OPENEMS,
-            ]
+            )
             and not user_input.get(CONF_HOST, "").strip()
         ):
             errors[CONF_HOST] = "host_missing"
             return self._show_form(user_input, errors)
 
         if user_input[CONF_TYPE] == c.CONN_TYPE_CUSTOM_URL:
-            if not user_input.get(CONF_URL):
-                errors[CONF_URL] = "custom_url_missing"
+            if not user_input.get(CONF_URL).strip():
+                errors[c.CONF_MORE_OPTIONS] = "custom_url_missing"
                 return self._show_form(user_input, errors)
 
             try:
                 conn_url = URL(user_input[CONF_URL])
             except ValueError as e:
-                errors[CONF_URL] = "invalid_url"
+                errors[c.CONF_MORE_OPTIONS] = "invalid_url"
                 errors[CONF_BASE] = str(e)
                 return self._show_form(user_input, errors)
 
             if not conn_url.absolute:
-                errors[CONF_URL] = "url_not_absolute"
+                errors[c.CONF_MORE_OPTIONS] = "url_not_absolute"
                 return self._show_form(user_input, errors)
+
+        # avoid storing inactive config options in the config entry
+        if user_input[CONF_TYPE] != c.CONN_TYPE_CUSTOM_URL and user_input.get(CONF_URL):
+            del user_input[CONF_URL]
+        if user_input.get(CONF_TYPE) in (
+            c.CONN_TYPE_WEB_FENECON,
+            c.CONN_TYPE_CUSTOM_URL,
+        ) and user_input.get(CONF_HOST):
+            del user_input[CONF_HOST]
 
         try:
             connection = OpenEMSWebSocketConnection(map_user_input(user_input))
@@ -257,11 +261,11 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
         # Create meaningful entry title, alter strategy based on selected options
         title: str = ""
-        if self._config_data[CONF_TYPE] in [
+        if self._config_data[CONF_TYPE] in (
             c.CONN_TYPE_DIRECT_EDGE,
             c.CONN_TYPE_LOCAL_FEMS,
             c.CONN_TYPE_LOCAL_OPENEMS,
-        ]:
+        ):
             title = self._config_data[CONF_HOST]
         elif self._config_data[CONF_TYPE] == c.CONN_TYPE_WEB_FENECON:
             title = "FEMS Web: " + self._config_data[CONF_USERNAME]
