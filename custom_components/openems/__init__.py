@@ -1,7 +1,5 @@
 """The HA OpenEMS integration."""
 
-from __future__ import annotations
-
 import asyncio
 import copy
 import logging
