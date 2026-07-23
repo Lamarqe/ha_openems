@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from homeassistant.components.openems import openems
+from custom_components.openems import openems
 
 
 class DummyRpcServer:

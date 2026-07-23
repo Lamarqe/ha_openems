@@ -3,8 +3,8 @@
 from unittest.mock import AsyncMock, patch
 
 from homeassistant import config_entries
-from homeassistant.components.openems.config_flow import CannotConnect, InvalidAuth
-from homeassistant.components.openems.const import OPENEMS_DOMAIN
+from custom_components.openems.config_flow import CannotConnect, InvalidAuth
+from custom_components.openems.const import OPENEMS_DOMAIN
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType

@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.13"]
     
     steps:
       - uses: actions/checkout@v4
@@ -33,14 +33,7 @@ jobs:
           pip install pytest pytest-cov pytest-asyncio
           pip install homeassistant
       
-      - name: Link custom_components for tests
-        run: |
-          mkdir -p homeassistant/components
-          ln -s ${{ github.workspace }}/custom_components/openems homeassistant/components/openems
-      
       - name: Run tests with coverage
-        env:
-          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest tests/ \
             --cov=custom_components/openems \

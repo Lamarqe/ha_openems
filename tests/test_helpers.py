@@ -2,7 +2,7 @@
 
 import asyncio
 
-from homeassistant.components.openems import helpers, openems
+from custom_components.openems import helpers, openems
 
 
 def test_unit_description_various() -> None:
