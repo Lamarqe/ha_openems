@@ -1,0 +1,88 @@
+repos:
+  - repo: local
+    hooks:
+      - id: codespell
+        name: Check code for common misspellings
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+        entry: codespell
+        args:
+          - --quiet-level=2
+          - --ignore-words-list=hass,ba,fo
+          - --skip=tests/fixtures/*
+
+      - id: isort
+        name: Sort imports
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+        entry: isort
+
+      - id: pyupgrade
+        name: Run pyupgrade
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+        entry: pyupgrade
+        files: ^.*.py$
+        args:
+          - "--py39-plus"
+
+      - id: ruff-check
+        name: Run ruff check
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+        entry: ruff
+        args:
+          - check
+        files: ^((action|custom_components|script|tests)/.+)?[^/]+\.py$
+
+      - id: ruff-format
+        name: Run ruff format
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+        entry: ruff
+        args:
+          - format
+        files: ^((action|custom_components|script)/.+)?[^/]+\.py$
+
+      - id: check-executables-have-shebangs
+        name: Check that executables have shebangs
+        language: system
+        types: [text, executable]
+        entry: check-executables-have-shebangs
+        stages: [pre-commit, pre-push, manual]
+
+      - id: check-json
+        name: Check JSON files
+        language: system
+        types: [json]
+        stages: [pre-commit, pre-push, manual]
+        entry: check-json
+
+      - id: requirements-txt-fixer
+        name: Check requirements files
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+        entry: requirements-txt-fixer
+        files: ^requirements_.*.txt$
+
+      - id: check-ast
+        name: Check Python AST
+        language: system
+        types: [python]
+        stages: [pre-commit, pre-push, manual]
+        entry: check-ast
+
+      - id: mixed-line-ending
+        name: Check line nedings
+        language: system
+        types: [text]
+        stages: [pre-commit, pre-push, manual]
+        entry: mixed-line-ending
+        args:
+          - --fix=lf

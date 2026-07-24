@@ -1,5 +1,0 @@
-pytest
-pytest-cov
-pytest-asyncio
-homeassistant
-jsonrpc-websocket==3.2.0
