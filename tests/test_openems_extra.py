@@ -1,44 +1,48 @@
 """Extra unit tests for the OpenEMS integration.
 
 These tests add coverage for channels, number property template references
-and backend login behavior.
+and connection login behavior.
 """
 
-from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
+from yarl import URL
 
 from custom_components.openems import openems
+from custom_components.openems.const import SLASH_ESC
+from custom_components.openems.entry_data import OpenEMSWebSocketConnection
+from custom_components.openems.helpers_openems import prepare_ref_value
 
 
-def make_comp(name: str = "ctrlEvcs1"):
-    """Create a minimal component-like object for tests.
+def _make_backend():
+    backend = MagicMock()
+    backend.multi_edge = False
+    backend.connection.conn_url = URL("ws://localhost:8085/openems-backend-ui")
+    backend.connection.notify_data_received = MagicMock()
+    return backend
 
-    Parameters
-    ----------
-    name : str
-        Component name
-    """
-    comp = SimpleNamespace()
+
+def _make_component(name: str = "ctrlEvcs1"):
+    """Create a minimal component-like object for property tests."""
+    comp = MagicMock()
     comp.name = name
-    comp.properties = {"id": name}
-    # provide a dummy edge object with register/unregister methods used by channels
+    comp.json_properties = {}
+
     class DummyEdge:
         def __init__(self) -> None:
             self.hostname = "h"
-            self._registered = {}
             self.id = "edge"
+            self._registered_handlers: dict = {}
 
         def register_channel(self, channel_names, handler):
             for ch_name in channel_names:
-                self._registered.setdefault(ch_name, set()).add(handler)
+                self._registered_handlers.setdefault(
+                    ch_name, set()).add(handler)
 
         def unregister_channel(self, handler):
-            for ch_name, handlers in list(self._registered.items()):
-                if handler in handlers:
-                    handlers.remove(handler)
-                    if not handlers:
-                        del self._registered[ch_name]
+            for ch_name, handlers in list(self._registered_handlers.items()):
+                handlers.discard(handler)
 
     comp.edge = DummyEdge()
     return comp
@@ -46,7 +50,7 @@ def make_comp(name: str = "ctrlEvcs1"):
 
 def test_channel_register_unregister_and_notify() -> None:
     """Test register and unregister behavior for channels and notify callback."""
-    comp = make_comp()
+    comp = _make_component()
     chan_json = {"id": "SomeSensor", "type": "INTEGER", "unit": "u"}
     chan = openems.OpenEMSChannel(component=comp, channel_json=chan_json)
 
@@ -57,70 +61,69 @@ def test_channel_register_unregister_and_notify() -> None:
         called = True
 
     chan.register_callback(cb)
-    # After registering, the component.edge should have the channel registered
-    assert any(isinstance(x, openems.OpenEMSChannel) or True for x in comp.edge.__dict__.get("__dict__", {})) or True
-    # notify should call callback
     chan.notify_ha()
     assert called
-    # unregister
     chan.unregister_callback()
-    # callback removed
     assert chan.callback is None
 
 
-@pytest.mark.asyncio
-async def test_set_unavailable_clears_subscriptions_and_sets_none() -> None:
-    """Test that set_unavailable sets values to None via currentData handling."""
-    backend = SimpleNamespace()
-    backend.rpc_server = SimpleNamespace()
-    backend.username = "u"
-    backend.password = "p"
-    backend.rest_base_url = None
+def test_set_unavailable_clears_values() -> None:
+    """Test that set_unavailable calls handle_data_update(None) for active channels."""
+    backend = _make_backend()
+    component_config = {"_host": {"Hostname": "h1"}}
+    edge = openems.OpenEMSEdge(backend, "e1", component_config)
+    try:
+        comp = _make_component()
+        chan_json = {"id": "S", "type": "INTEGER", "unit": "u"}
+        ch = openems.OpenEMSChannel(component=comp, channel_json=chan_json)
 
-    edge = openems.OpenEMSEdge(backend=backend, id="e1")
-    # create a dummy channel and register
-    comp = make_comp()
-    ch = openems.OpenEMSChannel(component=comp, channel_json={"id": "S", "type": "INTEGER", "unit": "u"})
-    # register in edge's registered channels map
-    edge._registered_channels["c1"] = {ch}
-    # current channel data set
-    edge.current_channel_data = {"c1": 5}
-    # call set_unavailable should call handle_data_update with None and clear active subs
-    edge.set_unavailable()
-    assert ch.current_value is None
+        # Register the channel directly in the edge handler map
+        edge._registered_handlers["c1/S"] = {ch}
+        edge.current_channel_data = {"c1/S": 5}
+
+        edge.set_unavailable()
+        assert ch.current_value is None
+    finally:
+        edge.stop()
 
 
-@pytest.mark.asyncio
-async def test_number_property_with_template_references() -> None:
+def test_number_property_with_template_references() -> None:
     """Test OpenEMSNumberProperty with template references to other channels."""
-    comp = make_comp("evcs1")
-    num_json = {"id": "_PropertyForceChargeMinPower", "type": "INTEGER", "unit": "W"}
-    num_prop = openems.OpenEMSNumberProperty(component=comp, channel_json=num_json)
-    # prepare multiplier definition using a reference to $evcs.id/Phases
+    comp = _make_component("evcs1")
+    # needed for $evcs.id resolution
+    comp.json_properties["evcs.id"] = comp.name
+
+    num_json = {"id": "_PropertyForceChargeMinPower",
+                "type": "INTEGER", "unit": "W"}
+    num_prop = openems.OpenEMSNumberProperty(
+        component=comp, channel_json=num_json)
+
     mult_def = "{{$evcs.id/Phases}}"
-    # ensure component.properties contains the key referenced by the template
-    comp.properties["evcs.id"] = comp.name
-    _, has_refs = num_prop._prepare_ref_value(mult_def)
-    assert has_refs
-    # when registering, the reference channel should be in reference_channels
+    _, refs = prepare_ref_value(mult_def, comp)
+    assert refs  # has external references
+
     num_prop.set_multiplier_def(mult_def)
-    # set limits so _update_config has limit templates to render
     num_prop.set_limit_def({"lower": "1", "upper": "100"})
-    # simulate the referenced channel update
-    # reference key becomes component + SLASH_ESC + channel
-    ref_key = "evcs1" + openems.SLASH_ESC + "Phases"
+
+    ref_key = "evcs1" + SLASH_ESC + "Phases"
     assert ref_key in num_prop.reference_channels
+
     num_prop.reference_channels[ref_key] = 3
-    # update config should calculate multiplier based on reference
     num_prop._update_config()
-    # multiplier should be set (from reference 3.0)
-    assert isinstance(num_prop.multiplier, float)
+    assert num_prop.multiplier == 3.0
 
 
-@pytest.mark.asyncio
-async def test_backend_login_raises_on_not_connected(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that login_to_server raises ConnectionError when rpc_server reports not connected."""
-    openems.jsonrpc_websocket.Server = lambda *args, **kwargs: SimpleNamespace(connected=False, authenticateWithPassword=lambda **kw: {})
-    backend = openems.OpenEMSBackend(ws_url=openems.URL("ws://ex"), username="u", password="p")
+async def test_login_raises_on_not_connected() -> None:
+    """Test that login_to_server raises ConnectionError when not connected."""
+    conn_props = {
+        "host": "localhost",
+        "password": "p",
+        "type": "direct_edge",
+        "url": None,
+        "username": "u",
+    }
+    conn = OpenEMSWebSocketConnection(conn_props)
+    conn.rpc_server.connected = False
     with pytest.raises(ConnectionError):
-        await backend.login_to_server()
+        await conn.login_to_server()
+    await conn.rpc_server.close()
