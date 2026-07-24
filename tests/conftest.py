@@ -1,9 +1,10 @@
 """Common fixtures for the HA OpenEMS tests."""
 
 from collections.abc import Generator
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from yarl import URL
 
 
 # pytest-homeassistant-custom-component pre-populates DATA_CUSTOM_COMPONENTS={}
@@ -29,3 +30,12 @@ def mock_setup_entry() -> Generator[AsyncMock]:
         ),
     ):
         yield mock_setup_entry
+
+
+@pytest.fixture
+def dummy_backend():
+    """Minimal mock OpenEMSBackend for unit tests that construct OpenEMSEdge directly."""
+    backend = MagicMock()
+    backend.multi_edge = False
+    backend.connection.conn_url = URL("ws://localhost:8085/openems-backend-ui")
+    return backend
