@@ -259,3 +259,91 @@ async def test_custom_url_invalid_url_shows_error(
     assert result["type"] is FlowResultType.FORM
     assert result["errors"].get(CONF_MORE_OPTIONS) == "invalid_url"
     assert "base" in result["errors"]
+
+
+# ---------------------------------------------------------------------------
+# Fenecon Web connection type
+# ---------------------------------------------------------------------------
+
+_USER_INPUT_WEB_FENECON = {
+    CONF_USERNAME: "user@example.com",
+    CONF_PASSWORD: "password",
+    "more_options": {"type": "web_fenecon"},
+}
+
+
+async def test_web_fenecon_creates_entry(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """web_fenecon type must create an entry without a host field stored."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, edges_patch, components_patch = _success_patches()
+    with conn_patch, edges_patch, components_patch:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT_WEB_FENECON
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    stored = result["data"]["user_input"]
+    assert stored["type"] == "web_fenecon"
+    assert not stored.get(CONF_HOST)
+
+
+async def test_web_fenecon_title_uses_username(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Entry title for web_fenecon must be 'FEMS Web: <username>'."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, edges_patch, components_patch = _success_patches()
+    with conn_patch, edges_patch, components_patch:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT_WEB_FENECON
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == "FEMS Web: user@example.com"
+
+
+async def test_web_fenecon_multi_edge_shows_edge_selection(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """web_fenecon with multi-edge login must show the edge-selection form."""
+    from .helpers_flow import make_mock_connection
+
+    _multi_login = {"user": {"hasMultipleEdges": True}}
+    _multi_edges = {
+        "edges": [
+            {"id": "edge-online-1", "isOnline": True},
+            {"id": "edge-online-2", "isOnline": True},
+        ]
+    }
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    mock_conn = make_mock_connection(_multi_login)
+    with (
+        patch(
+            "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+            return_value=mock_conn,
+        ),
+        patch.object(OpenEMSConfigReader, "read_edges",
+                     return_value=_multi_edges),
+        patch.object(OpenEMSConfigReader,
+                     "read_edge_components", return_value={}),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT_WEB_FENECON
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "edges"
