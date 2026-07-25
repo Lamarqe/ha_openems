@@ -6,10 +6,13 @@ network calls by using small dummy objects.
 from datetime import time
 from unittest.mock import MagicMock
 
+from homeassistant.core import HomeAssistant
 from yarl import URL
 
 from custom_components.openems import openems
+from custom_components.openems.const import SLASH_ESC
 from custom_components.openems.helpers import wrap_jsonrpc
+from custom_components.openems.helpers_openems import prepare_ref_value
 
 
 def _make_backend():
@@ -73,7 +76,8 @@ def test_component_boolean_property() -> None:
     try:
         assert "comp1" in edge.components
         comp = edge.components["comp1"]
-        assert any(p.name == "_PropertyEnabledCharging" for p in comp.boolean_properties)
+        assert any(
+            p.name == "_PropertyEnabledCharging" for p in comp.boolean_properties)
 
         prop = comp.boolean_properties[0]
         called = False
@@ -96,7 +100,8 @@ def test_enum_property_behavior() -> None:
     comp = _make_component()
     enum_json = {"id": "_PropertyChargeMode", "type": "STRING", "unit": "u"}
     options = ["EXCESS_POWER", "MANUAL", "OFF"]
-    prop = openems.OpenEMSEnumProperty(component=comp, channel_json=enum_json, options=options)
+    prop = openems.OpenEMSEnumProperty(
+        component=comp, channel_json=enum_json, options=options)
     prop.handle_data_update("_PropertyChargeMode", "EXCESS_POWER")
     assert prop.current_option == "EXCESS_POWER"
     # unknown option is ignored
@@ -107,7 +112,8 @@ def test_enum_property_behavior() -> None:
 def test_time_property_behavior() -> None:
     """Test time property parsing."""
     comp = _make_component()
-    time_json = {"id": "_PropertyManualTargetTime", "type": "STRING", "unit": "u"}
+    time_json = {"id": "_PropertyManualTargetTime",
+                 "type": "STRING", "unit": "u"}
     prop = openems.OpenEMSTimeProperty(component=comp, channel_json=time_json)
     prop.handle_data_update("_PropertyManualTargetTime", "12:34")
     assert prop.native_value == time(12, 34)
@@ -119,7 +125,8 @@ def test_time_property_behavior() -> None:
 def test_number_property_multiplier_and_limits() -> None:
     """Test number property applies multiplier on data update."""
     comp = _make_component()
-    num_json = {"id": "_PropertyEnergySessionLimit", "type": "INTEGER", "unit": "W"}
+    num_json = {"id": "_PropertyEnergySessionLimit",
+                "type": "INTEGER", "unit": "W"}
     prop = openems.OpenEMSNumberProperty(component=comp, channel_json=num_json)
     prop.set_multiplier_def("2")
     prop.set_limit_def({"lower": "1", "upper": "100"})
@@ -130,3 +137,114 @@ def test_number_property_multiplier_and_limits() -> None:
 
     prop.handle_data_update("comp/_PropertyEnergySessionLimit", 10)
     assert prop.current_value == 20
+
+
+def _make_component_with_edge(name: str = "ctrlEvcs1"):
+    """Return a mock component with a real DummyEdge supporting register/unregister."""
+    comp = MagicMock()
+    comp.name = name
+    comp.json_properties = {}
+
+    class DummyEdge:
+        def __init__(self) -> None:
+            self.hostname = "h"
+            self.id = "edge"
+            self._registered_handlers: dict = {}
+
+        def register_channel(self, channel_names, handler):
+            for ch_name in channel_names:
+                self._registered_handlers.setdefault(
+                    ch_name, set()).add(handler)
+
+        def unregister_channel(self, handler):
+            for ch_name, handlers in list(self._registered_handlers.items()):
+                handlers.discard(handler)
+
+    comp.edge = DummyEdge()
+    return comp
+
+
+def test_channel_register_unregister_and_notify() -> None:
+    """Test register and unregister behavior for channels and notify callback."""
+    comp = _make_component_with_edge()
+    chan_json = {"id": "SomeSensor", "type": "INTEGER", "unit": "u"}
+    chan = openems.OpenEMSChannel(component=comp, channel_json=chan_json)
+
+    called = False
+
+    def cb():
+        nonlocal called
+        called = True
+
+    chan.register_callback(cb)
+    chan.notify_ha()
+    assert called
+    chan.unregister_callback()
+    assert chan.callback is None
+
+
+def test_set_unavailable_clears_values() -> None:
+    """Test that set_unavailable calls handle_data_update(None) for active channels."""
+    backend = _make_backend()
+    component_config = {"_host": {"Hostname": "h1"}}
+    edge = openems.OpenEMSEdge(backend, "e1", component_config)
+    try:
+        comp = _make_component_with_edge()
+        chan_json = {"id": "S", "type": "INTEGER", "unit": "u"}
+        ch = openems.OpenEMSChannel(component=comp, channel_json=chan_json)
+
+        # Register the channel directly in the edge handler map
+        edge._registered_handlers["c1/S"] = {ch}
+        edge.current_channel_data = {"c1/S": 5}
+
+        edge.set_unavailable()
+        assert ch.current_value is None
+    finally:
+        edge.stop()
+
+
+def test_number_property_with_template_references() -> None:
+    """Test OpenEMSNumberProperty with template references to other channels."""
+    comp = _make_component_with_edge("evcs1")
+    # needed for $evcs.id resolution
+    comp.json_properties["evcs.id"] = comp.name
+
+    num_json = {"id": "_PropertyForceChargeMinPower",
+                "type": "INTEGER", "unit": "W"}
+    num_prop = openems.OpenEMSNumberProperty(
+        component=comp, channel_json=num_json)
+
+    mult_def = "{{$evcs.id/Phases}}"
+    _, refs = prepare_ref_value(mult_def, comp)
+    assert refs  # has external references
+
+    num_prop.set_multiplier_def(mult_def)
+    num_prop.set_limit_def({"lower": "1", "upper": "100"})
+
+    ref_key = "evcs1" + SLASH_ESC + "Phases"
+    assert ref_key in num_prop.reference_channels
+
+    num_prop.reference_channels[ref_key] = 3
+    num_prop._update_config()
+    assert num_prop.multiplier == 3.0
+
+
+async def test_entity_lifecycle_and_unique_id(hass: HomeAssistant, dummy_backend) -> None:
+    """Test entities are prepared and unique_ids are stable."""
+    comp = {
+        "_PropertyAlias": "a",
+        "properties": {},
+        "channels": [
+            {"id": "ch1", "type": "INTEGER", "unit": "u"},
+            {"id": "ch2", "type": "DOUBLE", "unit": "kWh"},
+        ],
+    }
+    component_config = {"_host": {"Hostname": "edge1"}, "c1": comp}
+    edge = openems.OpenEMSEdge(dummy_backend, "edge1", component_config)
+    try:
+        comp_obj = edge.components["c1"]
+        assert len(comp_obj.sensors) >= 1
+        for s in comp_obj.sensors:
+            assert s.unique_id().startswith("edge1")
+    finally:
+        edge.stop()
