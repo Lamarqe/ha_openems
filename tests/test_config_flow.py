@@ -1,6 +1,6 @@
 """Test the HA OpenEMS config flow."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import jsonrpc_base
 import jsonrpc_base.jsonrpc
@@ -12,6 +12,8 @@ from homeassistant.data_entry_flow import FlowResultType
 from custom_components.openems.const import DOMAIN
 from custom_components.openems.entry_data import OpenEMSConfigReader
 
+from .helpers_flow import make_mock_connection
+
 _USER_INPUT = {
     CONF_HOST: "1.1.1.1",
     CONF_USERNAME: "test-username",
@@ -21,22 +23,12 @@ _USER_INPUT = {
     },
 }
 
-_LOGIN_RESPONSE_SINGLE = {"user": {"hasMultipleEdges": False}}
-_EDGES_RESPONSE = {"edges": [{"id": "fems17289", "isOnline": True}]}
+_EDGES_RESPONSE = {"edges": [{"id": "edge-1", "isOnline": True}]}
 _COMPONENTS: dict = {}
 
 
-def _make_mock_connection():
-    """Return an AsyncMock connection that avoids creating a real aiohttp session."""
-    mock_conn = MagicMock()
-    mock_conn.connect_to_server = AsyncMock()
-    mock_conn.login_to_server = AsyncMock(return_value=_LOGIN_RESPONSE_SINGLE)
-    mock_conn.stop = AsyncMock()
-    return mock_conn
-
-
 def _success_patches():
-    mock_conn = _make_mock_connection()
+    mock_conn = make_mock_connection()
     return (
         patch(
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
@@ -80,7 +72,7 @@ async def test_form_invalid_auth(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
 
-    error_conn = _make_mock_connection()
+    error_conn = make_mock_connection()
     error_conn.login_to_server = AsyncMock(
         side_effect=jsonrpc_base.jsonrpc.ProtocolError(401, "Unauthorized")
     )
@@ -115,7 +107,7 @@ async def test_form_cannot_connect(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
 
-    error_conn = _make_mock_connection()
+    error_conn = make_mock_connection()
     error_conn.connect_to_server = AsyncMock(
         side_effect=jsonrpc_base.TransportError(
             "Connection refused", None, "errno 111")

@@ -1,6 +1,6 @@
 """Config flow tests for multi-edge scenarios and edge selection."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import jsonrpc_base
 import jsonrpc_base.jsonrpc
@@ -12,6 +12,8 @@ from homeassistant.data_entry_flow import FlowResultType, InvalidData
 
 from custom_components.openems.const import CONF_EDGE, CONF_EDGES, DOMAIN
 from custom_components.openems.entry_data import OpenEMSConfigReader
+
+from .helpers_flow import make_mock_connection
 
 _LOGIN_RESPONSE_MULTI: dict = {"user": {"hasMultipleEdges": True}}
 
@@ -32,20 +34,11 @@ _USER_INPUT = {
 _COMPONENTS: dict = {}
 
 
-def _make_mock_connection(login_response: dict):
-    """Return an AsyncMock connection with the given login response."""
-    mock_conn = MagicMock()
-    mock_conn.connect_to_server = AsyncMock()
-    mock_conn.login_to_server = AsyncMock(return_value=login_response)
-    mock_conn.stop = AsyncMock()
-    return mock_conn
-
-
 def _multi_edge_patches(login_response: dict | None = None):
     """Return patches for a successful multi-edge connection."""
     if login_response is None:
         login_response = _LOGIN_RESPONSE_MULTI
-    mock_conn = _make_mock_connection(login_response)
+    mock_conn = make_mock_connection(login_response)
     return (
         patch(
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
@@ -166,7 +159,7 @@ async def test_multi_edge_edges_step_error_on_connection_failure(
         assert result["step_id"] == "edges"
 
     # Simulate a connection failure when the user confirms edge selection
-    error_conn = _make_mock_connection(_LOGIN_RESPONSE_MULTI)
+    error_conn = make_mock_connection(_LOGIN_RESPONSE_MULTI)
     error_conn.connect_to_server = AsyncMock(
         side_effect=jsonrpc_base.TransportError("connect failed")
     )
