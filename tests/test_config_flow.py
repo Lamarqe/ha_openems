@@ -5,11 +5,12 @@ from unittest.mock import AsyncMock, patch
 import jsonrpc_base
 import jsonrpc_base.jsonrpc
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import (CONF_HOST, CONF_PASSWORD, CONF_URL,
+                                 CONF_USERNAME)
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.openems.const import DOMAIN
+from custom_components.openems.const import CONF_MORE_OPTIONS, DOMAIN
 from custom_components.openems.entry_data import OpenEMSConfigReader
 
 from .helpers_flow import make_mock_connection
@@ -27,8 +28,12 @@ _EDGES_RESPONSE = {"edges": [{"id": "edge-1", "isOnline": True}]}
 _COMPONENTS: dict = {}
 
 
-def _success_patches():
+def _success_patches(conn_url: str | None = None):
+    from yarl import URL
+
     mock_conn = make_mock_connection()
+    if conn_url:
+        mock_conn.conn_url = URL(conn_url)
     return (
         patch(
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
@@ -133,3 +138,102 @@ async def test_form_cannot_connect(
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert len(mock_setup_entry.mock_calls) == 1
+
+
+_USER_INPUT_CUSTOM_URL = {
+    CONF_USERNAME: "user",
+    CONF_PASSWORD: "password",
+    "more_options": {
+        "type": "custom_url",
+        CONF_URL: "ws://myserver.example.com:8085/openems-backend-ui",
+    },
+}
+
+
+async def test_custom_url_empty_url_shows_error(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Submitting custom_url type with a blank URL must show a validation error."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_USERNAME: "user",
+            CONF_PASSWORD: "password",
+            "more_options": {"type": "custom_url", CONF_URL: "   "},
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert CONF_MORE_OPTIONS in result["errors"]
+    assert result["errors"][CONF_MORE_OPTIONS] == "custom_url_missing"
+
+
+async def test_custom_url_relative_url_shows_error(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Submitting a relative (non-absolute) custom URL must show a validation error."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_USERNAME: "user",
+            CONF_PASSWORD: "password",
+            "more_options": {"type": "custom_url", CONF_URL: "relative/path"},
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert CONF_MORE_OPTIONS in result["errors"]
+    assert result["errors"][CONF_MORE_OPTIONS] == "url_not_absolute"
+
+
+async def test_custom_url_creates_entry(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A valid absolute custom URL must create an entry with URL stored and host absent."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, edges_patch, components_patch = _success_patches(
+        conn_url="ws://myserver.example.com:8085/openems-backend-ui"
+    )
+    with conn_patch, edges_patch, components_patch:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT_CUSTOM_URL
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    stored = result["data"]["user_input"]
+    assert stored[CONF_URL] == "ws://myserver.example.com:8085/openems-backend-ui"
+    # host is not provided for custom_url; it is absent or empty in stored data
+    assert not stored.get(CONF_HOST)
+
+
+async def test_custom_url_title_uses_url_host(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Entry title for a custom URL connection must be the URL hostname."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, edges_patch, components_patch = _success_patches(
+        conn_url="ws://myserver.example.com:8085/openems-backend-ui"
+    )
+    with conn_patch, edges_patch, components_patch:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT_CUSTOM_URL
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == "myserver.example.com"
