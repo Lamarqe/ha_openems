@@ -237,3 +237,25 @@ async def test_custom_url_title_uses_url_host(
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "myserver.example.com"
+
+
+async def test_custom_url_invalid_url_shows_error(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A malformed URL that raises ValueError must show an invalid_url error."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_USERNAME: "user",
+            CONF_PASSWORD: "password",
+            "more_options": {"type": "custom_url", CONF_URL: "http://[invalid"},
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"].get(CONF_MORE_OPTIONS) == "invalid_url"
+    assert "base" in result["errors"]
