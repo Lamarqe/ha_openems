@@ -2,19 +2,22 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
+                                             SensorStateClass)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import sensor
 from custom_components.openems.const import \
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
+from custom_components.openems.openems import OpenEMSChannel
 from custom_components.openems.sensor import (OpenEMSSensorDescription,
                                               OpenEMSSensorEntity)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_entity(channel=None, state_class=None) -> OpenEMSSensorEntity:
     """Build an OpenEMSSensorEntity backed by a mock channel."""
@@ -128,6 +131,45 @@ async def test_async_will_remove_unregisters_callback() -> None:
         await entity.async_will_remove_from_hass()
 
     channel.unregister_callback.assert_called_once()
+
+
+def test_enum_channel_maps_integer_to_snake_case_option() -> None:
+    """An ENUM channel converts the backend integer value to a snake_case option string.
+
+    OpenEMSChannel stores options as {int_value: option_name}.  A data update
+    with the matching integer should surface as the lower-cased option name on
+    the entity.
+    """
+    comp = MagicMock()
+    comp.name = "ctrlEvcs0"
+    comp.edge.hostname = "host"
+    comp.edge.id = "edge-1"
+    comp.edge.register_channel = MagicMock()
+    comp.edge.unregister_channel = MagicMock()
+
+    channel_json = {"id": "ChargeMode", "type": "STRING", "unit": ""}
+    # options are stored as {name: int_value}; OpenEMSChannel inverts them to {int_value: name}
+    options = {"EXCESS_POWER": 0, "MANUAL": 1, "OFF": 2}
+    channel_json["category"] = "ENUM"  # mark as enum so options are applied
+    # rebuild with category set so the branch is exercised
+    channel = OpenEMSChannel(
+        component=comp,
+        channel_json={**channel_json, "category": "ENUM"},
+        options=options,
+    )
+
+    channel.handle_data_update("ctrlEvcs0/ChargeMode", 1)  # 1 → "MANUAL"
+
+    desc = OpenEMSSensorDescription(
+        key=channel.unique_id(),
+        name="ChargeMode",
+        device_class=SensorDeviceClass.ENUM,
+        state_class=None,
+    )
+    device_info = DeviceInfo(name="dev", identifiers={("openems", "dev")})
+    entity = OpenEMSSensorEntity(channel, desc, device_info)
+
+    assert entity.native_value == "manual"
 
 
 # ---------------------------------------------------------------------------
