@@ -1,88 +1,105 @@
 repos:
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.21
+    hooks:
+      - id: ruff-check
+        args:
+          - --fix
+      - id: ruff-format
+        files: ^((homeassistant|pylint|script|tests)/.+)?[^/]+\.(py|pyi)$
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
     hooks:
       - id: codespell
-        name: Check code for common misspellings
-        language: system
-        types: [text]
-        stages: [pre-commit, pre-push, manual]
-        entry: codespell
         args:
+          - --ignore-words-list=aiport,astroid,checkin,currenty,hass,iif,incomfort,lookin,nam,NotIn
+          - --skip="./.*,*.csv,*.json,*.ambr"
           - --quiet-level=2
-          - --ignore-words-list=hass,ba,fo
-          - --skip=tests/fixtures/*
-
-      - id: isort
-        name: Sort imports
-        language: system
-        types: [text]
-        stages: [pre-commit, pre-push, manual]
-        entry: isort
-
-      - id: pyupgrade
-        name: Run pyupgrade
-        language: system
-        types: [text]
-        stages: [pre-commit, pre-push, manual]
-        entry: pyupgrade
-        files: ^.*.py$
+        exclude_types: [csv, json, html]
+        exclude: ^tests/fixtures/|homeassistant/generated/|tests/components/.*/snapshots/
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.24.1
+    hooks:
+      - id: zizmor
         args:
-          - "--py39-plus"
-
-      - id: ruff-check
-        name: Run ruff check
-        language: system
-        types: [text]
-        stages: [pre-commit, pre-push, manual]
-        entry: ruff
-        args:
-          - check
-        files: ^((action|custom_components|script|tests)/.+)?[^/]+\.py$
-
-      - id: ruff-format
-        name: Run ruff format
-        language: system
-        types: [text]
-        stages: [pre-commit, pre-push, manual]
-        entry: ruff
-        args:
-          - format
-        files: ^((action|custom_components|script)/.+)?[^/]+\.py$
-
+          - --pedantic
+        exclude: ^\.github/workflows/.*\.lock\.yml$
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
       - id: check-executables-have-shebangs
-        name: Check that executables have shebangs
-        language: system
-        types: [text, executable]
-        entry: check-executables-have-shebangs
-        stages: [pre-commit, pre-push, manual]
-
+        stages: [manual]
       - id: check-json
-        name: Check JSON files
-        language: system
-        types: [json]
-        stages: [pre-commit, pre-push, manual]
-        entry: check-json
-
-      - id: requirements-txt-fixer
-        name: Check requirements files
-        language: system
-        types: [text]
-        stages: [pre-commit, pre-push, manual]
-        entry: requirements-txt-fixer
-        files: ^requirements_.*.txt$
-
-      - id: check-ast
-        name: Check Python AST
-        language: system
-        types: [python]
-        stages: [pre-commit, pre-push, manual]
-        entry: check-ast
-
-      - id: mixed-line-ending
-        name: Check line nedings
-        language: system
-        types: [text]
-        stages: [pre-commit, pre-push, manual]
-        entry: mixed-line-ending
+        exclude: (.vscode|.devcontainer)
+      - id: no-commit-to-branch
         args:
-          - --fix=lf
+          - --branch=dev
+          - --branch=master
+          - --branch=rc
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.6.2
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier@3.6.2
+          - prettier-plugin-sort-json@4.2.0
+        exclude: ^\.github/workflows/.*\.lock\.yml$
+  - repo: https://github.com/cdce8p/python-typing-update
+    rev: v0.6.0
+    hooks:
+      # Run `python-typing-update` hook manually from time to time
+      # to update python typing syntax.
+      # Will require manual work, before submitting changes!
+      # prek run --hook-stage manual python-typing-update --all-files
+      - id: python-typing-update
+        stages: [manual]
+        args:
+          - --py311-plus
+          - --force
+          - --keep-updates
+        files: ^(homeassistant|tests|script)/.+\.py$
+  - repo: local
+    hooks:
+      # Run mypy through our wrapper script in order to get the possible
+      # pyenv and/or virtualenv activated; it may not have been e.g. if
+      # committing from a GUI tool that was not launched from an activated
+      # shell.
+      - id: mypy
+        name: mypy
+        entry: script/run-in-env.sh mypy
+        language: script
+        require_serial: true
+        types_or: [python, pyi]
+        files: ^(homeassistant|pylint)/.+\.(py|pyi)$
+      - id: pylint
+        name: pylint
+        entry: script/run-in-env.sh pylint
+        language: script
+        require_serial: true
+        types_or: [python, pyi]
+        files: ^(homeassistant|tests)/.+\.(py|pyi)$
+      - id: gen_copilot_instructions
+        name: gen_copilot_instructions
+        entry: script/run-in-env.sh python3 -m script.gen_copilot_instructions
+        pass_filenames: false
+        language: script
+        types: [text]
+        files: ^(AGENTS\.md|\.claude/skills/(?!github-pr-reviewer/).+/SKILL\.md|\.github/copilot-instructions\.md|script/gen_copilot_instructions\.py)$
+      - id: hassfest
+        name: hassfest
+        entry: script/run-in-env.sh python3 -m script.hassfest
+        pass_filenames: false
+        language: script
+        types: [text]
+        files: ^(homeassistant/.+/(icons|manifest|strings)\.json|homeassistant/.+/(conditions|quality_scale|services|triggers)\.yaml|homeassistant/brands/.*\.json|script/hassfest/(?!metadata|mypy_config).+\.py|homeassistant/components/sensor/const\.py|requirements.+\.txt)$
+      - id: hassfest-mypy-config
+        name: hassfest-mypy-config
+        entry: script/run-in-env.sh python3 -m script.hassfest -p mypy_config
+        pass_filenames: false
+        language: script
+        types: [text]
+        files: ^(script/hassfest/mypy_config\.py|\.strict-typing|mypy\.ini)$

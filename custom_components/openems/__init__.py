@@ -85,8 +85,12 @@ async def async_setup_entry(
         login_response: dict = await connection.login_to_server()
     except ProtocolError as ex:
         await connection.stop()
-        raise ConfigEntryAuthFailed(
-            f"Wrong user / password for {connection.conn_url.host}"
+        if ex.args and ex.args[0] == 1003:
+            raise ConfigEntryAuthFailed(
+                f"Wrong user / password for {connection.conn_url.host}"
+            ) from ex
+        raise ConfigEntryNotReady(
+            f"Server error during login to {connection.conn_url.host}: {ex}"
         ) from ex
 
     # 3. Reload component list in case explicit user request to reload (hass.is_running)
@@ -100,12 +104,13 @@ async def async_setup_entry(
         }
         hass.config_entries.async_update_entry(
             entry=config_entry,
-            data=copy.deepcopy(entry_data),  # copy data because backend has ownership
+            # copy data because backend has ownership
+            data=copy.deepcopy(entry_data),
         )
     else:
         components = data_copy["components"]
 
-    # 4. Prepare HA entity strucutures from config entry data
+    # 4. Prepare HA entity structures from config entry data
     multi_edge = OpenEMSConfigReader.parse_login_response(login_response)
     backend = OpenEMSBackend(connection, edge_id, multi_edge, components)
 
