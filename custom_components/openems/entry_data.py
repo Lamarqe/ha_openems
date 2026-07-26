@@ -18,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ConnectionProperties(TypedDict):
-    "Type containing the websocket connection paramters."
+    "Type containing the websocket connection parameters."
 
     host: str | None
     password: str
@@ -72,6 +72,11 @@ class OpenEMSWebSocketConnection:
         """Store the timestamp of the last received data. Used for connection loss detection."""
         self._last_data_received = time.time()
 
+    @property
+    def reconnect_task(self) -> asyncio.Task | None:
+        """The active reconnect task, if any."""
+        return self._reconnect_task
+
     async def _reconnect_forever(self, connection_lost_callback: Callable):
         while True:
             # check for an existing connection
@@ -111,7 +116,8 @@ class OpenEMSWebSocketConnection:
                 _LOGGER.debug("Reconnected to host %s", self.conn_url.host)
                 # connected. Lets login
                 await self.login_to_server()
-                _LOGGER.info("Connection to host %s reestablished", self.conn_url.host)
+                _LOGGER.info("Connection to host %s reestablished",
+                             self.conn_url.host)
             except (
                 jsonrpc_base.jsonrpc.TransportError,
                 jsonrpc_base.jsonrpc.ProtocolError,
@@ -148,7 +154,8 @@ class OpenEMSConfigReader:
     async def read_edge_components(self) -> dict:
         """Read components of the edge."""
         if not self.edge_id:
-            raise EdgeNotDefinedError("No edge ID defined for reading components.")
+            raise EdgeNotDefinedError(
+                "No edge ID defined for reading components.")
 
         # read component list
         edge_call = wrap_jsonrpc("getEdgeConfig")
@@ -219,7 +226,8 @@ class OpenEMSConfigReader:
     async def get_channel_values_via_websocket(self, channels: list[str]) -> dict:
         """Read channels via dedicated websocket connection."""
         if not self.edge_id:
-            raise EdgeNotDefinedError("No edge ID defined for reading components.")
+            raise EdgeNotDefinedError(
+                "No edge ID defined for reading components.")
 
         # create new connection and login
         rpc_server = jsonrpc_websocket.Server(
@@ -250,8 +258,10 @@ class OpenEMSConfigReader:
         rpc_server.edgeRpc = _handle_callback
         await rpc_server.subscribeEdges(edges=[self.edge_id])
 
-        subscribe_call = wrap_jsonrpc("subscribeChannels", count=0, channels=channels)
-        await rpc_server.edgeRpc(edgeId=self.edge_id, payload=subscribe_call)  # pyright: ignore[reportGeneralTypeIssues]
+        subscribe_call = wrap_jsonrpc(
+            "subscribeChannels", count=0, channels=channels)
+        # pyright: ignore[reportGeneralTypeIssues]
+        await rpc_server.edgeRpc(edgeId=self.edge_id, payload=subscribe_call)
 
         # wait for the data. When received, close connection and return data
         await asyncio.wait_for(data_received.wait(), timeout=5)
