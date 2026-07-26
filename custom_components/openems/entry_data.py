@@ -165,14 +165,14 @@ class OpenEMSConfigReader:
         components = r["payload"]["result"]["components"]
 
         # read properties of all channels of each component
-        await self._read_edge_channels(components)
+        await self.read_edge_channels(components)
 
         # read info details from selected channels
-        await self._read_component_info_channels(components)
+        await self.read_component_info_channels(components)
 
         return components
 
-    async def _read_edge_channels(self, components):
+    async def read_edge_channels(self, components):
         """Load channels of each component."""
         for component_id in list(components):
             edge_component_call = wrap_jsonrpc(
@@ -202,7 +202,7 @@ class OpenEMSConfigReader:
                 )
                 del components[component_id]
 
-    async def _read_component_info_channels(self, components: dict):
+    async def read_component_info_channels(self, components: dict):
         """Read hostname and all component names of an edge."""
 
         # Look up all components which have a channel "_PropertyAlias"
