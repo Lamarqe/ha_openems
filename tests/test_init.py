@@ -6,6 +6,7 @@ from jsonrpc_base.jsonrpc import ProtocolError, TransportError
 import pytest
 
 from custom_components.openems import (
+    async_remove_config_entry_device,
     async_setup_entry,
     async_unload_entry,
     update_config,
@@ -354,3 +355,93 @@ async def test_update_config_no_options_returns_early(hass: HomeAssistant) -> No
     await update_config(hass, entry)
 
     mock_backend.the_edge.set_advanced_options.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# async_remove_config_entry_device
+# ---------------------------------------------------------------------------
+
+
+def _make_device_entry(identifiers: set) -> MagicMock:
+    device_entry = MagicMock()
+    device_entry.identifiers = identifiers
+    return device_entry
+
+
+def _make_remove_device_entry(hostname: str, components: dict) -> MagicMock:
+    mock_backend = MagicMock()
+    mock_backend.the_edge.hostname = hostname
+    mock_backend.the_edge.components = components
+    entry = MagicMock()
+    entry.runtime_data.backend = mock_backend
+    return entry
+
+
+async def test_remove_device_foreign_domain_allows_removal(
+    hass: HomeAssistant,
+) -> None:
+    """A device belonging to another integration must always be removable."""
+    entry = _make_remove_device_entry("host", {})
+    device_entry = _make_device_entry({("other_domain", "host")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is True
+
+
+async def test_remove_device_unexpected_identifier_shape_allows_removal(
+    hass: HomeAssistant,
+) -> None:
+    """An identifier tuple that isn't (domain, value) must always be removable."""
+    entry = _make_remove_device_entry("host", {})
+    device_entry = _make_device_entry({(DOMAIN,)})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is True
+
+
+async def test_remove_device_edge_device_wrong_hostname_allows_removal(
+    hass: HomeAssistant,
+) -> None:
+    """The main edge device is removable once its hostname no longer matches."""
+    entry = _make_remove_device_entry("host", {})
+    device_entry = _make_device_entry({(DOMAIN, "old-host")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is True
+
+
+async def test_remove_device_edge_device_matching_hostname_blocks_removal(
+    hass: HomeAssistant,
+) -> None:
+    """The main edge device must not be removable while still active."""
+    entry = _make_remove_device_entry("host", {})
+    device_entry = _make_device_entry({(DOMAIN, "host")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is False
+
+
+async def test_remove_device_component_wrong_hostname_allows_removal(
+    hass: HomeAssistant,
+) -> None:
+    """A component device is removable if the hostname no longer matches."""
+    entry = _make_remove_device_entry("host", {"comp1": MagicMock()})
+    device_entry = _make_device_entry({(DOMAIN, "old-host comp1")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is True
+
+
+async def test_remove_device_component_not_present_allows_removal(
+    hass: HomeAssistant,
+) -> None:
+    """A component device is removable once the component is gone from the edge."""
+    entry = _make_remove_device_entry("host", {"comp1": MagicMock()})
+    device_entry = _make_device_entry({(DOMAIN, "host comp2")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is True
+
+
+async def test_remove_device_component_still_present_blocks_removal(
+    hass: HomeAssistant,
+) -> None:
+    """A component device must not be removable while still part of the edge."""
+    entry = _make_remove_device_entry("host", {"comp1": MagicMock()})
+    device_entry = _make_device_entry({(DOMAIN, "host comp1")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is False
