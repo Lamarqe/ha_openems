@@ -71,8 +71,6 @@ To use the template cards, do the following:
 7. Go back to regular edit mode
 8. add a new user-defined card, using yaml. 
 
-*All texts are automatically translated to your Home Assistant default language*
-
 #### EV Charging
 **Sample Card config**
 ```
