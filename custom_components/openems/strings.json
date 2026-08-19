@@ -76,11 +76,24 @@
           "no_remaining_time": "No remaining time",
           "no_remaining_capacity": "No remaining capacity",
           "target_minute_not_calculated": "Target minute not calculated",
-          "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Limit cannot be adapted because of other constraints with higher priority",
-          "no_active_limitation": "No active limitation",
-          "delay_charge_part_is_disabled": "Delay charge part is disabled",
-          "delay_charge_was_not_started_because_there_is_no_production_or_to_less_production": "Delay charge was not started because there is no production or to less production",
-          "avoid_charging_with_low_power_for_more_efficiency": "Avoid charging with low power for more efficiency"
+          "no_feasible_solution": "Limit cannot be adapted because of other constraints with higher priority",
+          "no_charge_limit": "No active limitation",
+          "disabled": "Delay charge part is disabled",
+          "not_started": "Delay charge was not started because there is no production or to less production",
+          "avoid_low_charging": "Avoid charging with low power for more efficiency",
+          "allowed_feed_in_limit_too_low": "No active limitation, as limitation is nearly zero. The controller has no flexibility left to delay charging."
+        }
+      },
+      "ctrlgridoptimizedcharge_s_l_a_s_h_selltogridlimitstate": {
+        "state": {
+          "undefined": "Undefined",
+          "active_limit_fixed": "Active limitation - Fix limit",
+          "no_limit": "No active limitation",
+          "no_feasible_solution": "Limit cannot be adapted because of other constraints with higher priority",
+          "active_limit_constraint": "Active limitation - Minimum charge power",
+          "disabled": "SellToGridLimit part is disabled",
+          "not_started": "Delay charge was not started because there is no production or to less production",
+          "allowed_feed_in_limit_too_low": "No active limitation, as limitation is nearly zero. The controller has no flexibility left to delay charging."
         }
       },
       "evcs_s_l_a_s_h_status": {

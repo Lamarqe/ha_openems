@@ -135,14 +135,27 @@
             "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
                 "state": {
                     "active_limit": "Begrenzung aktiv",
-                    "avoid_charging_with_low_power_for_more_efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
-                    "delay_charge_part_is_disabled": "Verz\u00f6gerte Ladung deaktiviert",
-                    "delay_charge_was_not_started_because_there_is_no_production_or_to_less_production": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
-                    "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
-                    "no_active_limitation": "Keine Begrenzung aktiv",
+                    "allowed_feed_in_limit_too_low": "Keine Begrenzung, da Grenze nahe Null. Keine Flexibilität zur Ladeverzögerung verfügbar",
+                    "avoid_low_charging": "Laden mit geringer Leistung zwecks Effizienz vermieden",
+                    "disabled": "Verz\u00f6gerte Ladung deaktiviert",
+                    "not_started": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
+                    "no_feasible_solution": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
+                    "no_charge_limit": "Keine Begrenzung aktiv",
                     "no_remaining_capacity": "Keine Kapazit\u00e4t verbleibend",
                     "no_remaining_time": "Keine Zeit verbleibend",
                     "target_minute_not_calculated": "Zielzeitpunkt nicht berechet",
+                    "undefined": "Nicht definiert"
+                }
+            },
+            "ctrlgridoptimizedcharge_s_l_a_s_h_selltogridlimitstate": {
+                "state": {
+                    "active_limit_constraint": "Begrenzung aktiv - Minimale Ladeleistung",
+                    "active_limit_fixed": "Begrenzung aktiv - Fester Grenzwert",
+                    "allowed_feed_in_limit_too_low": "Keine Begrenzung, da Grenze nahe Null. Keine Flexibilität zur Ladeverzögerung verfügbar",
+                    "disabled": "Verz\u00f6gerte Ladung deaktiviert",
+                    "no_feasible_solution": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
+                    "no_limit": "Keine Begrenzung aktiv",
+                    "not_started": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
                     "undefined": "Nicht definiert"
                 }
             },

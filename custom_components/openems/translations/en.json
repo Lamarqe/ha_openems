@@ -135,14 +135,27 @@
             "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
                 "state": {
                     "active_limit": "Active limit",
-                    "avoid_charging_with_low_power_for_more_efficiency": "Avoid charging with low power for more efficiency",
-                    "delay_charge_part_is_disabled": "Delay charge part is disabled",
-                    "delay_charge_was_not_started_because_there_is_no_production_or_to_less_production": "Delay charge was not started because there is no production or to less production",
-                    "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Limit cannot be adapted because of other constraints with higher priority",
-                    "no_active_limitation": "No active limitation",
+                    "allowed_feed_in_limit_too_low": "No active limitation, as limitation is nearly zero. The controller has no flexibility left to delay charging.",
+                    "avoid_low_charging": "Avoid charging with low power for more efficiency",
+                    "disabled": "Delay charge part is disabled",
+                    "no_charge_limit": "No active limitation",
+                    "no_feasible_solution": "Limit cannot be adapted because of other constraints with higher priority",
                     "no_remaining_capacity": "No remaining capacity",
                     "no_remaining_time": "No remaining time",
+                    "not_started": "Delay charge was not started because there is no production or to less production",
                     "target_minute_not_calculated": "Target minute not calculated",
+                    "undefined": "Undefined"
+                }
+            },
+            "ctrlgridoptimizedcharge_s_l_a_s_h_selltogridlimitstate": {
+                "state": {
+                    "active_limit_constraint": "Active limitation - Minimum charge power",
+                    "active_limit_fixed": "Active limitation - Fix limit",
+                    "allowed_feed_in_limit_too_low": "No active limitation, as limitation is nearly zero. The controller has no flexibility left to delay charging.",
+                    "disabled": "SellToGridLimit part is disabled",
+                    "no_feasible_solution": "Limit cannot be adapted because of other constraints with higher priority",
+                    "no_limit": "No active limitation",
+                    "not_started": "Delay charge was not started because there is no production or to less production",
                     "undefined": "Undefined"
                 }
             },
