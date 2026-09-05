@@ -13,7 +13,6 @@ from homeassistant.components.sensor import (
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -52,7 +51,7 @@ async def async_setup_entry(
 
     def _create_sensor_entities(component: OpenEMSComponent) -> None:
         """Create Sensor Entities from channel list."""
-        device = component_device(component)
+        device = component_device(entry.runtime_data.edge_device.entry, component)
         # create empty device explicitly, in case their are no entities
         device_registry = dr.async_get(hass)
         device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
@@ -155,7 +154,7 @@ class OpenEMSSensorEntity(SensorEntity):
         self,
         channel: OpenEMSDataHandler,
         entity_description,
-        device_info: DeviceInfo,
+        device_info: dr.DeviceInfo,
     ) -> None:
         """Initialize the sensor."""
         self._channel: OpenEMSDataHandler = channel
@@ -180,7 +179,9 @@ class OpenEMSSensorEntity(SensorEntity):
 
         if self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING:
             if (
-                self._channel.component.edge.advanced_options[CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING]
+                self._channel.component.edge.advanced_options[
+                    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
+                ]
                 and val is not None
                 and self.previous_increasing_value_not_null is not None
                 and self.previous_increasing_value_not_null > val

@@ -2,7 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 from typing import Any
 
@@ -14,11 +14,10 @@ from homeassistant.components.update import (
     UpdateEntityFeature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+import homeassistant.util.dt as dt_util
 
-from .const import DOMAIN
 from .helpers_ha import OpenEMSConfigEntry
 from .openems import OpenEMSBackend, OpenEMSEdge
 
@@ -34,19 +33,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up OpenEMS update entity."""
     backend: OpenEMSBackend = entry.runtime_data.backend
-    # Create the edge device
-    edge_device = DeviceInfo(
-        name=backend.the_edge.hostname,
-        identifiers={(DOMAIN, backend.the_edge.hostname)},
-    )
-    device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(**edge_device, config_entry_id=entry.entry_id)
-
     unique_id = backend.the_edge.hostname + "/" + backend.the_edge.id + "/" + "update"
     entity_description = OpenEMSUpdateDescription(key=unique_id)
 
     update_entity = OpenEMSUpdateEntity(
-        backend.the_edge, entity_description, edge_device
+        backend.the_edge, entity_description, entry.runtime_data.edge_device.info
     )
     async_add_entities([update_entity], update_before_add=True)
 
@@ -86,11 +77,11 @@ class OpenEMSUpdateEntity(UpdateEntity):
         """Install an update."""
         update_task = asyncio.create_task(self._edge.execute_system_update())
         # give the backend some time to start the update before checking progress
-        update_start_time = datetime.now()
+        update_start_time = dt_util.naive_now()
         await asyncio.sleep(0.5)
         try:
             # if the update did not finish after 15 minutes, something went wrong
-            while datetime.now() - update_start_time < timedelta(minutes=15):
+            while dt_util.naive_now() - update_start_time < timedelta(minutes=15):
                 await self.async_update()
                 self.async_write_ha_state()
                 if not self.in_progress:

@@ -11,7 +11,6 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
@@ -30,7 +29,7 @@ async def async_setup_entry(
 
     def _create_sensor_entities(component: OpenEMSComponent) -> None:
         """Create binary sensor entities from channel list."""
-        device = component_device(component)
+        device = component_device(entry.runtime_data.edge_device.entry, component)
         # create empty device explicitly, in case their are no entities
         device_registry = dr.async_get(hass)
 
@@ -95,7 +94,7 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
         self,
         channel: OpenEMSChannel,
         entity_description,
-        device_info: DeviceInfo,
+        device_info: dr.DeviceInfo,
     ) -> None:
         """Initialize the binary sensor."""
         self._channel: OpenEMSChannel = channel

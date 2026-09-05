@@ -16,7 +16,7 @@ from homeassistant.const import (
     CONF_URL,
     CONF_USERNAME,
 )
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN, SLASH_ESC
 from .entry_data import ConnectionProperties
@@ -32,10 +32,19 @@ SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
 
 
 @dataclass
+class DeviceRuntimeData:
+    """Data class to store all relevant runtime data."""
+
+    info: dr.DeviceInfo
+    entry: dr.DeviceEntry
+
+
+@dataclass
 class RuntimeData:
     """Data class to store all relevant runtime data."""
 
     backend: OpenEMSBackend
+    edge_device: DeviceRuntimeData
     add_component_callbacks: ClassVar[dict[str, Callable]] = {}
 
 
@@ -128,14 +137,16 @@ def supported_features(channel: OpenEMSChannel) -> OpenEMSEntityFeature | None:
             return None
 
 
-def component_device(component: OpenEMSComponent) -> DeviceInfo:
+def component_device(
+    edge_device: dr.DeviceEntry, component: OpenEMSComponent
+) -> dr.DeviceInfo:
     """Provide the device of an OpenEMSComponent."""
-    return DeviceInfo(
+    return dr.DeviceInfo(
         name=component.edge.hostname + " " + component.name,
         model=component.alias,
         identifiers={(DOMAIN, component.edge.hostname + " " + component.name)},
-        via_device=(DOMAIN, component.edge.hostname),
-        entry_type=DeviceEntryType.SERVICE,
+        via_device_id=edge_device.id,
+        entry_type=dr.DeviceEntryType.SERVICE,
     )
 
 

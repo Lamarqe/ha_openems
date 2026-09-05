@@ -7,7 +7,6 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .helpers_ha import (
@@ -30,7 +29,7 @@ async def async_setup_entry(
 
     def _create_select_entities(component: OpenEMSComponent) -> None:
         """Create Sensor Entities from channel list."""
-        device = component_device(component)
+        device = component_device(entry.runtime_data.edge_device.entry, component)
         # create empty device explicitly, in case their are no entities
         device_registry = dr.async_get(hass)
         device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
@@ -89,7 +88,7 @@ class OpenEMSSelectEntity(SelectEntity):
         self,
         channel: OpenEMSEnumProperty,
         entity_description,
-        device_info: DeviceInfo,
+        device_info: dr.DeviceInfo,
     ) -> None:
         """Initialize OpenEMS switch entity."""
         self._channel: OpenEMSEnumProperty = channel

@@ -20,6 +20,7 @@ from homeassistant.helpers.typing import ConfigType
 from . import const as c
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from .helpers_ha import (
+    DeviceRuntimeData,
     OpenEMSConfigEntry,
     OpenEMSEntityFeature,  # noqa: F401
     RuntimeData,
@@ -124,10 +125,30 @@ async def async_setup_entry(
     # ==================== TODO REMOVE_LATER_END ============================
     backend.the_edge.set_config_options(config_entry.options)
 
-    config_entry.runtime_data = RuntimeData(backend=backend)
-    config_entry.async_on_unload(config_entry.add_update_listener(update_config))
+    # 6. Create central edge device in HA device registry, so that all component devices can be linked to it
+    edge_device_identifiers = {(c.DOMAIN, backend.the_edge.hostname)}
+    device_registry = dr.async_get(hass)
+    edge_device_info = dr.DeviceInfo(
+        identifiers=edge_device_identifiers,
+        name=backend.the_edge.hostname,
+        entry_type=dr.DeviceEntryType.SERVICE,
+    )
+    edge_device_entry: dr.DeviceEntry = device_registry.async_get_or_create(
+        config_entry_id=config_entry.entry_id,
+        **edge_device_info,
+    )
 
+    # 7. Prepare runtime data for later access
+    config_entry.runtime_data = RuntimeData(
+        backend=backend,
+        edge_device=DeviceRuntimeData(info=edge_device_info, entry=edge_device_entry),
+    )
+
+    # 8. Forward setup to platforms
+    config_entry.async_on_unload(config_entry.add_update_listener(update_config))
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
+
+    # 9. Start backend
     backend.start()
     return True
 
@@ -257,7 +278,9 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     for comp_name, component in backend.the_edge.components.items():
         if not components_options.get(comp_name) and component.create_entities:
             # remove entities
-            comp_device: DeviceInfo = component_device(component)
+            comp_device: DeviceInfo = component_device(
+                entry.runtime_data.edge_device.entry, component
+            )
             device = device_registry.async_get_device(comp_device.get("identifiers"))
             if not device:
                 continue

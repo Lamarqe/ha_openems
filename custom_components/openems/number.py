@@ -16,7 +16,6 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import ATTR_VALUE
 from .helpers_ha import (
-    DeviceInfo,
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
     component_device,
@@ -37,7 +36,7 @@ async def async_setup_entry(
 
     def _create_number_entities(component: OpenEMSComponent) -> None:
         """Create Number Entities from channel list."""
-        device = component_device(component)
+        device = component_device(entry.runtime_data.edge_device.entry, component)
         # create empty device explicitly, in case their are no entities
         device_registry = dr.async_get(hass)
         device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
@@ -98,7 +97,7 @@ class OpenEMSNumberEntity(NumberEntity):
         self,
         channel: OpenEMSNumberProperty,
         entity_description,
-        device_info: DeviceInfo,
+        device_info: dr.DeviceInfo,
     ) -> None:
         """Initialize OpenEMS number entity."""
         self._channel: OpenEMSNumberProperty = channel
