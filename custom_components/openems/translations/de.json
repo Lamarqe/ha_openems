@@ -1,197 +1,1892 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Gerät bereits konfiguriert"
-        },
-        "error": {
-            "cannot_connect": "Verbindung fehlgeschlagen",
-            "cannot_read_components": "Edge Komponenten konnten nicht geladen werden",
-            "custom_url_missing": "Individuelle URL nicht angegeben",
-            "error_processing_edge": "Fehler beim Lesen der Edge Konfiguration",
-            "host_missing": "Bitte Hostnamen für die Verbindung angeben",
-            "invalid_auth": "Fehler während der Authentifizierung",
-            "invalid_url": "Ungültige URL angegeben",
-            "unknown": "Unerwarter Fehler",
-            "url_not_absolute": "Indiviudelle URL muss absolut sein."
-        },
-        "step": {
-            "edges": {
-                "data": {
-                    "edges": "OpenEMS Edge zur Integration auswählen"
-                }
-            },
-            "user": {
-                "data": {
-                    "host": "Host",
-                    "password": "Passwort",
-                    "username": "Benutzername"
-                },
-                "data_description": {
-                    "host": "Der Hostname oder die IP Addresse des Fenecon oder OpenEMS systems",
-                    "password": "Standardwerte für das lokale Monitoring: \"user\" oder \"owner\"",
-                    "username": "Der Benutzername um auf das System zuzugreifen. Verwende \"x\" für das lokale Monitoring."
-                },
-                "description": "Einstellungen der FEMS / OpenEMS Verbindungsparameter",
-                "sections": {
-                    "more_options": {
-                        "data": {
-                            "type": "Verbindungstyp",
-                            "url": "Individuelle URL"
-                        },
-                        "data_description": {
-                            "url": "Individuelle WebSocket URL, z.B.: ws://192.168.1.100:8888/websocket"
-                        },
-                        "name": "Erweiterte Optionen"
-                    }
-                }
-            }
-        }
+  "config": {
+    "abort": {
+      "already_configured": "Gerät bereits konfiguriert"
     },
-    "entity": {
-        "select": {
-            "ctrlevcs_s_l_a_s_h_chargemode": {
-                "state": {
-                    "excess_power": "\u00dcberschuss",
-                    "force_charge": "Zielwert"
-                }
-            },
-            "ctrlevcs_s_l_a_s_h_priority": {
-                "state": {
-                    "car": "Auto",
-                    "storage": "Speicher"
-                }
-            },
-            "ctrlevsesingle_s_l_a_s_h_mode": {
-                "state": {
-                    "force": "Schnellladen",
-                    "minimum": "Minimal Beladung mit PV-Überschuss",
-                    "surplus": "PV-Überschuss",
-                    "zero": "Keine Beladung"
-                }
-            },
-            "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
-                "state": {
-                    "disable": "Deaktiviert",
-                    "force_single_phase": "1-phasig",
-                    "force_three_phase": "3-phasig"
-                }
-            },
-            "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
-                "state": {
-                    "high": "Hoch",
-                    "low": "Gering",
-                    "medium": "Mittel"
-                }
-            },
-            "ctrlgridoptimizedcharge_s_l_a_s_h_mode": {
-                "state": {
-                    "automatic": "Automatisch",
-                    "manual": "Manuell",
-                    "off": "Aus"
-                }
-            },
-            "ctrlioheatingelement_s_l_a_s_h_defaultlevel": {
-                "state": {
-                    "level_1": "Level 1",
-                    "level_2": "Level 2",
-                    "level_3": "Level 3"
-                }
-            },
-            "ctrlioheatingelement_s_l_a_s_h_mode": {
-                "state": {
-                    "automatic": "Automatisch",
-                    "manual_on": "An",
-                    "manual_off": "Aus"
-                }
-            },
-            "ctrlioheatingelement_s_l_a_s_h_workmode": {
-                "state": {
-                    "time": "Garantierte Mindestzeit",
-                    "none": "Überschussleistung, ausschließlich"
-                }
-            }
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen",
+      "cannot_read_components": "Edge Komponenten konnten nicht geladen werden",
+      "custom_url_missing": "Individuelle URL nicht angegeben",
+      "error_processing_edge": "Fehler beim Lesen der Edge Konfiguration",
+      "host_missing": "Bitte Hostnamen für die Verbindung angeben",
+      "invalid_auth": "Fehler während der Authentifizierung",
+      "invalid_url": "Ungültige URL angegeben",
+      "unknown": "Unerwarter Fehler",
+      "url_not_absolute": "Indiviudelle URL muss absolut sein."
+    },
+    "step": {
+      "edges": {
+        "data": {
+          "edges": "OpenEMS Edge zur Integration auswählen"
+        }
+      },
+      "user": {
+        "data": {
+          "host": "Host",
+          "password": "Passwort",
+          "username": "Benutzername"
         },
-        "sensor": {
-            "ctrlevsesingle_s_l_a_s_h_actualmode": {
-                "state": {
-                    "force": "Schnellladen",
-                    "minimum": "Minimal Beladung mit PV-Überschuss",
-                    "surplus": "PV-Überschuss",
-                    "zero": "Keine Beladung"
-                }
+        "data_description": {
+          "host": "Der Hostname oder die IP Addresse des Fenecon oder OpenEMS systems",
+          "password": "Standardwerte für das lokale Monitoring: \"user\" oder \"owner\"",
+          "username": "Der Benutzername um auf das System zuzugreifen. Verwende \"x\" für das lokale Monitoring."
+        },
+        "description": "Einstellungen der FEMS / OpenEMS Verbindungsparameter",
+        "sections": {
+          "more_options": {
+            "data": {
+              "type": "Verbindungstyp",
+              "url": "Individuelle URL"
             },
-            "ctrlevsesingle_s_l_a_s_h_statemachine": {
-                "state": {
-                    "charging": "Lädt",
-                    "ev_connected": "EV verbunden",
-                    "ev_not_connected": "EV nicht verbunden",
-                    "finished_energy_session_limit": "Ladevorgang beendet durch Energielimit",
-                    "finished_ev_stop": "Ladevorgang beendet durch EV",
-                    "phase_switch": "Manuelles Phasenwechseln",
-                    "phase_switch_to_single_phase": "Wechsel auf 1-phasig",
-                    "phase_switch_to_three_phase": "Wechsel auf 3-phasig"
-                }
+            "data_description": {
+              "url": "Individuelle WebSocket URL, z.B.: ws://192.168.1.100:8888/websocket"
             },
-            "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
-                "state": {
-                    "active_limit": "Begrenzung aktiv",
-                    "avoid_charging_with_low_power_for_more_efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
-                    "delay_charge_part_is_disabled": "Verz\u00f6gerte Ladung deaktiviert",
-                    "delay_charge_was_not_started_because_there_is_no_production_or_to_less_production": "Verz\u00f6gerte Ladung wegen zu geringer Erzeugung nicht gestartet",
-                    "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Begrenzung wegen anderer Beschr\u00e4nkungen nicht angepasst",
-                    "no_active_limitation": "Keine Begrenzung aktiv",
-                    "no_remaining_capacity": "Keine Kapazit\u00e4t verbleibend",
-                    "no_remaining_time": "Keine Zeit verbleibend",
-                    "target_minute_not_calculated": "Zielzeitpunkt nicht berechet",
-                    "undefined": "Nicht definiert"
-                }
-            },
-            "evcs_s_l_a_s_h_status": {
-                "state": {
-                    "charging": "Ladevorgang aktiv",
-                    "charging_rejected": "Laden verweigert",
-                    "error": "Fehler",
-                    "not_ready_for_charging": "Nicht bereit zum Laden",
-                    "ready_for_charging": "Bereit zum Laden",
-                    "starting": "Starte...",
-                    "the_charging_limit_reached": "Ladelimit erreicht",
-                    "undefined": "Nicht definiert"
-                }
-            }
+            "name": "Erweiterte Optionen"
+          }
         }
-    },
-    "options": {
-        "step": {
-            "init": {
-                "menu_options": {
-                    "select_components": "Komponenten auswählen",
-                    "advanced_options": "Erweiterte Optionen"
-                }
-            },
-            "select_components": {
-                "title": "Komponenten auswählen"
-            },
-            "advanced_options": {
-                "title": "Erweiterte Optionen",
-                "data": {
-                    "ignore_decreasing_if_total_increasing": "Abnehmend ignorieren wenn Gesamt steigend",
-                    "forward_interval": "Updatefrequenz begrenzen (Sekunden)"
-                },
-                "data_description": {
-                    "forward_interval": "Intervall in Sekunden für die Veröffentlichung von Kanaldaten. 0 deaktiviert die Begrenzung."
-                }
-            }
-        }
-    },
-    "selector": {
-        "connection_type": {
-            "options": {
-                "custom_url": "Individuelle Websocket URL (angegebener Hostname wird nicht verwendet)",
-                "direct_edge": "Direkte Edge Websocket Verbindung (Port 8085)",
-                "local_fems": "FEMS lokales Monitoring (Port 80)",
-                "local_openems": "OpenEMS lokales Monitoring (Port 8082)",
-                "web_fenecon": "Fenecon Online Monitoring auf portal.fenecon.de (angegebener Hostname wird nicht verwendet)"
-            }
-        }
+      }
     }
+  },
+  "entity": {
+    "select": {
+      "ctrlevcs_s_l_a_s_h_chargemode": {
+        "state": {
+          "excess_power": "Überschuss",
+          "force_charge": "Zielwert"
+        }
+      },
+      "ctrlevcs_s_l_a_s_h_priority": {
+        "state": {
+          "car": "Auto",
+          "storage": "Speicher"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_mode": {
+        "state": {
+          "force": "Schnellladen",
+          "minimum": "Minimal Beladung mit PV-Überschuss",
+          "surplus": "PV-Überschuss",
+          "zero": "Keine Beladung"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+        "state": {
+          "disable": "Deaktiviert",
+          "force_single_phase": "1-phasig",
+          "force_three_phase": "3-phasig"
+        }
+      },
+      "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
+        "state": {
+          "high": "Hoch",
+          "low": "Gering",
+          "medium": "Mittel"
+        }
+      },
+      "ctrlgridoptimizedcharge_s_l_a_s_h_mode": {
+        "state": {
+          "automatic": "Automatisch",
+          "manual": "Manuell",
+          "off": "Aus"
+        }
+      },
+      "ctrlioheatingelement_s_l_a_s_h_defaultlevel": {
+        "state": {
+          "level_1": "Level 1",
+          "level_2": "Level 2",
+          "level_3": "Level 3"
+        }
+      },
+      "ctrlioheatingelement_s_l_a_s_h_mode": {
+        "state": {
+          "automatic": "Automatisch",
+          "manual_on": "An",
+          "manual_off": "Aus"
+        }
+      },
+      "ctrlioheatingelement_s_l_a_s_h_workmode": {
+        "state": {
+          "time": "Garantierte Mindestzeit",
+          "none": "Überschussleistung, ausschließlich"
+        }
+      }
+    },
+    "sensor": {
+      "ctrlevsesingle_s_l_a_s_h_actualmode": {
+        "state": {
+          "force": "Schnellladen",
+          "minimum": "Minimal Beladung mit PV-Überschuss",
+          "surplus": "PV-Überschuss",
+          "zero": "Keine Beladung"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_statemachine": {
+        "state": {
+          "charging": "Lädt",
+          "ev_connected": "EV verbunden",
+          "ev_not_connected": "EV nicht verbunden",
+          "finished_energy_session_limit": "Ladevorgang beendet durch Energielimit",
+          "finished_ev_stop": "Ladevorgang beendet durch EV",
+          "phase_switch": "Manuelles Phasenwechseln",
+          "phase_switch_to_single_phase": "Wechsel auf 1-phasig",
+          "phase_switch_to_three_phase": "Wechsel auf 3-phasig"
+        }
+      },
+      "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
+        "state": {
+          "active_limit": "Begrenzung aktiv",
+          "avoid_charging_with_low_power_for_more_efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
+          "delay_charge_part_is_disabled": "Verzögerte Ladung deaktiviert",
+          "delay_charge_was_not_started_because_there_is_no_production_or_to_less_production": "Verzögerte Ladung wegen zu geringer Erzeugung nicht gestartet",
+          "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Begrenzung wegen anderer Beschränkungen nicht angepasst",
+          "no_active_limitation": "Keine Begrenzung aktiv",
+          "no_remaining_capacity": "Keine Kapazität verbleibend",
+          "no_remaining_time": "Keine Zeit verbleibend",
+          "target_minute_not_calculated": "Zielzeitpunkt nicht berechet",
+          "undefined": "Nicht definiert",
+          "not_active__the_controller_has_no_flexibility_left_to_delay_charge__because_the_limitation_is_nearly_zero_": "Not active. The controller has no flexibility left to delay charge, because the limitation is nearly zero."
+        }
+      },
+      "evcs_s_l_a_s_h_status": {
+        "state": {
+          "charging": "Ladevorgang aktiv",
+          "charging_rejected": "Laden verweigert",
+          "error": "Fehler",
+          "not_ready_for_charging": "Nicht bereit zum Laden",
+          "ready_for_charging": "Bereit zum Laden",
+          "starting": "Starte...",
+          "the_charging_limit_reached": "Ladelimit erreicht",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "_appmanager_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_componentmanager_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_cycle_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_energy_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_evcsslowpowerincreasefilter_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_host_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_meta_s_l_a_s_h_currency": {
+        "state": {
+          "chf": "CHF",
+          "eur": "EUR",
+          "sek": "SEK",
+          "undefined": "UNDEFINED"
+        }
+      },
+      "_meta_s_l_a_s_h_gridfeedinlimitationtype": {
+        "state": {
+          "dynamic_limitation": "Dynamic limitation",
+          "no_limitation": "No limitation",
+          "undefined": "UNDEFINED"
+        }
+      },
+      "_meta_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_power_s_l_a_s_h_solvestrategy": {
+        "state": {
+          "all_constraints": "All Constraints",
+          "none": "None",
+          "optimize_by_keeping_all_inverters_equal": "Optimize By Keeping All Inverters Equal",
+          "optimize_by_keeping_all_inverters_nearly_equal": "Optimize By Keeping All Inverters Nearly Equal",
+          "optimize_by_keeping_ess_in_balance": "Optimize by Keeping ESS in Balance",
+          "optimize_by_keeping_target_direction_and_maximizing_in_order": "Optimize By Keeping Target Direction And Maximizing In Order",
+          "optimize_by_moving_towards_target": "Optimize By Moving Towards Target",
+          "undefined": "Undefined"
+        }
+      },
+      "_power_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_predictormanager_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_serialnumber_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "_sum_s_l_a_s_h_gridmode": {
+        "state": {
+          "off-grid": "Off-Grid",
+          "off-grid_genset": "Off-Grid Genset",
+          "on-grid": "On-Grid",
+          "undefined": "Undefined"
+        }
+      },
+      "_sum_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "battery_s_l_a_s_h_batteryhardwaretype": {
+        "state": {
+          "fenecon_home_battery_52ah": "Fenecon Home Battery 52Ah",
+          "fenecon_home_battery_64_4ah": "Fenecon Home Battery 64,4Ah"
+        }
+      },
+      "battery_s_l_a_s_h_bpforcecharge": {
+        "state": {
+          "block_mode": "BLOCK_MODE",
+          "force_mode": "FORCE_MODE",
+          "undefined": "UNDEFINED",
+          "wait_for_force_mode": "WAIT_FOR_FORCE_MODE"
+        }
+      },
+      "battery_s_l_a_s_h_bpforcedischarge": {
+        "state": {
+          "block_mode": "BLOCK_MODE",
+          "force_mode": "FORCE_MODE",
+          "undefined": "UNDEFINED",
+          "wait_for_force_mode": "WAIT_FOR_FORCE_MODE"
+        }
+      },
+      "battery_s_l_a_s_h_startstop": {
+        "state": {
+          "start": "Start",
+          "stop": "Stop",
+          "undefined": "Undefined"
+        }
+      },
+      "battery_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "battery_s_l_a_s_h_statemachine": {
+        "state": {
+          "error": "ERROR",
+          "firmware_update": "FIRMWARE_UPDATE",
+          "go_running": "GO_RUNNING",
+          "go_stopped": "GO_STOPPED",
+          "running": "RUNNING",
+          "stopped": "STOPPED",
+          "undefined": "UNDEFINED"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_acoutputtype": {
+        "state": {
+          "single_phase": "single phase",
+          "three_phase_four_wire_system": "three phase four wire system",
+          "three_phase_three_wire_system": "three phase three wire system",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_arcselfcheckstatus": {
+        "state": {
+          "activated": "Activated",
+          "failure": "Failure",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_backupled": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_battery2mode": {
+        "state": {
+          "charging": "Charging",
+          "discharging": "Discharging",
+          "no_battery_inverter_disconnects_to_battery": "NO Battery,inverter disconnects to Battery",
+          "standby_no_discharging_and_no_charging": "Standby,no discharging and no charging",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_battery2protocol": {
+        "state": {
+          "byd_box_h": "Byd box h",
+          "byd_box_premium_hvm___hvl": "Byd box premium hvm / hvl",
+          "byd_box_premium_hvs": "Byd box premium hvs",
+          "ems_battery": "EMS Battery",
+          "for_oloid_is_lbs__for_dyness_is_tower__for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
+          "powercube_h1___force_h1___force_h2": "Powercube H1 / Force H1 / Force H2",
+          "resu_hv_type-r": "Resu_hv_type-r",
+          "secu-s___lx_s-h___lx_f-h": "SECU-S / LX S-H / LX F-H",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_batteryled": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_batterymode": {
+        "state": {
+          "charging": "Charging",
+          "discharging": "Discharging",
+          "no_battery_inverter_disconnects_to_battery": "NO Battery,inverter disconnects to Battery",
+          "standby_no_discharging_and_no_charging": "Standby,no discharging and no charging",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_batteryprotocol": {
+        "state": {
+          "byd_box_h": "Byd box h",
+          "byd_box_premium_hvm___hvl": "Byd box premium hvm / hvl",
+          "byd_box_premium_hvs": "Byd box premium hvs",
+          "ems_battery": "EMS Battery",
+          "for_oloid_is_lbs__for_dyness_is_tower__for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
+          "powercube_h1___force_h1___force_h2": "Powercube H1 / Force H1 / Force H2",
+          "resu_hv_type-r": "Resu_hv_type-r",
+          "secu-s___lx_s-h___lx_f-h": "SECU-S / LX S-H / LX F-H",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_batteryprotocolarm": {
+        "state": {
+          "byd_box_h": "Byd box h",
+          "byd_box_premium_hvm___hvl": "Byd box premium hvm / hvl",
+          "byd_box_premium_hvs": "Byd box premium hvs",
+          "ems_battery": "EMS Battery",
+          "for_oloid_is_lbs__for_dyness_is_tower__for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
+          "powercube_h1___force_h1___force_h2": "Powercube H1 / Force H1 / Force H2",
+          "resu_hv_type-r": "Resu_hv_type-r",
+          "secu-s___lx_s-h___lx_f-h": "SECU-S / LX S-H / LX F-H",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_comledstate": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_commode": {
+        "state": {
+          "gprs": "gprs",
+          "lan_e20": "Lan e20",
+          "lan_mode_of_wifi_lan_module": "Lan mode of Wifi+Lan module",
+          "undefined": "Undefined",
+          "wifi": "Wifi",
+          "wifi_mode_of_wifi_lan_module": "Wifi mode of Wifi+Lan module"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_cpldwarningcode": {
+        "state": {
+          "battery_over_current_hw": "Battery over current hw",
+          "battery_relay_fail": "Battery relay fail",
+          "bus_over_voltage_hw": "Bus over voltage hw",
+          "pv_1_over_current_hw": "PV 1 over current hw",
+          "pv_2_over_current_hw": "PV 2 over current hw",
+          "r_inverter_over_current_hw": "R inverter over current hw",
+          "s_inverter_over_current_hw": "S inverter over current hw",
+          "t_inverter_over_current_hw": "T inverter over current hw",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugemspowermode": {
+        "state": {
+          "auto": "Auto",
+          "battery_standby": "Battery Standby",
+          "buy_power": "Buy Power",
+          "charge_bat": "Charge Bat",
+          "charge_pv": "Charge PV",
+          "conserve": "Conserve",
+          "discharge_bat": "Discharge Bat",
+          "discharge_pv": "Discharge PV",
+          "export_ac": "Export AC",
+          "import_ac": "Import AC",
+          "off-grid": "Off-Grid",
+          "sell_power": "Sell Power",
+          "stopped": "Stopped",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2apmenablepfoverfrequenzycurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2apmenablepfunderfrequenzycurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2apmenablepucurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2apmpuoutputresponsemode": {
+        "state": {
+          "disable": "Disable",
+          "gradient_control": "Gradient Control",
+          "pt-1_behaviour": "PT-1 Behaviour",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2cpreconnectiongradientenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2hvrtenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2hvrtzerocurrentmodeenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2lvrtenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2lvrtzerocurrentmodeenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmcosphipcurvemode": {
+        "state": {
+          "basic": "Basic",
+          "slope_model": "Slope Model",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmcosphipextendedfunctions": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmenablecurvecosphip": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmenablefixedq": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmenableqpcurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmqpcurvemode": {
+        "state": {
+          "basic": "Basic",
+          "slope_model": "Slope Model",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmqucurvemode": {
+        "state": {
+          "basic": "Basic",
+          "slope_model": "Slope Model",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmquenablequcurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugv2rpmquextendedfunctions": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugvrtactivepowerrecoverymode": {
+        "state": {
+          "disable": "Disable",
+          "gradient_control": "Gradient Control",
+          "pt-1_behaviour": "PT-1 Behaviour",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugvrtcurrentdistributionmode": {
+        "state": {
+          "active_power_priority_mode": "Active Power Priority Mode",
+          "constant_current_mode": "Constant Current Mode",
+          "reactive_power_priority_mode": "Reactive Power Priority Mode",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_debugvrtreactivepowerrecoverymodeend": {
+        "state": {
+          "disable": "Disable",
+          "gradient_control": "Gradient Control",
+          "pt-1_behaviour": "PT-1 Behaviour",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_dredcmd": {
+        "state": {
+          "dred_0": "Dred 0",
+          "dred_1_or_0__pv": "Dred 1 or 0% PV",
+          "dred_2_or_30__pv": "Dred 2 or 30% PV",
+          "dred_3_or_60__pv": "Dred 3 or 60% PV",
+          "dred_4_or_100__pv": "Dred 4 or 100% PV",
+          "dred_5": "Dred 5",
+          "dred_6": "Dred 6",
+          "dred_7": "Dred 7",
+          "dred_8": "Dred 8",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_dredoffgridcheck": {
+        "state": {
+          "dred_off_grid_is_off": "Dred off grid is off",
+          "dred_off_grid_is_on": "Dred off grid is on",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_ehbatteryfunctionactive": {
+        "state": {
+          "activated": "Activated",
+          "deactivated": "Deactivated",
+          "failure": "Failure",
+          "locked": "Locked",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_emscheckinverteroperationstatus": {
+        "state": {
+          "checking": "Checking",
+          "fault": "Fault",
+          "normal": "Normal",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_emspowermode": {
+        "state": {
+          "auto": "Auto",
+          "battery_standby": "Battery Standby",
+          "buy_power": "Buy Power",
+          "charge_bat": "Charge Bat",
+          "charge_pv": "Charge PV",
+          "conserve": "Conserve",
+          "discharge_bat": "Discharge Bat",
+          "discharge_pv": "Discharge PV",
+          "export_ac": "Export AC",
+          "import_ac": "Import AC",
+          "off-grid": "Off-Grid",
+          "sell_power": "Sell Power",
+          "stopped": "Stopped",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_enablecurvecosphip": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_enablefixedpowerfactorv2": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_enablepfcurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_enablepowerslopecosphip": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_enablepucurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_enablequcurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_energyled": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_externalemsflag": {
+        "state": {
+          "alpha": "Alpha",
+          "normal": "Normal",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_ezloggerprocommstatus": {
+        "state": {
+          "_success": " Success",
+          "not_good_": "Not good ",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_faultled": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_fixedpowerfactor": {
+        "state": {
+          "0_80_lagging": "0.80 lagging",
+          "0_80_leading": "0.80 leading",
+          "0_81_lagging": "0.81 lagging",
+          "0_81_leading": "0.81 leading",
+          "0_82_lagging": "0.82 lagging",
+          "0_82_leading": "0.82 leading",
+          "0_83_lagging": "0.83 lagging",
+          "0_83_leading": "0.83 leading",
+          "0_84_lagging": "0.84 lagging",
+          "0_84_leading": "0.84 leading",
+          "0_85_lagging": "0.85 lagging",
+          "0_85_leading": "0.85 leading",
+          "0_86_lagging": "0.86 lagging",
+          "0_86_leading": "0.86 leading",
+          "0_87_lagging": "0.87 lagging",
+          "0_87_leading": "0.87 leading",
+          "0_88_lagging": "0.88 lagging",
+          "0_88_leading": "0.88 leading",
+          "0_89_lagging": "0.89 lagging",
+          "0_89_leading": "0.89 leading",
+          "0_90_lagging": "0.90 lagging",
+          "0_90_leading": "0.90 leading",
+          "0_91_lagging": "0.91 lagging",
+          "0_91_leading": "0.91 leading",
+          "0_92_lagging": "0.92 lagging",
+          "0_92_leading": "0.92 leading",
+          "0_93_lagging": "0.93 lagging",
+          "0_93_leading": "0.93 leading",
+          "0_94_lagging": "0.94 lagging",
+          "0_94_leading": "0.94 leading",
+          "0_95_lagging": "0.95 lagging",
+          "0_95_leading": "0.95 leading",
+          "0_96_lagging": "0.96 lagging",
+          "0_96_leading": "0.96 leading",
+          "0_97_lagging": "0.97 lagging",
+          "0_97_leading": "0.97 leading",
+          "0_98_lagging": "0.98 lagging",
+          "0_98_leading": "0.98 leading",
+          "0_99_lagging": "0.99 lagging",
+          "0_99_leading": "0.99 leading",
+          "1_leading_or_none": "1 leading or none"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_fixedpowerfactorv2": {
+        "state": {
+          "0_80_lagging": "0.80 lagging",
+          "0_80_leading": "0.80 leading",
+          "0_81_lagging": "0.81 lagging",
+          "0_81_leading": "0.81 leading",
+          "0_82_lagging": "0.82 lagging",
+          "0_82_leading": "0.82 leading",
+          "0_83_lagging": "0.83 lagging",
+          "0_83_leading": "0.83 leading",
+          "0_84_lagging": "0.84 lagging",
+          "0_84_leading": "0.84 leading",
+          "0_85_lagging": "0.85 lagging",
+          "0_85_leading": "0.85 leading",
+          "0_86_lagging": "0.86 lagging",
+          "0_86_leading": "0.86 leading",
+          "0_87_lagging": "0.87 lagging",
+          "0_87_leading": "0.87 leading",
+          "0_88_lagging": "0.88 lagging",
+          "0_88_leading": "0.88 leading",
+          "0_89_lagging": "0.89 lagging",
+          "0_89_leading": "0.89 leading",
+          "0_90_lagging": "0.90 lagging",
+          "0_90_leading": "0.90 leading",
+          "0_91_lagging": "0.91 lagging",
+          "0_91_leading": "0.91 leading",
+          "0_92_lagging": "0.92 lagging",
+          "0_92_leading": "0.92 leading",
+          "0_93_lagging": "0.93 lagging",
+          "0_93_leading": "0.93 leading",
+          "0_94_lagging": "0.94 lagging",
+          "0_94_leading": "0.94 leading",
+          "0_95_lagging": "0.95 lagging",
+          "0_95_leading": "0.95 leading",
+          "0_96_lagging": "0.96 lagging",
+          "0_96_leading": "0.96 leading",
+          "0_97_lagging": "0.97 lagging",
+          "0_97_leading": "0.97 leading",
+          "0_98_lagging": "0.98 lagging",
+          "0_98_leading": "0.98 leading",
+          "0_99_lagging": "0.99 lagging",
+          "0_99_leading": "0.99 leading",
+          "1_leading_or_none": "1 leading or none"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_goodwetype": {
+        "state": {
+          "fenecon_100k": "FENECON 100K",
+          "fenecon_50k": "FENECON 50K",
+          "fenecon_et_gen2_10k": "FENECON ET Gen2 10K",
+          "fenecon_et_gen2_15k": "FENECON ET Gen2 15K",
+          "fenecon_et_gen2_6k": "FENECON ET Gen2 6K",
+          "fenecon_fhi_10_dah": "FENECON FHI 10 DAH",
+          "fenecon_fhi_20_dah": "FENECON FHI 20 DAH",
+          "fenecon_fhi_30_dah": "FENECON FHI 30 DAH",
+          "goodwe_gw10k-bt": "GoodWe GW10K-BT",
+          "goodwe_gw10k-et": "GoodWe GW10K-ET",
+          "goodwe_gw5k-bt": "GoodWe GW5K-BT",
+          "goodwe_gw5k-et": "GoodWe GW5K-ET",
+          "goodwe_gw8k-bt": "GoodWe GW8K-BT",
+          "goodwe_gw8k-et": "GoodWe GW8K-ET",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_gridled": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_gridmode": {
+        "state": {
+          "off-grid": "Off-Grid",
+          "off-grid_genset": "Off-Grid Genset",
+          "on-grid": "On-Grid",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_gridprotect": {
+        "state": {
+          "disable_grid_protect": "Disable grid protect",
+          "enable_grid_protect": "Enable grid protect",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_loadmoder": {
+        "state": {
+          "off__inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
+          "on_inverter_connects_to_load": "ON,inverter connects to Load",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_loadmodes": {
+        "state": {
+          "off__inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
+          "on_inverter_connects_to_load": "ON,inverter connects to Load",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_loadmodet": {
+        "state": {
+          "off__inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
+          "on_inverter_connects_to_load": "ON,inverter connects to Load",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_loadregulationindex": {
+        "state": {
+          "_disable": " Disable",
+          "switching_mode": "Switching mode",
+          "time_manage": "Time manage",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_metercommunicatestatus": {
+        "state": {
+          "ng": "NG",
+          "ok": "OK",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_metertype": {
+        "state": {
+          "home_kit": "Home kit",
+          "single_phase_grid_meter": "Single phase grid meter",
+          "three_phase_four_wire_grid_meter": "Three phase four wire grid meter",
+          "three_phase_three_wire_grid_meter": "Three phase three wire grid meter",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_operationmode": {
+        "state": {
+          "cut_off_all_the_connection_to_inverter": "cut off all the connection to Inverter",
+          "fault_fault_mode_something_is_in_fault_mode": "Fault,fault mode,something is in fault mode",
+          "pv_inputs_to_inverter_first__battery_inputs_to_inverter_second__inverter_work_as_ac_source": "PV inputs to Inverter(First),Battery inputs to Inverter(Second),Inverter work as AC source",
+          "pv_inputs_to_inverter_inverter_outputs_to_grid": "PV inputs to Inverter,Inverter outputs to Grid",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_pvmode": {
+        "state": {
+          "inverter_disconnects_to_pv": "Inverter disconnects to PV",
+          "pv_does_not_output_power": "PV does not output power",
+          "pv_output_power": "PV output power",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_safetycountry": {
+        "state": {
+          "50hz_grid_default": "50Hz Grid Default",
+          "50hz_lv_default": "50Hz LV Default",
+          "60hz_grid_default": "60Hz Grid Default",
+          "60hz_lv_default": "60Hz LV Default",
+          "australia": "Australia",
+          "australia_ausgrid": "Australia Ausgrid",
+          "australia_energex": "Australia Energex",
+          "australia_ergon": "Australia Ergon",
+          "australia_essential": "Australia Essential",
+          "australia_horizon": "Australia Horizon",
+          "australia_microgrid": "Australia MicroGrid",
+          "australia_pwcore_citipw": "Australia Pwcore_CitiPW",
+          "australia_sapn": "Australia SAPN",
+          "australia_western": "Australia Western",
+          "australial": "AustraliaL",
+          "austria": "Austria",
+          "barbados": "Barbados",
+          "belgium": "BELGIUM",
+          "brazil": "Brazil",
+          "brazil_lv": "Brazil LV",
+          "bulgaria": "Bulgaria",
+          "cei_016": "CEI_016",
+          "chile": "Chile",
+          "china": "China",
+          "china_station": "China Station",
+          "chinese_standard_higher_performance": "Chinese Standard higher performance",
+          "cyprus": "Cyprus",
+          "czech": "CZECH",
+          "denmark": "DENMARK",
+          "dewa_lv": "DEWA LV",
+          "dewa_mv": "DEWA MV",
+          "en50549": "EN50549",
+          "energe30k": "Energe30K",
+          "ergon30k": "Ergon30K",
+          "france": "France",
+          "french_50hz": "French 50Hz",
+          "french_60hz": "French 60Hz",
+          "g59_3": "G59/3",
+          "g83_or_g59__according_to_model": "G83 or G59, according to model",
+          "germany": "GERMANY",
+          "germany_vde_4110": "Germany VDE 4110",
+          "greece_mainland": "GREECE MAINLAND",
+          "greengrid": "GreenGrid",
+          "holland": "Holland",
+          "holland_16_20a": "Holland 16/20A",
+          "hungary": "Hungary",
+          "iec61727_60hz": "IEC61727_60Hz",
+          "ieee1547_208vac": "IEEE1547 208Vac",
+          "ieee1547_220vac": "IEEE1547 220Vac",
+          "ieee1547_230vac": "IEEE1547_230VAC",
+          "ieee1547_240vac": "IEEE1547 240Vac",
+          "india": "India",
+          "india_higher": "India Higher",
+          "ireland": "Ireland",
+          "italy": "Italy",
+          "jp_50hz": "JP_50Hz",
+          "jp_60hz": "JP_60Hz",
+          "korea": "Korea",
+          "mauritius": "Mauritius",
+          "newzealand": "NewZealand",
+          "northern_ireland": "Northern Ireland",
+          "philippines": "Philippines",
+          "poland": "Poland",
+          "romania": "ROMANIA",
+          "slovakia": "Slovakia",
+          "south_africa": "South Africa",
+          "spain": "SPAIN",
+          "spainislands": "SpainIslands",
+          "srilanka": "SriLanka",
+          "sweden": "Sweden",
+          "switzerland": "Switzerland",
+          "taiwan": "Taiwan",
+          "thailand_mea": "Thailand MEA",
+          "thailand_pea": "Thailand PEA",
+          "undefined": "Undefined",
+          "warehouse": "Warehouse"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_safetycountrycode": {
+        "state": {
+          "50hz_grid_default": "50Hz Grid Default",
+          "50hz_lv_default": "50Hz LV Default",
+          "60hz_grid_default": "60Hz Grid Default",
+          "60hz_lv_default": "60Hz LV Default",
+          "australia": "Australia",
+          "australia_ausgrid": "Australia Ausgrid",
+          "australia_energex": "Australia Energex",
+          "australia_ergon": "Australia Ergon",
+          "australia_essential": "Australia Essential",
+          "australia_horizon": "Australia Horizon",
+          "australia_microgrid": "Australia MicroGrid",
+          "australia_pwcore_citipw": "Australia Pwcore_CitiPW",
+          "australia_sapn": "Australia SAPN",
+          "australia_western": "Australia Western",
+          "australial": "AustraliaL",
+          "austria": "Austria",
+          "barbados": "Barbados",
+          "belgium": "BELGIUM",
+          "brazil": "Brazil",
+          "brazil_lv": "Brazil LV",
+          "bulgaria": "Bulgaria",
+          "cei_016": "CEI_016",
+          "chile": "Chile",
+          "china": "China",
+          "china_station": "China Station",
+          "chinese_standard_higher_performance": "Chinese Standard higher performance",
+          "cyprus": "Cyprus",
+          "czech": "CZECH",
+          "denmark": "DENMARK",
+          "dewa_lv": "DEWA LV",
+          "dewa_mv": "DEWA MV",
+          "en50549": "EN50549",
+          "energe30k": "Energe30K",
+          "ergon30k": "Ergon30K",
+          "france": "France",
+          "french_50hz": "French 50Hz",
+          "french_60hz": "French 60Hz",
+          "g59_3": "G59/3",
+          "g83_or_g59__according_to_model": "G83 or G59, according to model",
+          "germany": "GERMANY",
+          "germany_vde_4110": "Germany VDE 4110",
+          "greece_mainland": "GREECE MAINLAND",
+          "greengrid": "GreenGrid",
+          "holland": "Holland",
+          "holland_16_20a": "Holland 16/20A",
+          "hungary": "Hungary",
+          "iec61727_60hz": "IEC61727_60Hz",
+          "ieee1547_208vac": "IEEE1547 208Vac",
+          "ieee1547_220vac": "IEEE1547 220Vac",
+          "ieee1547_230vac": "IEEE1547_230VAC",
+          "ieee1547_240vac": "IEEE1547 240Vac",
+          "india": "India",
+          "india_higher": "India Higher",
+          "ireland": "Ireland",
+          "italy": "Italy",
+          "jp_50hz": "JP_50Hz",
+          "jp_60hz": "JP_60Hz",
+          "korea": "Korea",
+          "mauritius": "Mauritius",
+          "newzealand": "NewZealand",
+          "northern_ireland": "Northern Ireland",
+          "philippines": "Philippines",
+          "poland": "Poland",
+          "romania": "ROMANIA",
+          "slovakia": "Slovakia",
+          "south_africa": "South Africa",
+          "spain": "SPAIN",
+          "spainislands": "SpainIslands",
+          "srilanka": "SriLanka",
+          "sweden": "Sweden",
+          "switzerland": "Switzerland",
+          "taiwan": "Taiwan",
+          "thailand_mea": "Thailand MEA",
+          "thailand_pea": "Thailand PEA",
+          "undefined": "Undefined",
+          "warehouse": "Warehouse"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_selectworkmode": {
+        "state": {
+          "backup_mode": "backup mode",
+          "economic_mode": "economic mode",
+          "off_grid_mode": "Off grid mode",
+          "self_use_mode": "Self use mode",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_socled1": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_socled2": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_socled3": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_socled4": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_startstop": {
+        "state": {
+          "start": "Start",
+          "stop": "Stop",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_statemachine": {
+        "state": {
+          "error": "ERROR",
+          "go_running": "GO_RUNNING",
+          "go_stopped": "GO_STOPPED",
+          "running": "RUNNING",
+          "stopped": "STOPPED",
+          "undefined": "UNDEFINED"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_stopsocprotect": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_systemled": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_upsstdvolttype": {
+        "state": {
+          "208_v": "208 V",
+          "220_v_": "220 V ",
+          "230_v": "230 V",
+          "240_v": "240 V",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2apmenablepfoverfrequenzycurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2apmenablepfunderfrequenzycurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2apmenablepucurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2apmpuoutputresponsemode": {
+        "state": {
+          "disable": "Disable",
+          "gradient_control": "Gradient Control",
+          "pt-1_behaviour": "PT-1 Behaviour",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2cpreconnectiongradientenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2frtenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2hvrtenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2hvrtzerocurrentmodeenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2lvrtenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2lvrtzerocurrentmodeenable": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmcosphipcurvemode": {
+        "state": {
+          "basic": "Basic",
+          "slope_model": "Slope Model",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmcosphipextendedfunctions": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmenablecurvecosphip": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmenablefixedq": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmenableqpcurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmqpcurvemode": {
+        "state": {
+          "basic": "Basic",
+          "slope_model": "Slope Model",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmqucurvemode": {
+        "state": {
+          "basic": "Basic",
+          "slope_model": "Slope Model",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmquenablequcurve": {
+        "state": {
+          "disable_curve": "Disable Curve",
+          "enable_curve": "Enable Curve",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2rpmquextendedfunctions": {
+        "state": {
+          "disable": "Disable",
+          "enable": "Enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2vrtactivepowerrecoverymode": {
+        "state": {
+          "disable": "Disable",
+          "gradient_control": "Gradient Control",
+          "pt-1_behaviour": "PT-1 Behaviour",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2vrtcurrentdistributionmode": {
+        "state": {
+          "active_power_priority_mode": "Active Power Priority Mode",
+          "constant_current_mode": "Constant Current Mode",
+          "reactive_power_priority_mode": "Reactive Power Priority Mode",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_v2vrtreactivepowerrecoverymodeend": {
+        "state": {
+          "disable": "Disable",
+          "gradient_control": "Gradient Control",
+          "pt-1_behaviour": "PT-1 Behaviour",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_waveformdetection": {
+        "state": {
+          "off-grid_operation_is_prioritized_with_high_precision": "Off-Grid operation is prioritized with high precision",
+          "off-grid_operation_is_prioritized_with_low_precision": "Off-Grid operation is prioritized with low precision",
+          "undefined": "Undefined",
+          "vde_4110_ride_through_operation_is_prioritized": "VDE 4110 Ride Through operation is prioritized"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_wifiledstate": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_off": "Led Off",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_wifiorlanswitch": {
+        "state": {
+          "led_flash": "Led flash",
+          "led_on": "Led On",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_wmeterconnectcheckflag": {
+        "state": {
+          "checking": "Checking",
+          "stop_checking": "Stop Checking",
+          "undefined": "Undefined",
+          "wait_for_check": "Wait for check"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_workmode": {
+        "state": {
+          "cut_off_all_the_connection_to_inverter": "cut off all the connection to Inverter",
+          "fault_fault_mode_something_is_in_fault_mode": "Fault,fault mode,something is in fault mode",
+          "inverter_upgrade": "Inverter upgrade",
+          "power_on_self-check_of_inverter": "Power on self-check of inverter",
+          "pv_inputs_to_inverter_first__battery_inputs_to_inverter_second__inverter_work_as_ac_source": "PV inputs to Inverter(First),Battery inputs to Inverter(Second),Inverter work as AC source",
+          "pv_inputs_to_inverter_inverter_outputs_to_grid": "PV inputs to Inverter,Inverter outputs to Grid",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_workweek1": {
+        "state": {
+          "_dry_contact_load_mode_disable": " Dry contact load mode disable",
+          "backup_mode_disable": "Backup mode disable",
+          "backup_mode_enable": "Backup mode enable",
+          "dry_contact_load_mode_enable": "Dry contact load mode enable",
+          "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
+          "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
+          "eco_mode_disable": "Eco mode disable",
+          "eco_mode_enable": "Eco mode enable",
+          "peak_shaving_function_disable": "Peak shaving function disable",
+          "peak_shaving_function_enable": "Peak shaving function enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_workweek2": {
+        "state": {
+          "_dry_contact_load_mode_disable": " Dry contact load mode disable",
+          "backup_mode_disable": "Backup mode disable",
+          "backup_mode_enable": "Backup mode enable",
+          "dry_contact_load_mode_enable": "Dry contact load mode enable",
+          "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
+          "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
+          "eco_mode_disable": "Eco mode disable",
+          "eco_mode_enable": "Eco mode enable",
+          "peak_shaving_function_disable": "Peak shaving function disable",
+          "peak_shaving_function_enable": "Peak shaving function enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_workweek3": {
+        "state": {
+          "_dry_contact_load_mode_disable": " Dry contact load mode disable",
+          "backup_mode_disable": "Backup mode disable",
+          "backup_mode_enable": "Backup mode enable",
+          "dry_contact_load_mode_enable": "Dry contact load mode enable",
+          "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
+          "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
+          "eco_mode_disable": "Eco mode disable",
+          "eco_mode_enable": "Eco mode enable",
+          "peak_shaving_function_disable": "Peak shaving function disable",
+          "peak_shaving_function_enable": "Peak shaving function enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_workweek4": {
+        "state": {
+          "_dry_contact_load_mode_disable": " Dry contact load mode disable",
+          "backup_mode_disable": "Backup mode disable",
+          "backup_mode_enable": "Backup mode enable",
+          "dry_contact_load_mode_enable": "Dry contact load mode enable",
+          "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
+          "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
+          "eco_mode_disable": "Eco mode disable",
+          "eco_mode_enable": "Eco mode enable",
+          "peak_shaving_function_disable": "Peak shaving function disable",
+          "peak_shaving_function_enable": "Peak shaving function enable",
+          "undefined": "Undefined"
+        }
+      },
+      "batteryinverter_s_l_a_s_h_zvrtconfig": {
+        "state": {
+          "both_enable": "Both enable",
+          "disable": "Disable",
+          "only_hvrt_enable": "Only HVRT enable",
+          "only_lvrt_enable": "Only LVRT enable",
+          "undefined": "Undefined"
+        }
+      },
+      "charger_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlapimodbustcp_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlapirest_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlapiwebsocket_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlbackend_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlbalancing_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrldebuglog_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlemergencycapacityreserve_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlemergencycapacityreserve_s_l_a_s_h_statemachine": {
+        "state": {
+          "abovereservesoc": "AboveReserveSoc",
+          "atreservesoc": "AtReserveSoc",
+          "belowreservesoc": "BelowReserveSoc",
+          "forcechargegrid": "ForceChargeGrid",
+          "forcechargepv": "ForceChargePv",
+          "nolimit": "NoLimit",
+          "undefined": "Undefined"
+        }
+      },
+      "ctrlesslimiter14a_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlesssohcycle_s_l_a_s_h_balancingerrordebug": {
+        "state": {
+          "baseline_min_missing": "BASELINE_MIN_MISSING",
+          "delta_above_threshold": "DELTA_ABOVE_THRESHOLD",
+          "delta_negative": "DELTA_NEGATIVE",
+          "internal_error": "INTERNAL_ERROR",
+          "max_voltage_undefined": "MAX_VOLTAGE_UNDEFINED",
+          "min_voltage_undefined": "MIN_VOLTAGE_UNDEFINED",
+          "none": "NONE",
+          "timeout": "TIMEOUT"
+        }
+      },
+      "ctrlesssohcycle_s_l_a_s_h_isbatterybalanced": {
+        "state": {
+          "balanced": "BALANCED",
+          "error": "ERROR",
+          "not_balanced": "NOT_BALANCED",
+          "not_measured": "NOT_MEASURED"
+        }
+      },
+      "ctrlesssohcycle_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlesssohcycle_s_l_a_s_h_statemachine": {
+        "state": {
+          "check_balancing": "CHECK_BALANCING",
+          "done": "DONE",
+          "error_abort": "ERROR_ABORT",
+          "evaluate_result": "EVALUATE_RESULT",
+          "idle": "IDLE",
+          "measurement_cycle_charging": "MEASUREMENT_CYCLE_CHARGING",
+          "measurement_cycle_charging_wait": "MEASUREMENT_CYCLE_CHARGING_WAIT",
+          "measurement_cycle_discharging": "MEASUREMENT_CYCLE_DISCHARGING",
+          "measurement_cycle_discharging_wait": "MEASUREMENT_CYCLE_DISCHARGING_WAIT",
+          "prepare": "PREPARE",
+          "reference_cycle_charging": "REFERENCE_CYCLE_CHARGING",
+          "reference_cycle_charging_wait": "REFERENCE_CYCLE_CHARGING_WAIT",
+          "reference_cycle_discharging": "REFERENCE_CYCLE_DISCHARGING",
+          "reference_cycle_discharging_wait": "REFERENCE_CYCLE_DISCHARGING_WAIT"
+        }
+      },
+      "ctrlesssurplusfeedtogrid_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlevcs_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlgridoptimizedcharge_s_l_a_s_h_selltogridlimitstate": {
+        "state": {
+          "active_limitation_-_fix_limit": "Active limitation - Fix limit",
+          "active_limitation_-_minimum_charge_power_": "Active limitation - Minimum charge power ",
+          "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Limit cannot be adapted because of other constraints with higher priority",
+          "no_active_limitation": "No active limitation",
+          "not_active__the_controller_has_no_flexibility_left_to_delay_charge__because_the_limitation_is_nearly_zero_": "Not active. The controller has no flexibility left to delay charge, because the limitation is nearly zero.",
+          "selltogridlimit_part_is_disabled": "SellToGridLimit part is disabled",
+          "selltogridlimit_part_was_not_started_because_there_is_no_production_or_to_less_production": "SellToGridLimit part was not started because there is no production or to less production",
+          "undefined": "Undefined"
+        }
+      },
+      "ctrlgridoptimizedcharge_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlpreparebatteryextension_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlpreparebatteryextension_s_l_a_s_h_statemachine": {
+        "state": {
+          "abovetargetsoc": "AboveTargetSoc",
+          "attargetsoc": "AtTargetSoc",
+          "belowtargetsoc": "BelowTargetSoc",
+          "idle": "Idle",
+          "notstarted": "NotStarted",
+          "referencecycle": "ReferenceCycle",
+          "withinlowertargetsocboundaries": "WithinLowerTargetSocBoundaries",
+          "withinuppertargetsocboundaries": "WithinUpperTargetSocBoundaries"
+        }
+      },
+      "ess_s_l_a_s_h_gridmode": {
+        "state": {
+          "off-grid": "Off-Grid",
+          "off-grid_genset": "Off-Grid Genset",
+          "on-grid": "On-Grid",
+          "undefined": "Undefined"
+        }
+      },
+      "ess_s_l_a_s_h_startstop": {
+        "state": {
+          "start": "Start",
+          "stop": "Stop",
+          "undefined": "Undefined"
+        }
+      },
+      "ess_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ess_s_l_a_s_h_statemachine": {
+        "state": {
+          "error": "Error",
+          "maintenance": "Maintenance",
+          "startbattery": "StartBattery",
+          "startbatteryinverter": "StartBatteryInverter",
+          "started": "Started",
+          "stopbattery": "StopBattery",
+          "stopbatteryinverter": "StopBatteryInverter",
+          "stopped": "Stopped",
+          "undefined": "Undefined"
+        }
+      },
+      "evcs_s_l_a_s_h_chargemode": {
+        "state": {
+          "force-charge": "Force-Charge",
+          "use_surplus_power": "Use surplus power"
+        }
+      },
+      "evcs_s_l_a_s_h_chargestate": {
+        "state": {
+          "charging": "Charging",
+          "decreasing": "Decreasing",
+          "increasing": "Increasing",
+          "not_charging": "Not charging",
+          "undefined": "Undefined",
+          "waiting_for_available_power": "Waiting for available power"
+        }
+      },
+      "evcs_s_l_a_s_h_chargingtype": {
+        "state": {
+          "ac": "AC",
+          "ccs": "CCS",
+          "chademo": "Chademo",
+          "undefined": "Undefined"
+        }
+      },
+      "evcs_s_l_a_s_h_phases": {
+        "state": {
+          "one_phase": "One Phase",
+          "three_phase": "Three Phase",
+          "two_phase": "Two Phase"
+        }
+      },
+      "evcs_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "io_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "meter_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "modbus_s_l_a_s_h_startstop": {
+        "state": {
+          "start": "Start",
+          "stop": "Stop",
+          "undefined": "Undefined"
+        }
+      },
+      "modbus_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "predictor_s_l_a_s_h_predictorlinearmodelpredictionstate": {
+        "state": {
+          "insufficient_prediction_data": "Insufficient prediction data",
+          "model_outdated": "Model outdated",
+          "no_model_trained": "No model trained",
+          "no_prediction_data": "No prediction data",
+          "prediction_successful": "Prediction successful",
+          "predictor_deactivated": "Predictor deactivated",
+          "undefined": "Undefined",
+          "unknown_error": "Unknown error"
+        }
+      },
+      "predictor_s_l_a_s_h_predictorlinearmodeltrainingstate": {
+        "state": {
+          "insufficient_training_data": "Insufficient training data",
+          "no_training_data": "No training data",
+          "predictor_deactivated": "Predictor deactivated",
+          "training_successful": "Training successful",
+          "undefined": "Undefined",
+          "unknown_error": "Unknown error"
+        }
+      },
+      "predictor_s_l_a_s_h_predictorproductionlinearmodelsnowstate": {
+        "state": {
+          "normal": "Normal",
+          "snow": "Snow"
+        }
+      },
+      "predictor_s_l_a_s_h_predictorprofileclusteringmodelpredictionstate": {
+        "state": {
+          "insufficient_prediction_data": "Insufficient prediction data",
+          "model_outdated": "Model outdated",
+          "no_model_trained": "No model trained",
+          "no_prediction_data": "No prediction data",
+          "prediction_successful": "Prediction successful",
+          "predictor_deactivated": "Predictor deactivated",
+          "undefined": "Undefined",
+          "unknown_error": "Unknown error"
+        }
+      },
+      "predictor_s_l_a_s_h_predictorprofileclusteringmodeltrainingstate": {
+        "state": {
+          "insufficient_training_data": "Insufficient training data",
+          "no_training_data": "No training data",
+          "predictor_deactivated": "Predictor deactivated",
+          "training_successful": "Training successful",
+          "undefined": "Undefined",
+          "unknown_error": "Unknown error"
+        }
+      },
+      "predictor_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "pvinverter_s_l_a_s_h_s113st": {
+        "state": {
+          "fault": "FAULT",
+          "mppt": "MPPT",
+          "off": "OFF",
+          "shutting_down": "SHUTTING_DOWN",
+          "sleeping": "SLEEPING",
+          "standby": "STANDBY",
+          "starting": "STARTING",
+          "throttled": "THROTTLED",
+          "undefined": "Undefined"
+        }
+      },
+      "pvinverter_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "rrd4j_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "scheduler_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "weather_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "menu_options": {
+          "select_components": "Komponenten auswählen",
+          "advanced_options": "Erweiterte Optionen"
+        }
+      },
+      "select_components": {
+        "title": "Komponenten auswählen"
+      },
+      "advanced_options": {
+        "title": "Erweiterte Optionen",
+        "data": {
+          "ignore_decreasing_if_total_increasing": "Abnehmend ignorieren wenn Gesamt steigend",
+          "forward_interval": "Updatefrequenz begrenzen (Sekunden)"
+        },
+        "data_description": {
+          "forward_interval": "Intervall in Sekunden für die Veröffentlichung von Kanaldaten. 0 deaktiviert die Begrenzung."
+        }
+      }
+    }
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "custom_url": "Individuelle Websocket URL (angegebener Hostname wird nicht verwendet)",
+        "direct_edge": "Direkte Edge Websocket Verbindung (Port 8085)",
+        "local_fems": "FEMS lokales Monitoring (Port 80)",
+        "local_openems": "OpenEMS lokales Monitoring (Port 8082)",
+        "web_fenecon": "Fenecon Online Monitoring auf portal.fenecon.de (angegebener Hostname wird nicht verwendet)"
+      }
+    }
+  }
 }
