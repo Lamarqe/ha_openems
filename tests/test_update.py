@@ -1,14 +1,16 @@
 """Tests for the OpenEMS update platform."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import jsonrpc_base
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import update as update_module
-from custom_components.openems.update import (OpenEMSUpdateDescription,
-                                              OpenEMSUpdateEntity)
+from custom_components.openems.update import (
+    OpenEMSUpdateDescription,
+    OpenEMSUpdateEntity,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -33,6 +35,7 @@ def _make_entity(edge=None) -> OpenEMSUpdateEntity:
 # ---------------------------------------------------------------------------
 # _set_versions
 # ---------------------------------------------------------------------------
+
 
 def test_set_versions_up_to_date_no_update_available() -> None:
     """When only current_version is supplied the system is up to date."""
@@ -68,6 +71,7 @@ def test_set_versions_none_marks_unavailable() -> None:
 # _set_progress_percentage
 # ---------------------------------------------------------------------------
 
+
 def test_set_progress_percentage_marks_in_progress() -> None:
     entity = _make_entity()
     entity._set_progress_percentage(42)
@@ -80,6 +84,7 @@ def test_set_progress_percentage_marks_in_progress() -> None:
 # ---------------------------------------------------------------------------
 # async_update state machine
 # ---------------------------------------------------------------------------
+
 
 async def test_async_update_status_updated() -> None:
     """'updated' status sets versions from the response."""
@@ -98,8 +103,9 @@ async def test_async_update_status_available() -> None:
     """'available' status exposes both current and latest version."""
     edge = _make_edge()
     edge.get_system_update_state = AsyncMock(
-        return_value={"available": {
-            "currentVersion": "1.0.0", "latestVersion": "2.0.0"}}
+        return_value={
+            "available": {"currentVersion": "1.0.0", "latestVersion": "2.0.0"}
+        }
     )
     entity = _make_entity(edge)
     await entity.async_update()
@@ -159,6 +165,7 @@ async def test_async_update_protocol_error_marks_unavailable() -> None:
 # async_setup_entry
 # ---------------------------------------------------------------------------
 
+
 async def test_async_setup_entry_creates_update_entity(hass: HomeAssistant) -> None:
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
@@ -167,14 +174,16 @@ async def test_async_setup_entry_creates_update_entity(hass: HomeAssistant) -> N
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
+    mock_entry.runtime_data.edge_device.info = DeviceInfo(
+        name="host", identifiers={("openems", "host")}
+    )
 
     created: list[OpenEMSUpdateEntity] = []
 
     def _add_entities(entities, **kwargs):
         created.extend(entities)
 
-    with patch("custom_components.openems.update.dr.async_get", return_value=MagicMock()):
-        await update_module.async_setup_entry(hass, mock_entry, _add_entities)
+    await update_module.async_setup_entry(hass, mock_entry, _add_entities)
 
     assert len(created) == 1
     assert isinstance(created[0], OpenEMSUpdateEntity)

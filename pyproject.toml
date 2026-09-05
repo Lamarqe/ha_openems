@@ -649,6 +649,7 @@ exclude_lines = [
 
 [tool.ruff]
 required-version = ">=0.15.20"
+extend-exclude = ["tests"]
 
 [tool.ruff.lint]
 select = [
@@ -879,7 +880,7 @@ split-on-trailing-comma = false
 
 # Temporary
 "homeassistant/**" = ["PTH"]
-"tests/**" = ["PTH", "TID251"]
+"tests/**" = ["ALL"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 25
