@@ -13,12 +13,13 @@ SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
 
 def to_snake_case(name: str) -> str:
     """Convert a name to the format used by the OpenEMS integration."""
-    return SNAKE_REPLACE_PATTERN.sub("_", name).lower()
+    name = SNAKE_REPLACE_PATTERN.sub("_", name).lower()
+    return re.sub(r"[_-]{2,}", "_", name).strip("-_")
 
 
 def translation_key(component_name: str, channel_name: str) -> str:
     """Generate the translation key used by the OpenEMS integration."""
-    component_name = re.sub(r"\d+$", "", component_name)
+    component_name = re.sub(r"\d+$", "", component_name).lstrip("_")
     channel_name = channel_name.removeprefix("_Property")
     return to_snake_case(component_name) + SLASH_ESC + to_snake_case(channel_name)
 
@@ -40,7 +41,7 @@ def main() -> None:
                 continue
 
             state = {
-                to_snake_case(option_name): option_name
+                to_snake_case(option_name): option_name.strip()
                 for option_name in channel["options"]
             }
             key = translation_key(component_name, channel["id"])

@@ -21,11 +21,21 @@ def add_missing_values(english: dict, german: dict) -> None:
             add_missing_values(english_value, german[key])
 
 
+def strip_translation_values(value: object) -> object:
+    """Remove invalid leading or trailing whitespace from translation values."""
+    if isinstance(value, dict):
+        return {key: strip_translation_values(item) for key, item in value.items()}
+    if isinstance(value, str):
+        return value.strip()
+    return value
+
+
 def main() -> None:
     """Update the German translations without replacing existing values."""
     english = json.loads(EN_TRANSLATIONS_PATH.read_text(encoding="utf-8"))
     german = json.loads(DE_TRANSLATIONS_PATH.read_text(encoding="utf-8"))
     add_missing_values(english, german)
+    german = strip_translation_values(german)
     DE_TRANSLATIONS_PATH.write_text(
         json.dumps(german, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )

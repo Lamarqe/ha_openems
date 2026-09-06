@@ -176,11 +176,8 @@ def translation_key(channel: OpenEMSDataHandler) -> str:
         channel_name = channel.name[9:]
     else:
         channel_name = channel.name
-    return (
-        to_snake_case(re.sub(r"\d+$", "", channel.component.name))
-        + SLASH_ESC
-        + to_snake_case(channel_name)
-    )
+    component_name = re.sub(r"\d+$", "", channel.component.name).lstrip("_")
+    return to_snake_case(component_name) + SLASH_ESC + to_snake_case(channel_name)
 
 
 def map_user_input(user_input: dict[str, str]) -> ConnectionProperties:

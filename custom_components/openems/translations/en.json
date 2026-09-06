@@ -112,122 +112,7 @@
             }
         },
         "sensor": {
-            "_appmanager_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_componentmanager_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_cycle_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_energy_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_evcsslowpowerincreasefilter_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_host_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_meta_s_l_a_s_h_currency": {
-                "state": {
-                    "chf": "CHF",
-                    "eur": "EUR",
-                    "sek": "SEK",
-                    "undefined": "UNDEFINED"
-                }
-            },
-            "_meta_s_l_a_s_h_gridfeedinlimitationtype": {
-                "state": {
-                    "dynamic_limitation": "Dynamic limitation",
-                    "no_limitation": "No limitation",
-                    "undefined": "UNDEFINED"
-                }
-            },
-            "_meta_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_power_s_l_a_s_h_solvestrategy": {
-                "state": {
-                    "all_constraints": "All Constraints",
-                    "none": "None",
-                    "optimize_by_keeping_all_inverters_equal": "Optimize By Keeping All Inverters Equal",
-                    "optimize_by_keeping_all_inverters_nearly_equal": "Optimize By Keeping All Inverters Nearly Equal",
-                    "optimize_by_keeping_ess_in_balance": "Optimize by Keeping ESS in Balance",
-                    "optimize_by_keeping_target_direction_and_maximizing_in_order": "Optimize By Keeping Target Direction And Maximizing In Order",
-                    "optimize_by_moving_towards_target": "Optimize By Moving Towards Target",
-                    "undefined": "Undefined"
-                }
-            },
-            "_power_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_predictormanager_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_serialnumber_s_l_a_s_h_state": {
-                "state": {
-                    "fault": "Fault",
-                    "info": "Info",
-                    "ok": "Ok",
-                    "warning": "Warning"
-                }
-            },
-            "_sum_s_l_a_s_h_gridmode": {
-                "state": {
-                    "off-grid": "Off-Grid",
-                    "off-grid_genset": "Off-Grid Genset",
-                    "on-grid": "On-Grid",
-                    "undefined": "Undefined"
-                }
-            },
-            "_sum_s_l_a_s_h_state": {
+            "appmanager_s_l_a_s_h_state": {
                 "state": {
                     "fault": "Fault",
                     "info": "Info",
@@ -318,13 +203,13 @@
             "batteryinverter_s_l_a_s_h_battery2protocol": {
                 "state": {
                     "byd_box_h": "Byd box h",
-                    "byd_box_premium_hvm___hvl": "Byd box premium hvm / hvl",
+                    "byd_box_premium_hvm_hvl": "Byd box premium hvm / hvl",
                     "byd_box_premium_hvs": "Byd box premium hvs",
                     "ems_battery": "EMS Battery",
-                    "for_oloid_is_lbs__for_dyness_is_tower__for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
-                    "powercube_h1___force_h1___force_h2": "Powercube H1 / Force H1 / Force H2",
+                    "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
+                    "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
                     "resu_hv_type-r": "Resu_hv_type-r",
-                    "secu-s___lx_s-h___lx_f-h": "SECU-S / LX S-H / LX F-H",
+                    "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H",
                     "undefined": "Undefined"
                 }
             },
@@ -348,26 +233,26 @@
             "batteryinverter_s_l_a_s_h_batteryprotocol": {
                 "state": {
                     "byd_box_h": "Byd box h",
-                    "byd_box_premium_hvm___hvl": "Byd box premium hvm / hvl",
+                    "byd_box_premium_hvm_hvl": "Byd box premium hvm / hvl",
                     "byd_box_premium_hvs": "Byd box premium hvs",
                     "ems_battery": "EMS Battery",
-                    "for_oloid_is_lbs__for_dyness_is_tower__for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
-                    "powercube_h1___force_h1___force_h2": "Powercube H1 / Force H1 / Force H2",
+                    "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
+                    "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
                     "resu_hv_type-r": "Resu_hv_type-r",
-                    "secu-s___lx_s-h___lx_f-h": "SECU-S / LX S-H / LX F-H",
+                    "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H",
                     "undefined": "Undefined"
                 }
             },
             "batteryinverter_s_l_a_s_h_batteryprotocolarm": {
                 "state": {
                     "byd_box_h": "Byd box h",
-                    "byd_box_premium_hvm___hvl": "Byd box premium hvm / hvl",
+                    "byd_box_premium_hvm_hvl": "Byd box premium hvm / hvl",
                     "byd_box_premium_hvs": "Byd box premium hvs",
                     "ems_battery": "EMS Battery",
-                    "for_oloid_is_lbs__for_dyness_is_tower__for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
-                    "powercube_h1___force_h1___force_h2": "Powercube H1 / Force H1 / Force H2",
+                    "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "For Oloid is LBS, For DYNESS is Tower, For SOLUNA is HV Battery",
+                    "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
                     "resu_hv_type-r": "Resu_hv_type-r",
-                    "secu-s___lx_s-h___lx_f-h": "SECU-S / LX S-H / LX F-H",
+                    "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H",
                     "undefined": "Undefined"
                 }
             },
@@ -574,10 +459,10 @@
             "batteryinverter_s_l_a_s_h_dredcmd": {
                 "state": {
                     "dred_0": "Dred 0",
-                    "dred_1_or_0__pv": "Dred 1 or 0% PV",
-                    "dred_2_or_30__pv": "Dred 2 or 30% PV",
-                    "dred_3_or_60__pv": "Dred 3 or 60% PV",
-                    "dred_4_or_100__pv": "Dred 4 or 100% PV",
+                    "dred_1_or_0_pv": "Dred 1 or 0% PV",
+                    "dred_2_or_30_pv": "Dred 2 or 30% PV",
+                    "dred_3_or_60_pv": "Dred 3 or 60% PV",
+                    "dred_4_or_100_pv": "Dred 4 or 100% PV",
                     "dred_5": "Dred 5",
                     "dred_6": "Dred 6",
                     "dred_7": "Dred 7",
@@ -686,8 +571,8 @@
             },
             "batteryinverter_s_l_a_s_h_ezloggerprocommstatus": {
                 "state": {
-                    "_success": " Success",
-                    "not_good_": "Not good ",
+                    "not_good": "Not good",
+                    "success": "Success",
                     "undefined": "Undefined"
                 }
             },
@@ -833,28 +718,28 @@
             },
             "batteryinverter_s_l_a_s_h_loadmoder": {
                 "state": {
-                    "off__inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
+                    "off_inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
                     "on_inverter_connects_to_load": "ON,inverter connects to Load",
                     "undefined": "Undefined"
                 }
             },
             "batteryinverter_s_l_a_s_h_loadmodes": {
                 "state": {
-                    "off__inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
+                    "off_inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
                     "on_inverter_connects_to_load": "ON,inverter connects to Load",
                     "undefined": "Undefined"
                 }
             },
             "batteryinverter_s_l_a_s_h_loadmodet": {
                 "state": {
-                    "off__inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
+                    "off_inverter_disconnects_to_load": "OFF, inverter disconnects to Load",
                     "on_inverter_connects_to_load": "ON,inverter connects to Load",
                     "undefined": "Undefined"
                 }
             },
             "batteryinverter_s_l_a_s_h_loadregulationindex": {
                 "state": {
-                    "_disable": " Disable",
+                    "disable": "Disable",
                     "switching_mode": "Switching mode",
                     "time_manage": "Time manage",
                     "undefined": "Undefined"
@@ -880,7 +765,7 @@
                 "state": {
                     "cut_off_all_the_connection_to_inverter": "cut off all the connection to Inverter",
                     "fault_fault_mode_something_is_in_fault_mode": "Fault,fault mode,something is in fault mode",
-                    "pv_inputs_to_inverter_first__battery_inputs_to_inverter_second__inverter_work_as_ac_source": "PV inputs to Inverter(First),Battery inputs to Inverter(Second),Inverter work as AC source",
+                    "pv_inputs_to_inverter_first_battery_inputs_to_inverter_second_inverter_work_as_ac_source": "PV inputs to Inverter(First),Battery inputs to Inverter(Second),Inverter work as AC source",
                     "pv_inputs_to_inverter_inverter_outputs_to_grid": "PV inputs to Inverter,Inverter outputs to Grid",
                     "undefined": "Undefined"
                 }
@@ -933,7 +818,7 @@
                     "french_50hz": "French 50Hz",
                     "french_60hz": "French 60Hz",
                     "g59_3": "G59/3",
-                    "g83_or_g59__according_to_model": "G83 or G59, according to model",
+                    "g83_or_g59_according_to_model": "G83 or G59, according to model",
                     "germany": "GERMANY",
                     "germany_vde_4110": "Germany VDE 4110",
                     "greece_mainland": "GREECE MAINLAND",
@@ -1013,7 +898,7 @@
                     "french_50hz": "French 50Hz",
                     "french_60hz": "French 60Hz",
                     "g59_3": "G59/3",
-                    "g83_or_g59__according_to_model": "G83 or G59, according to model",
+                    "g83_or_g59_according_to_model": "G83 or G59, according to model",
                     "germany": "GERMANY",
                     "germany_vde_4110": "Germany VDE 4110",
                     "greece_mainland": "GREECE MAINLAND",
@@ -1137,7 +1022,7 @@
             "batteryinverter_s_l_a_s_h_upsstdvolttype": {
                 "state": {
                     "208_v": "208 V",
-                    "220_v_": "220 V ",
+                    "220_v": "220 V",
                     "230_v": "230 V",
                     "240_v": "240 V",
                     "undefined": "Undefined"
@@ -1338,16 +1223,16 @@
                     "fault_fault_mode_something_is_in_fault_mode": "Fault,fault mode,something is in fault mode",
                     "inverter_upgrade": "Inverter upgrade",
                     "power_on_self-check_of_inverter": "Power on self-check of inverter",
-                    "pv_inputs_to_inverter_first__battery_inputs_to_inverter_second__inverter_work_as_ac_source": "PV inputs to Inverter(First),Battery inputs to Inverter(Second),Inverter work as AC source",
+                    "pv_inputs_to_inverter_first_battery_inputs_to_inverter_second_inverter_work_as_ac_source": "PV inputs to Inverter(First),Battery inputs to Inverter(Second),Inverter work as AC source",
                     "pv_inputs_to_inverter_inverter_outputs_to_grid": "PV inputs to Inverter,Inverter outputs to Grid",
                     "undefined": "Undefined"
                 }
             },
             "batteryinverter_s_l_a_s_h_workweek1": {
                 "state": {
-                    "_dry_contact_load_mode_disable": " Dry contact load mode disable",
                     "backup_mode_disable": "Backup mode disable",
                     "backup_mode_enable": "Backup mode enable",
+                    "dry_contact_load_mode_disable": "Dry contact load mode disable",
                     "dry_contact_load_mode_enable": "Dry contact load mode enable",
                     "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
                     "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
@@ -1360,9 +1245,9 @@
             },
             "batteryinverter_s_l_a_s_h_workweek2": {
                 "state": {
-                    "_dry_contact_load_mode_disable": " Dry contact load mode disable",
                     "backup_mode_disable": "Backup mode disable",
                     "backup_mode_enable": "Backup mode enable",
+                    "dry_contact_load_mode_disable": "Dry contact load mode disable",
                     "dry_contact_load_mode_enable": "Dry contact load mode enable",
                     "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
                     "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
@@ -1375,9 +1260,9 @@
             },
             "batteryinverter_s_l_a_s_h_workweek3": {
                 "state": {
-                    "_dry_contact_load_mode_disable": " Dry contact load mode disable",
                     "backup_mode_disable": "Backup mode disable",
                     "backup_mode_enable": "Backup mode enable",
+                    "dry_contact_load_mode_disable": "Dry contact load mode disable",
                     "dry_contact_load_mode_enable": "Dry contact load mode enable",
                     "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
                     "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
@@ -1390,9 +1275,9 @@
             },
             "batteryinverter_s_l_a_s_h_workweek4": {
                 "state": {
-                    "_dry_contact_load_mode_disable": " Dry contact load mode disable",
                     "backup_mode_disable": "Backup mode disable",
                     "backup_mode_enable": "Backup mode enable",
+                    "dry_contact_load_mode_disable": "Dry contact load mode disable",
                     "dry_contact_load_mode_enable": "Dry contact load mode enable",
                     "dry_contact_smart_load_mode_disable": "Dry contact smart load mode disable",
                     "dry_contact_smart_load_mode_enable": "Dry contact smart load mode enable",
@@ -1413,6 +1298,14 @@
                 }
             },
             "charger_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
+            "componentmanager_s_l_a_s_h_state": {
                 "state": {
                     "fault": "Fault",
                     "info": "Info",
@@ -1587,18 +1480,18 @@
                     "no_active_limitation": "No active limitation",
                     "no_remaining_capacity": "No remaining capacity",
                     "no_remaining_time": "No remaining time",
-                    "not_active__the_controller_has_no_flexibility_left_to_delay_charge__because_the_limitation_is_nearly_zero_": "Not active. The controller has no flexibility left to delay charge, because the limitation is nearly zero.",
+                    "not_active_the_controller_has_no_flexibility_left_to_delay_charge_because_the_limitation_is_nearly_zero": "Not active. The controller has no flexibility left to delay charge, because the limitation is nearly zero.",
                     "target_minute_not_calculated": "Target minute not calculated",
                     "undefined": "Undefined"
                 }
             },
             "ctrlgridoptimizedcharge_s_l_a_s_h_selltogridlimitstate": {
                 "state": {
-                    "active_limitation_-_fix_limit": "Active limitation - Fix limit",
-                    "active_limitation_-_minimum_charge_power_": "Active limitation - Minimum charge power ",
+                    "active_limitation_fix_limit": "Active limitation - Fix limit",
+                    "active_limitation_minimum_charge_power": "Active limitation - Minimum charge power",
                     "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Limit cannot be adapted because of other constraints with higher priority",
                     "no_active_limitation": "No active limitation",
-                    "not_active__the_controller_has_no_flexibility_left_to_delay_charge__because_the_limitation_is_nearly_zero_": "Not active. The controller has no flexibility left to delay charge, because the limitation is nearly zero.",
+                    "not_active_the_controller_has_no_flexibility_left_to_delay_charge_because_the_limitation_is_nearly_zero": "Not active. The controller has no flexibility left to delay charge, because the limitation is nearly zero.",
                     "selltogridlimit_part_is_disabled": "SellToGridLimit part is disabled",
                     "selltogridlimit_part_was_not_started_because_there_is_no_production_or_to_less_production": "SellToGridLimit part was not started because there is no production or to less production",
                     "undefined": "Undefined"
@@ -1630,6 +1523,22 @@
                     "referencecycle": "ReferenceCycle",
                     "withinlowertargetsocboundaries": "WithinLowerTargetSocBoundaries",
                     "withinuppertargetsocboundaries": "WithinUpperTargetSocBoundaries"
+                }
+            },
+            "cycle_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
+            "energy_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
                 }
             },
             "ess_s_l_a_s_h_gridmode": {
@@ -1719,7 +1628,46 @@
                     "undefined": "Undefined"
                 }
             },
+            "evcsslowpowerincreasefilter_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
+            "host_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
             "io_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
+            "meta_s_l_a_s_h_currency": {
+                "state": {
+                    "chf": "CHF",
+                    "eur": "EUR",
+                    "sek": "SEK",
+                    "undefined": "UNDEFINED"
+                }
+            },
+            "meta_s_l_a_s_h_gridfeedinlimitationtype": {
+                "state": {
+                    "dynamic_limitation": "Dynamic limitation",
+                    "no_limitation": "No limitation",
+                    "undefined": "UNDEFINED"
+                }
+            },
+            "meta_s_l_a_s_h_state": {
                 "state": {
                     "fault": "Fault",
                     "info": "Info",
@@ -1743,6 +1691,26 @@
                 }
             },
             "modbus_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
+            "power_s_l_a_s_h_solvestrategy": {
+                "state": {
+                    "all_constraints": "All Constraints",
+                    "none": "None",
+                    "optimize_by_keeping_all_inverters_equal": "Optimize By Keeping All Inverters Equal",
+                    "optimize_by_keeping_all_inverters_nearly_equal": "Optimize By Keeping All Inverters Nearly Equal",
+                    "optimize_by_keeping_ess_in_balance": "Optimize by Keeping ESS in Balance",
+                    "optimize_by_keeping_target_direction_and_maximizing_in_order": "Optimize By Keeping Target Direction And Maximizing In Order",
+                    "optimize_by_moving_towards_target": "Optimize By Moving Towards Target",
+                    "undefined": "Undefined"
+                }
+            },
+            "power_s_l_a_s_h_state": {
                 "state": {
                     "fault": "Fault",
                     "info": "Info",
@@ -1808,6 +1776,14 @@
                     "warning": "Warning"
                 }
             },
+            "predictormanager_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
             "pvinverter_s_l_a_s_h_s113st": {
                 "state": {
                     "fault": "FAULT",
@@ -1838,6 +1814,30 @@
                 }
             },
             "scheduler_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
+            "serialnumber_s_l_a_s_h_state": {
+                "state": {
+                    "fault": "Fault",
+                    "info": "Info",
+                    "ok": "Ok",
+                    "warning": "Warning"
+                }
+            },
+            "sum_s_l_a_s_h_gridmode": {
+                "state": {
+                    "off-grid": "Off-Grid",
+                    "off-grid_genset": "Off-Grid Genset",
+                    "on-grid": "On-Grid",
+                    "undefined": "Undefined"
+                }
+            },
+            "sum_s_l_a_s_h_state": {
                 "state": {
                     "fault": "Fault",
                     "info": "Info",
