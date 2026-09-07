@@ -3,6 +3,7 @@
 from custom_components.openems import openems
 from custom_components.openems.const import SLASH_ESC
 from custom_components.openems.helpers_ha import (find_channel_in_backend,
+                                                  to_snake_case,
                                                   translation_key,
                                                   unit_description)
 
@@ -41,3 +42,15 @@ def test_translation_key_and_find_channel(dummy_backend) -> None:
         assert SLASH_ESC in tk
     finally:
         edge.stop()
+
+
+def test_to_snake_case_matches_translation_key_format() -> None:
+    """Ensure option keys match the translation string extraction format."""
+    assert (
+        to_snake_case(
+            "Not active. The controller has no flexibility left to delay charge, "
+            "because the limitation is nearly zero."
+        )
+        == "not_active_the_controller_has_no_flexibility_left_to_delay_charge_"
+        "because_the_limitation_is_nearly_zero"
+    )

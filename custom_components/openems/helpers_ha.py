@@ -167,7 +167,8 @@ def find_channel_in_backend(
 
 def to_snake_case(name: str) -> str:
     """Convert given name to snake_case."""
-    return SNAKE_REPLACE_PATTERN.sub("_", name).lower()
+    name = SNAKE_REPLACE_PATTERN.sub("_", name).lower()
+    return re.sub(r"[_-]{2,}", "_", name).strip("-_")
 
 
 def translation_key(channel: OpenEMSDataHandler) -> str:
