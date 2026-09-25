@@ -33,7 +33,9 @@ async def async_setup_entry(
         # create empty device explicitly, in case their are no entities
         device_registry = dr.async_get(hass)
 
-        device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
+        device_registry.async_get_or_create_child(
+            config_entry_id=entry.entry_id, **device
+        )
 
         entities: list[OpenEMSBinarySensorEntity] = []
         channel: OpenEMSChannel
@@ -94,7 +96,7 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
         self,
         channel: OpenEMSChannel,
         entity_description,
-        device_info: dr.DeviceInfo,
+        device_info: dr.ChildDeviceInfo,
     ) -> None:
         """Initialize the binary sensor."""
         self._channel: OpenEMSChannel = channel

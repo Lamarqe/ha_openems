@@ -54,7 +54,9 @@ async def async_setup_entry(
         device = component_device(entry.runtime_data.edge_device.entry, component)
         # create empty device explicitly, in case their are no entities
         device_registry = dr.async_get(hass)
-        device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
+        device_registry.async_get_or_create_child(
+            config_entry_id=entry.entry_id, **device
+        )
 
         entities: list[OpenEMSSensorEntity] = []
         channel: OpenEMSChannel
@@ -154,7 +156,7 @@ class OpenEMSSensorEntity(SensorEntity):
         self,
         channel: OpenEMSDataHandler,
         entity_description,
-        device_info: dr.DeviceInfo,
+        device_info: dr.ChildDeviceInfo,
     ) -> None:
         """Initialize the sensor."""
         self._channel: OpenEMSDataHandler = channel
