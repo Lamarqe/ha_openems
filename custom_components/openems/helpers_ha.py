@@ -137,6 +137,11 @@ def supported_features(channel: OpenEMSChannel) -> OpenEMSEntityFeature | None:
             return None
 
 
+def component_identifier(component: OpenEMSComponent) -> tuple[str, str]:
+    """Provide the device registry identifier of an OpenEMSComponent."""
+    return (DOMAIN, component.edge.hostname + " " + component.name)
+
+
 def component_device(
     edge_device: dr.DeviceEntry, component: OpenEMSComponent
 ) -> dr.DeviceInfo:
@@ -144,7 +149,7 @@ def component_device(
     return dr.DeviceInfo(
         name=component.edge.hostname + " " + component.name,
         model=component.alias,
-        identifiers={(DOMAIN, component.edge.hostname + " " + component.name)},
+        identifiers={component_identifier(component)},
         via_device_id=edge_device.id,
         entry_type=dr.DeviceEntryType.SERVICE,
     )

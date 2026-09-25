@@ -284,7 +284,7 @@ async def test_update_config_disables_component_removes_entities(
     mock_device = MagicMock()
     mock_device.id = "device-id-1"
     mock_device_registry = MagicMock()
-    mock_device_registry.async_get_device.return_value = mock_device
+    mock_device_registry.async_get_device_by_identifier.return_value = mock_device
     mock_entity_registry = MagicMock()
     mock_entity_registry.async_entries_for_device = MagicMock(return_value=[])
 
