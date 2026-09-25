@@ -12,7 +12,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
@@ -24,7 +23,7 @@ from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSEntityFeature,  # noqa: F401
     RuntimeData,
-    component_device,
+    component_identifier,
     map_user_input,
 )
 from .openems import CONFIG, OpenEMSBackend
@@ -278,10 +277,9 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
     for comp_name, component in backend.the_edge.components.items():
         if not components_options.get(comp_name) and component.create_entities:
             # remove entities
-            comp_device: DeviceInfo = component_device(
-                entry.runtime_data.edge_device.entry, component
+            device = device_registry.async_get_device_by_identifier(
+                component_identifier(component), entry.entry_id
             )
-            device = device_registry.async_get_device(comp_device.get("identifiers"))
             if not device:
                 continue
 
