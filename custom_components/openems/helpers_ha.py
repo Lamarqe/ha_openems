@@ -144,14 +144,12 @@ def component_identifier(component: OpenEMSComponent) -> tuple[str, str]:
 
 def component_device(
     edge_device: dr.DeviceEntry, component: OpenEMSComponent
-) -> dr.DeviceInfo:
-    """Provide the device of an OpenEMSComponent."""
-    return dr.DeviceInfo(
+) -> dr.ChildDeviceInfo:
+    """Provide the child device info of an OpenEMSComponent."""
+    return dr.ChildDeviceInfo(
         name=component.edge.hostname + " " + component.name,
-        model=component.alias,
         identifiers={component_identifier(component)},
-        via_device_id=edge_device.id,
-        entry_type=dr.DeviceEntryType.SERVICE,
+        parent_device_id=edge_device.id,
     )
 
 
