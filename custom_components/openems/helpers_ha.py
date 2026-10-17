@@ -166,25 +166,27 @@ def component_from_device(hass: HomeAssistant, device_id: str) -> OpenEMSCompone
     """
     device = dr.async_get(hass).async_get(device_id)
     if device is not None:
-        for domain, identifier in device.identifiers:
-            if domain != DOMAIN:
-                continue
-            for entry_id in device.config_entries:
-                entry: OpenEMSConfigEntry | None = hass.config_entries.async_get_entry(
-                    entry_id
-                )
+        entry: OpenEMSConfigEntry | None = hass.config_entries.async_get_entry(
+            device.config_entry_id
+        )
+        if (
+            entry is not None
+            and entry.domain == DOMAIN
+            and entry.state is ConfigEntryState.LOADED
+        ):
+            edge = entry.runtime_data.backend.the_edge
+            # identifier structure: "<hostname> <component name>", see component_identifier.
+            # The hostname may contain spaces itself (multi edge setups).
+            prefix = edge.hostname + " "
+            for domain, identifier in device.identifiers:
                 if (
-                    entry is None
-                    or entry.domain != DOMAIN
-                    or entry.state is not ConfigEntryState.LOADED
-                ):
-                    continue
-                edge = entry.runtime_data.backend.the_edge
-                # identifier structure: "<hostname> <component name>", see component_identifier.
-                # The hostname may contain spaces itself (multi edge setups).
-                prefix = edge.hostname + " "
-                if identifier.startswith(prefix) and (
-                    component := edge.components.get(identifier.removeprefix(prefix))
+                    domain == DOMAIN
+                    and identifier.startswith(prefix)
+                    and (
+                        component := edge.components.get(
+                            identifier.removeprefix(prefix)
+                        )
+                    )
                 ):
                     return component
     raise ServiceValidationError(

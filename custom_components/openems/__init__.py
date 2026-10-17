@@ -221,7 +221,7 @@ async def async_migrate_entry(
         device_registry = dr.async_get(hass)
         for device in device_registry.devices.copy().values():
             if (
-                config_entry.entry_id in device.config_entries
+                device.config_entry_id == config_entry.entry_id
                 and device.identifiers
                 and len(identifiers := device.identifiers.pop()) == 3
             ):
