@@ -220,21 +220,6 @@ def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
     return {"boolean": {}}
 
 
-def find_channel_in_backend(
-    backend: OpenEMSBackend, unique_id: str
-) -> OpenEMSDataHandler | None:
-    """Search for a unique ID in a backend and return the channel when found."""
-    component: OpenEMSComponent
-    for component in backend.the_edge.components.values():
-        channel: OpenEMSDataHandler
-        for channel in component.channels:
-            if channel.unique_id() == unique_id:
-                # found it, return it.
-                return channel
-    # not found.
-    return None
-
-
 def translation_key(channel: OpenEMSDataHandler) -> str:
     """Generate translation key for given channel."""
     if isinstance(channel, OpenEMSProperty):

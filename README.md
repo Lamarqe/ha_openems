@@ -238,8 +238,6 @@ Property names are the component configuration names (e.g. `chargeMode`) or chan
 
 In the automation editor, the same is available as device action "Update component configuration", which offers one field per property of the selected component.
 
-The previous form with number entities (`entity_id`) and a single `value` is still supported.
-
 ## Installation
 
 ### HACS

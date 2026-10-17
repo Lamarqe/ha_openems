@@ -1959,9 +1959,6 @@
     "no_component_device": {
       "message": "Gerät {device_id} ist keine OpenEMS Komponente einer geladenen Edge."
     },
-    "no_number_entity": {
-      "message": "Entität {entity_id} ist keine OpenEMS Zahlen-Entität einer geladenen Edge."
-    },
     "unknown_property": {
       "message": "Komponente {component} hat keine Eigenschaft {property}. Gültige Eigenschaften: {valid_properties}"
     },
@@ -1981,14 +1978,6 @@
         "properties": {
           "name": "Eigenschaften",
           "description": "Zu ändernde Eigenschaften der ausgewählten Komponenten-Geräte, z. B. enabledCharging: true und chargeMode: force_charge. Verwende den Konfigurationsnamen (chargeMode) oder den Kanalnamen (_PropertyChargeMode). Werte werden wie bei den zugehörigen Entitäten angegeben: Auswahloptionen in snake_case, Zahlen skaliert wie bei der Zahlen-Entität, Uhrzeiten als HH:MM."
-        },
-        "entity_id": {
-          "name": "Zahlen-Entitäten",
-          "description": "OpenEMS-Zahlen-Entitäten, die auf den angegebenen Wert gesetzt werden (veraltete Form, stattdessen Komponenten-Geräte und Eigenschaften verwenden)."
-        },
-        "value": {
-          "name": "Wert",
-          "description": "Neuer Wert für die ausgewählten Zahlen-Entitäten (veraltete Form)."
         }
       }
     },

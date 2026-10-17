@@ -1959,9 +1959,6 @@
     "no_component_device": {
       "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
     },
-    "no_number_entity": {
-      "message": "Entity {entity_id} is not an OpenEMS number entity of a loaded edge."
-    },
     "unknown_property": {
       "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
     },
@@ -1981,14 +1978,6 @@
         "properties": {
           "name": "Properties",
           "description": "Properties to change on the selected component devices, e.g. enabledCharging: true and chargeMode: force_charge. Use the configuration name (chargeMode) or the channel name (_PropertyChargeMode). Values are given like in the corresponding entities: select options in snake_case, numbers scaled like the number entity, times as HH:MM."
-        },
-        "entity_id": {
-          "name": "Number entities",
-          "description": "OpenEMS number entities to set to the given value (legacy form, use component devices and properties instead)."
-        },
-        "value": {
-          "name": "Value",
-          "description": "New value for the selected number entities (legacy form)."
         }
       }
     },

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from yarl import URL
 
@@ -26,7 +26,6 @@ class LoadedComponent:
     update_config: AsyncMock
     component_device: dr.DeviceEntry
     edge_device: dr.DeviceEntry
-    number_entity_id: str
 
     def stop(self) -> None:
         """Stop the edge and prevent unloading of the mocked entry at teardown."""
@@ -35,7 +34,7 @@ class LoadedComponent:
 
 
 def setup_evcs_component(hass: HomeAssistant) -> LoadedComponent:
-    """Create an edge with component ctrlEvcs0 and register entry, devices and entity.
+    """Create an edge with component ctrlEvcs0 and register entry and devices.
 
     The caller must call stop() at the end of the test.
     """
@@ -74,15 +73,6 @@ def setup_evcs_component(hass: HomeAssistant) -> LoadedComponent:
         identifiers={(DOMAIN, HOSTNAME + " ctrlEvcs0")},
         via_device=(DOMAIN, HOSTNAME),
     )
-    number_prop = component.get_property("energySessionLimit")
-    assert number_prop is not None
-    number_entity = er.async_get(hass).async_get_or_create(
-        "number",
-        DOMAIN,
-        number_prop.unique_id(),
-        config_entry=entry,
-        device_id=component_device.id,
-    )
     return LoadedComponent(
         hass=hass,
         entry=entry,
@@ -91,5 +81,4 @@ def setup_evcs_component(hass: HomeAssistant) -> LoadedComponent:
         update_config=update_config,
         component_device=component_device,
         edge_device=edge_device,
-        number_entity_id=number_entity.entity_id,
     )

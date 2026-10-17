@@ -125,37 +125,19 @@ async def test_edge_device_is_rejected(
     assert exc_info.value.translation_key == "no_component_device"
 
 
-async def test_legacy_number_entity_with_value(
-    hass: HomeAssistant, loaded: LoadedComponent
-) -> None:
-    """The legacy form with a number entity target and value still works."""
-    await _call(hass, {"entity_id": loaded.number_entity_id, "value": 500})
-
-    loaded.update_config.assert_awaited_once_with([("energySessionLimit", 500.0)])
-
-
-async def test_legacy_unknown_entity_is_rejected(
-    hass: HomeAssistant, loaded: LoadedComponent
-) -> None:
-    """Entities which are not OpenEMS number entities are rejected."""
-    with pytest.raises(ServiceValidationError) as exc_info:
-        await _call(hass, {"entity_id": "number.unknown", "value": 1})
-
-    assert exc_info.value.translation_key == "no_number_entity"
-
-
 @pytest.mark.parametrize(
     "data",
     [
         {"properties": {"enabledCharging": True}},
-        {"device_id": "abc", "value": 1},
-        {"entity_id": "number.x", "properties": {"enabledCharging": True}},
-        {"entity_id": "number.x"},
+        {"device_id": "abc"},
+        # the removed legacy form
+        {"entity_id": "number.x", "value": 1},
+        {"device_id": "abc", "properties": {"enabledCharging": True}, "value": 1},
     ],
 )
-async def test_schema_requires_matching_target_and_fields(
+async def test_schema_requires_device_and_properties(
     hass: HomeAssistant, loaded: LoadedComponent, data: dict
 ) -> None:
-    """Properties require a device target, value requires an entity target."""
+    """Device and properties are required, the legacy fields are rejected."""
     with pytest.raises(vol.Invalid):
         await _call(hass, data)
