@@ -1814,7 +1814,8 @@
         "state": {
           "disable": "Disabled",
           "force_single_phase": "1-phase",
-          "force_three_phase": "3-phase"
+          "force_three_phase": "3-phase",
+          "automatic": "Automatic"
         }
       },
       "ctrlevcs_s_l_a_s_h_chargemode": {
@@ -1910,7 +1911,8 @@
       "options": {
         "disable": "Disabled",
         "force_single_phase": "1-phase",
-        "force_three_phase": "3-phase"
+        "force_three_phase": "3-phase",
+        "automatic": "Automatic"
       }
     },
     "ctrlevcs_s_l_a_s_h_chargemode": {

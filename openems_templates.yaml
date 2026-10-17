@@ -598,6 +598,37 @@ decluttering_templates:
                   entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching
                   name: >-
                     [[[ return
+                    hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_phaseswitching.state.automatic")
+                    ]]]
+                  icon: mdi:auto-mode
+                  styles:
+                    card:
+                      - height: 80px
+                  state:
+                    - value: automatic
+                      color: green
+                      styles:
+                        card:
+                          - background-color: var(--paper-item-icon-active-color)
+                    - value: automatic
+                      operator: "!="
+                      styles:
+                        name:
+                          - filter: opacity(50%)
+                        icon:
+                          - filter: opacity(50%)
+                  tap_action:
+                    action: call-service
+                    service: select.select_option
+                    data:
+                      option: automatic
+                      entity_id: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching
+                - type: custom:button-card
+                  show_name: true
+                  show_icon: true
+                  entity: select.[[system]]_ctrlevse[[ctrlevse_id]]_phaseswitching
+                  name: >-
+                    [[[ return
                     hass.localize("component.openems.entity.select.ctrlevsesingle_s_l_a_s_h_phaseswitching.state.force_single_phase")
                     ]]]
                   icon: mdi:power-socket-de
@@ -606,7 +637,7 @@ decluttering_templates:
                       - height: 80px
                   state:
                     - value: force_single_phase
-                      color: green
+                      color: blue
                       styles:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
@@ -637,7 +668,7 @@ decluttering_templates:
                       - height: 80px
                   state:
                     - value: force_three_phase
-                      color: blue
+                      color: purple
                       styles:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
