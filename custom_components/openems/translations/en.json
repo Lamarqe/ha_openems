@@ -1956,23 +1956,39 @@
     }
   },
   "exceptions": {
-    "no_component_device": "Device {device_id} is not an OpenEMS component of a loaded edge.",
-    "no_number_entity": "Entity {entity_id} is not an OpenEMS number entity of a loaded edge.",
-    "unknown_property": "Component {component} has no property {property}. Valid properties: {valid_properties}",
-    "invalid_property_value": "Invalid value {value} for property {property} of component {component}."
+    "no_component_device": {
+      "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
+    },
+    "no_number_entity": {
+      "message": "Entity {entity_id} is not an OpenEMS number entity of a loaded edge."
+    },
+    "unknown_property": {
+      "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
+    },
+    "invalid_property_value": {
+      "message": "Invalid value {value} for property {property} of component {component}."
+    }
   },
   "services": {
     "update_component_config": {
       "name": "Update component configuration",
       "description": "Changes properties of OpenEMS components. All properties of a component are sent in a single updateComponentConfig request. Number limits are not checked.",
       "fields": {
+        "device_id": {
+          "name": "Component devices",
+          "description": "OpenEMS component devices whose properties are changed. A single updateComponentConfig request is sent per device."
+        },
         "properties": {
           "name": "Properties",
-          "description": "Properties to change on the targeted component devices, e.g. {\"enabledCharging\": true, \"chargeMode\": \"force_charge\"}. Use the configuration name (chargeMode) or the channel name (_PropertyChargeMode). Values are given like in the corresponding entities: select options in snake_case, numbers scaled like the number entity, times as HH:MM."
+          "description": "Properties to change on the selected component devices, e.g. enabledCharging: true and chargeMode: force_charge. Use the configuration name (chargeMode) or the channel name (_PropertyChargeMode). Values are given like in the corresponding entities: select options in snake_case, numbers scaled like the number entity, times as HH:MM."
+        },
+        "entity_id": {
+          "name": "Number entities",
+          "description": "OpenEMS number entities to set to the given value (legacy form, use component devices and properties instead)."
         },
         "value": {
           "name": "Value",
-          "description": "New value for the targeted number entities (legacy form, use properties with a device target instead)."
+          "description": "New value for the selected number entities (legacy form)."
         }
       }
     },

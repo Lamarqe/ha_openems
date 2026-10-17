@@ -1,6 +1,7 @@
 """Consistency checks of services.yaml and the translation files."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -54,3 +55,35 @@ def test_select_options_are_available_for_selectors(file_name: str) -> None:
     translations = _load_json(file_name)
     for key, select in translations["entity"]["select"].items():
         assert translations["selector"][key]["options"] == select["state"], key
+
+
+def test_services_yaml_has_no_device_target() -> None:
+    """Hassfest rejects device filters on targets, a device selector field must be used."""
+    for service_name, service_def in _services_yaml().items():
+        assert "device" not in (service_def.get("target") or {}), service_name
+
+
+@pytest.mark.parametrize("file_name", TRANSLATION_FILES)
+def test_exceptions_have_messages(file_name: str) -> None:
+    """Hassfest requires a mapping with key "message" per exception."""
+    for key, value in _load_json(file_name)["exceptions"].items():
+        assert isinstance(value, dict), key
+        assert value["message"], key
+
+
+@pytest.mark.parametrize("file_name", TRANSLATION_FILES)
+def test_placeholders_are_identifiers(file_name: str) -> None:
+    """Hassfest requires each {placeholder} to be a valid identifier."""
+
+    def strings(value: object, path: str = ""):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                yield from strings(item, f"{path}/{key}")
+        elif isinstance(value, str):
+            yield path, value
+
+    for path, text in strings(_load_json(file_name)):
+        for placeholder in re.findall(r"\{([^}]*)\}", text):
+            assert re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*", placeholder), (
+                f"{path}: {{{placeholder}}}"
+            )

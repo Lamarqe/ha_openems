@@ -223,13 +223,12 @@ _Note: Values sent via REST write are not reflected by the backend and thus not 
 ### Update multiple component properties at once
 
 Calling e.g. `switch.turn_on` and `select.select_option` one after the other sends one `updateComponentConfig` request per action.
-Use the action **openems.update_component_config** with a component device as target to send several properties of a component in a single request:
+Use the action **openems.update_component_config** with a component device to send several properties of a component in a single request:
 
 ```yaml
 action: openems.update_component_config
-target:
-  device_id: <device id of "fems12345 ctrlEvcs0">
 data:
+  device_id: <device id of "fems12345 ctrlEvcs0">
   properties:
     enabledCharging: true
     chargeMode: force_charge
@@ -239,7 +238,7 @@ Property names are the component configuration names (e.g. `chargeMode`) or chan
 
 In the automation editor, the same is available as device action "Update component configuration", which offers one field per property of the selected component.
 
-The previous form with number entities as target and a single `value` is still supported.
+The previous form with number entities (`entity_id`) and a single `value` is still supported.
 
 ## Installation
 
