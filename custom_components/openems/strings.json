@@ -1890,6 +1890,135 @@
         "web_fenecon": "Fenecon online monitoring at portal.fenecon.de (hostname option will not be used)",
         "custom_url": "Custom Websocket URL (hostname option will not be used)"
       }
+    },
+    "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
+      "options": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
+    },
+    "ctrlevsesingle_s_l_a_s_h_mode": {
+      "options": {
+        "zero": "Off",
+        "minimum": "Minimal",
+        "surplus": "PV",
+        "force": "Fast"
+      }
+    },
+    "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+      "options": {
+        "disable": "Disabled",
+        "force_single_phase": "1-phase",
+        "force_three_phase": "3-phase"
+      }
+    },
+    "ctrlevcs_s_l_a_s_h_chargemode": {
+      "options": {
+        "force_charge": "Force charge",
+        "excess_power": "Excess power"
+      }
+    },
+    "ctrlevcs_s_l_a_s_h_priority": {
+      "options": {
+        "car": "Car",
+        "storage": "Storage"
+      }
+    },
+    "ctrlgridoptimizedcharge_s_l_a_s_h_mode": {
+      "options": {
+        "off": "Off",
+        "automatic": "Automatic",
+        "manual": "Manual"
+      }
+    },
+    "ctrlioheatingelement_s_l_a_s_h_defaultlevel": {
+      "options": {
+        "level_1": "Level 1",
+        "level_2": "Level 2",
+        "level_3": "Level 3"
+      }
+    },
+    "ctrlioheatingelement_s_l_a_s_h_mode": {
+      "options": {
+        "automatic": "Automatic",
+        "manual_on": "On",
+        "manual_off": "Off"
+      }
+    },
+    "ctrlioheatingelement_s_l_a_s_h_workmode": {
+      "options": {
+        "time": "Guaranteed minimum time",
+        "none": "Excess power only"
+      }
+    }
+  },
+  "device_automation": {
+    "action_type": {
+      "update_component_config": "Update component configuration"
+    }
+  },
+  "exceptions": {
+    "no_component_device": {
+      "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
+    },
+    "unknown_property": {
+      "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
+    },
+    "invalid_property_value": {
+      "message": "Invalid value {value} for property {property} of component {component}."
+    }
+  },
+  "services": {
+    "update_component_config": {
+      "name": "Update component configuration",
+      "description": "Changes properties of OpenEMS components. All properties of a component are sent in a single updateComponentConfig request. Number limits are not checked.",
+      "fields": {
+        "device_id": {
+          "name": "Component devices",
+          "description": "OpenEMS component devices whose properties are changed. A single updateComponentConfig request is sent per device."
+        },
+        "properties": {
+          "name": "Properties",
+          "description": "Properties to change on the selected component devices, e.g. enabledCharging: true and chargeMode: force_charge. Use the configuration name (chargeMode) or the channel name (_PropertyChargeMode). Values are given like in the corresponding entities: select options in snake_case, numbers scaled like the number entity, times as HH:MM."
+        }
+      }
+    },
+    "rest_write_sensor": {
+      "name": "REST write sensor",
+      "description": "Cyclically sends a value for the channel of a sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
+      "fields": {
+        "value": {
+          "name": "Value",
+          "description": "The new target value."
+        },
+        "timeout": {
+          "name": "Timeout",
+          "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity."
+        },
+        "update_cycle": {
+          "name": "Update cycle",
+          "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only."
+        }
+      }
+    },
+    "rest_write_binary_sensor": {
+      "name": "REST write binary sensor",
+      "description": "Cyclically sends a value for the channel of a binary sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
+      "fields": {
+        "value": {
+          "name": "Value",
+          "description": "The new target value."
+        },
+        "timeout": {
+          "name": "Timeout",
+          "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity."
+        },
+        "update_cycle": {
+          "name": "Update cycle",
+          "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only."
+        }
+      }
     }
   }
 }

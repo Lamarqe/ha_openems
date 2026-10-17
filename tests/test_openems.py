@@ -4,9 +4,10 @@ These tests exercise the OpenEMS channel/property/component logic without
 network calls by using small dummy objects.
 """
 from datetime import time
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.core import HomeAssistant
+import pytest
 from yarl import URL
 
 from custom_components.openems import openems
@@ -248,3 +249,112 @@ async def test_entity_lifecycle_and_unique_id(hass: HomeAssistant, dummy_backend
             assert s.unique_id().startswith("edge1")
     finally:
         edge.stop()
+
+
+def _make_evcs_edge():
+    """Return an edge with a ctrlEvcs0 component and a mocked update_config."""
+    component_config = {
+        "_host": {"Hostname": "h1"},
+        "ctrlEvcs0": {
+            "_PropertyAlias": "EVCS",
+            "properties": {},
+            "channels": [
+                make_channel_json("_PropertyEnabledCharging", "BOOLEAN"),
+                make_channel_json("_PropertyChargeMode", "STRING"),
+            ],
+        },
+    }
+    edge = openems.OpenEMSEdge(_make_backend(), "edge-1", component_config)
+    comp = edge.components["ctrlEvcs0"]
+    comp.update_config = AsyncMock()
+    return edge, comp
+
+
+async def test_update_properties_adds_update_group_members() -> None:
+    """Switching charging on adds the current charge mode to the same request."""
+    edge, comp = _make_evcs_edge()
+    try:
+        comp.get_property("chargeMode").handle_data_update("", "EXCESS_POWER")
+        await comp.get_property("enabledCharging").update_value(True)
+        comp.update_config.assert_awaited_once_with(
+            [("enabledCharging", True), ("chargeMode", "EXCESS_POWER")]
+        )
+    finally:
+        edge.stop()
+
+
+async def test_update_properties_respects_when_condition() -> None:
+    """Switching charging off does not add the charge mode (rule has when: true)."""
+    edge, comp = _make_evcs_edge()
+    try:
+        await comp.get_property("enabledCharging").update_value(False)
+        comp.update_config.assert_awaited_once_with([("enabledCharging", False)])
+    finally:
+        edge.stop()
+
+
+async def test_update_properties_explicit_values_win() -> None:
+    """Explicitly given values are not overwritten by current values of group members."""
+    edge, comp = _make_evcs_edge()
+    try:
+        enabled = comp.get_property("_PropertyEnabledCharging")
+        mode = comp.get_property("_PropertyChargeMode")
+        enabled.handle_data_update("", 0)
+        await comp.update_properties({enabled: True, mode: "FORCE_CHARGE"})
+        comp.update_config.assert_awaited_once_with(
+            [("enabledCharging", True), ("chargeMode", "FORCE_CHARGE")]
+        )
+    finally:
+        edge.stop()
+
+
+def test_get_property_by_channel_or_config_name() -> None:
+    """Properties can be looked up by channel name and config name."""
+    edge, comp = _make_evcs_edge()
+    try:
+        prop = comp.get_property("chargeMode")
+        assert prop is not None
+        assert comp.get_property("_PropertyChargeMode") is prop
+        assert prop.config_name == "chargeMode"
+        assert comp.get_property("unknown") is None
+    finally:
+        edge.stop()
+
+
+def test_to_backend_value_conversions() -> None:
+    """Each property type converts HA values to backend values."""
+    comp = _make_component()
+    enum_prop = openems.OpenEMSEnumProperty(
+        comp, make_channel_json("_PropertyChargeMode", "STRING"), ["FORCE_CHARGE"]
+    )
+    assert enum_prop.to_backend_value("force_charge") == "FORCE_CHARGE"
+    assert enum_prop.to_backend_value("FORCE_CHARGE") == "FORCE_CHARGE"
+    with pytest.raises(ValueError):
+        enum_prop.to_backend_value("off")
+
+    bool_prop = openems.OpenEMSBooleanProperty(
+        comp, make_channel_json("_PropertyEnabledCharging", "BOOLEAN")
+    )
+    assert bool_prop.to_backend_value(True) is True
+    assert bool_prop.to_backend_value("off") is False
+    assert bool_prop.to_backend_value(1) is True
+    with pytest.raises(ValueError):
+        bool_prop.to_backend_value(2)
+
+    num_prop = openems.OpenEMSNumberProperty(
+        comp, make_channel_json("_PropertyForceChargeMinPower", "INTEGER")
+    )
+    num_prop.multiplier = 3
+    assert num_prop.to_backend_value("4200") == 1400
+    for invalid in ("abc", None, True):
+        with pytest.raises(ValueError):
+            num_prop.to_backend_value(invalid)
+
+    time_prop = openems.OpenEMSTimeProperty(
+        comp, make_channel_json("_PropertyManualTargetTime", "STRING")
+    )
+    assert time_prop.to_backend_value(time(7, 5)) == "07:05"
+    assert time_prop.to_backend_value("07:05:00") == "07:05"
+    for invalid in ("nope", 7):
+        with pytest.raises(ValueError):
+            time_prop.to_backend_value(invalid)

@@ -451,3 +451,44 @@ async def test_remove_device_component_still_present_blocks_removal(
     device_entry = _make_device_entry({(DOMAIN, "host comp1")})
 
     assert await async_remove_config_entry_device(hass, entry, device_entry) is False
+
+
+async def test_remove_device_multi_edge_edge_device_blocks_removal(
+    hass: HomeAssistant,
+) -> None:
+    """The main device of an edge in a multi edge setup must not be removable."""
+    entry = _make_remove_device_entry("host edge0", {"comp1": MagicMock()})
+    device_entry = _make_device_entry({(DOMAIN, "host edge0")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is False
+
+
+async def test_remove_device_multi_edge_component_still_present_blocks_removal(
+    hass: HomeAssistant,
+) -> None:
+    """A component device of a multi edge setup must not be removable while present."""
+    entry = _make_remove_device_entry("host edge0", {"comp1": MagicMock()})
+    device_entry = _make_device_entry({(DOMAIN, "host edge0 comp1")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is False
+
+
+async def test_remove_device_multi_edge_component_not_present_allows_removal(
+    hass: HomeAssistant,
+) -> None:
+    """A component device of a multi edge setup is removable once the component is gone."""
+    entry = _make_remove_device_entry("host edge0", {"comp1": MagicMock()})
+    device_entry = _make_device_entry({(DOMAIN, "host edge0 comp2")})
+
+    assert await async_remove_config_entry_device(hass, entry, device_entry) is True
+
+
+async def test_remove_device_multi_edge_other_edge_allows_removal(
+    hass: HomeAssistant,
+) -> None:
+    """Devices of another edge on the same host are removable from this entry."""
+    entry = _make_remove_device_entry("host edge0", {"comp1": MagicMock()})
+
+    for identifier in ("host edge1", "host edge1 comp1"):
+        device_entry = _make_device_entry({(DOMAIN, identifier)})
+        assert await async_remove_config_entry_device(hass, entry, device_entry) is True

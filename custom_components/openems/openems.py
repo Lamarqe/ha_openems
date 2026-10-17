@@ -26,7 +26,7 @@ from .const import (
     ConfigOptions,
 )
 from .entry_data import OpenEMSWebSocketConnection
-from .helpers import connection_url, wrap_jsonrpc
+from .helpers import connection_url, to_snake_case, wrap_jsonrpc
 from .helpers_openems import expand_sensor_def, prepare_ref_value
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class OpenEMSDataHandler:
         """Return the value of the channel."""
 
     def notify_ha(self):
-        """Notify HA of a value cahnge."""
+        """Notify HA of a value change."""
         if self.callback:
             self.callback()
 
@@ -157,7 +157,7 @@ class OpenEMSChannel(OpenEMSDataHandler):
     async def update_value(
         self, new_value: float | bool, update_cycle: int, timeout: int
     ):
-        """Handle value change request from Home Assisant."""
+        """Handle value change request from Home Assistant."""
         edge = self.component.edge
         backend = edge.backend
         # Note: This is not a component property.
@@ -293,24 +293,22 @@ class OpenEMSDerivedChannel(OpenEMSDataHandler):
 class OpenEMSProperty(OpenEMSChannel):
     """Class representing a property of an OpenEMS component."""
 
-    async def update_value(self, new_value: Any) -> None:
-        """Handle value change request from Home Assisant."""
-        channel_names, condition_value = CONFIG.update_group_members(
-            self.component.name, self.name
-        )
-        properties = [(self.name[9].lower() + self.name[10:], new_value)]
-        if condition_value is None or condition_value == new_value:
-            for channel_name in channel_names:
-                channel: OpenEMSProperty = next(
-                    chan
-                    for chan in self.component.properties
-                    if chan.name == channel_name
-                )
-                properties.append(
-                    (channel.name[9].lower() + channel.name[10:], channel.current_value)
-                )
+    @property
+    def config_name(self) -> str:
+        """Return the name of the property in the component configuration."""
+        # remove "_Property" prefix and lower the first character
+        return self.name[9].lower() + self.name[10:]
 
-        await self.component.update_config(properties)
+    def to_backend_value(self, value: Any) -> Any:
+        """Convert a value in Home Assistant representation to the backend representation.
+
+        Raise ValueError if the value is invalid.
+        """
+        return value
+
+    async def update_value(self, new_value: Any) -> None:
+        """Handle value change request from Home Assistant."""
+        await self.component.update_properties({self: new_value})
 
 
 class OpenEMSEnumProperty(OpenEMSProperty):
@@ -323,6 +321,13 @@ class OpenEMSEnumProperty(OpenEMSProperty):
         """Initialize the channel."""
         super().__init__(component, channel_json)
         self.property_options: list[str] = options
+
+    def to_backend_value(self, value: Any) -> str:
+        """Convert the snake_case or original option to the original option."""
+        for option in self.property_options:
+            if value in (option, to_snake_case(option)):
+                return option
+        raise ValueError(f"Invalid option: {value}")
 
     @property
     def current_option(self) -> str | None:
@@ -375,10 +380,18 @@ class OpenEMSTimeProperty(OpenEMSProperty):
 
         return None
 
+    def to_backend_value(self, value: Any) -> str:
+        """Convert a time object or a "HH:MM[:SS]" string to "HH:MM"."""
+        if isinstance(value, time):
+            return value.strftime("%H:%M")
+        try:
+            return time.fromisoformat(value).strftime("%H:%M")
+        except (TypeError, ValueError) as err:
+            raise ValueError(f"Invalid time: {value}") from err
+
     async def async_set_value(self, value: time) -> None:
         """Update the selected time."""
-        time_str = value.strftime("%H:%M")
-        await super().update_value(time_str)
+        await super().update_value(self.to_backend_value(value))
 
 
 class OpenEMSNumberProperty(OpenEMSProperty):
@@ -500,9 +513,19 @@ class OpenEMSNumberProperty(OpenEMSProperty):
 
         return False
 
+    def to_backend_value(self, value: Any) -> float:
+        """Convert the scaled Home Assistant value to the unscaled backend value."""
+        if isinstance(value, bool):
+            # ValueError, as all invalid user input is reported as ValueError
+            raise ValueError(f"Invalid number: {value}")  # noqa: TRY004
+        try:
+            return float(value) / self.multiplier
+        except (TypeError, ValueError) as err:
+            raise ValueError(f"Invalid number: {value}") from err
+
     async def update_value(self, new_value: float) -> None:
-        """Handle value change request from Home Assisant."""
-        await super().update_value(new_value / self.multiplier)
+        """Handle value change request from Home Assistant."""
+        await super().update_value(self.to_backend_value(new_value))
 
     def set_multiplier_def(self, multiplier_def):
         """Initialize the multiplier of the number channel."""
@@ -554,6 +577,21 @@ class OpenEMSBooleanProperty(OpenEMSProperty):
     """Class representing a boolean property of an OpenEMS component."""
 
     # Use with platform switch
+    TRUE_VALUES = ("1", "true", "on", "yes", "enable")
+    FALSE_VALUES = ("0", "false", "off", "no", "disable")
+
+    def to_backend_value(self, value: Any) -> bool:
+        """Convert booleans, 0/1 and strings like "on"/"off" to bool."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int) and value in (0, 1):
+            return bool(value)
+        if isinstance(value, str):
+            if value.lower() in self.TRUE_VALUES:
+                return True
+            if value.lower() in self.FALSE_VALUES:
+                return False
+        raise ValueError(f"Invalid boolean: {value}")
 
     @property
     def is_on(self) -> bool | None:
@@ -670,6 +708,33 @@ class OpenEMSComponent:
                 self.derived_sensors.append(
                     OpenEMSDerivedChannel(self, expanded_sensor_def)
                 )
+
+    def get_property(self, name: str) -> OpenEMSProperty | None:
+        """Return the property with the given channel name or config name."""
+        return next(
+            (prop for prop in self.properties if name in (prop.name, prop.config_name)),
+            None,
+        )
+
+    async def update_properties(self, values: dict[OpenEMSProperty, Any]) -> None:
+        """Send the given backend values in a single updateComponentConfig request.
+
+        Members of an update group, which are not part of values, are added with their current value.
+        """
+        implied: dict[OpenEMSProperty, Any] = {}
+        for prop, value in values.items():
+            channel_names, condition_value = CONFIG.update_group_members(
+                self.name, prop.name
+            )
+            if condition_value is None or condition_value == value:
+                for channel_name in channel_names:
+                    member = self.get_property(channel_name)
+                    if member is not None and member not in values:
+                        implied.setdefault(member, member.current_value)
+
+        await self.update_config(
+            [(prop.config_name, value) for prop, value in {**values, **implied}.items()]
+        )
 
     async def update_config(self, channels: list[tuple[str, Any]]):
         """Send updateComponentConfig request to backend."""

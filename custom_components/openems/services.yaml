@@ -1,13 +1,16 @@
 update_component_config:
-  target:
-    entity:
-      integration: openems
-      domain: number
   fields:
-    value:
+    device_id:
       required: true
       selector:
-        number:
+        device:
+          integration: openems
+          multiple: true
+    properties:
+      required: true
+      example: '{"enabledCharging": true, "chargeMode": "force_charge"}'
+      selector:
+        object:
 
 rest_write_sensor:
   target:

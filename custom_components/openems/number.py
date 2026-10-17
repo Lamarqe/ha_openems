@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any
 
 from homeassistant.components.number import (
     NumberEntity,
@@ -14,7 +13,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import ATTR_VALUE
 from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
@@ -83,7 +81,7 @@ async def async_setup_entry(
 
 @dataclass(frozen=True, kw_only=True)
 class OpenEMSNumberDescription(NumberEntityDescription):
-    """Defintion of OpenEMS number attributes."""
+    """Definition of OpenEMS number attributes."""
 
     has_entity_name = True
 
@@ -131,11 +129,6 @@ class OpenEMSNumberEntity(NumberEntity):
         """Change the current value."""
         await self._channel.update_value(value)
         self.async_write_ha_state()
-
-    async def update_component_config(self, **kwargs: Any) -> None:
-        """Service callback to change value while ignoring limits."""
-        val: float = float(kwargs[ATTR_VALUE])
-        await self.async_set_native_value(val)
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

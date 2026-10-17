@@ -7,6 +7,7 @@ SLASH_ESC = "_s_l_a_s_h_"
 DOMAIN: str = "openems"
 
 ATTR_VALUE: str = "value"
+ATTR_PROPERTIES: str = "properties"
 ATTR_TIMEOUT: str = "timeout"
 ATTR_UPDATE_CYCLE: str = "update_cycle"
 
@@ -51,7 +52,7 @@ class ConfigOptions(TypedDict):
 
 
 class ConnectionType(TypedDict):
-    "Type containing the websocket connection paramters."
+    "Type containing the websocket connection parameters."
 
     scheme: str
     host: str | None

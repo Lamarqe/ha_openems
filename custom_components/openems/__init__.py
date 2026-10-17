@@ -305,18 +305,17 @@ async def async_remove_config_entry_device(
     device_identifiers = next(iter(device_entry.identifiers))
     if len(device_identifiers) != 2 or device_identifiers[0] != c.DOMAIN:
         return True  # not our device, allow removal
-    component_identifiers = device_identifiers[1].split(" ", 1)
-    match len(component_identifiers):
-        case 1:
-            # main device of an edge, allow removal only if the hostname is wrong
-            return component_identifiers[0] != backend.the_edge.hostname
-        case 2:
-            # regular component identifier structure. allow removal...
-            return (
-                # ... if the hostname is wrong
-                component_identifiers[0] != backend.the_edge.hostname
-                # ... or the component is not part of the edge anymore
-                or component_identifiers[1] not in backend.the_edge.components
-            )
-        case _:
-            return True  # not our device, allow removal
+    identifier: str = device_identifiers[1]
+    # The hostname may contain spaces itself (multi edge setups: "<hostname> <edge id>"),
+    # so the identifier must not be split at the first space.
+    hostname = backend.the_edge.hostname
+    if identifier == hostname:
+        # main device of the edge, don't allow removal
+        return False
+    if identifier.startswith(hostname + " "):
+        # component device. allow removal if the component is not part of the edge anymore
+        return (
+            identifier.removeprefix(hostname + " ") not in backend.the_edge.components
+        )
+    # device of another hostname or edge, allow removal
+    return True

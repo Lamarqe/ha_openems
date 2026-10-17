@@ -1887,6 +1887,135 @@
         "local_openems": "OpenEMS lokales Monitoring (Port 8082)",
         "web_fenecon": "Fenecon Online Monitoring auf portal.fenecon.de (angegebener Hostname wird nicht verwendet)"
       }
+    },
+    "ctrlevcs_s_l_a_s_h_chargemode": {
+      "options": {
+        "excess_power": "Überschuss",
+        "force_charge": "Zielwert"
+      }
+    },
+    "ctrlevcs_s_l_a_s_h_priority": {
+      "options": {
+        "car": "Auto",
+        "storage": "Speicher"
+      }
+    },
+    "ctrlevsesingle_s_l_a_s_h_mode": {
+      "options": {
+        "force": "Schnellladen",
+        "minimum": "Minimal Beladung mit PV-Überschuss",
+        "surplus": "PV-Überschuss",
+        "zero": "Keine Beladung"
+      }
+    },
+    "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+      "options": {
+        "disable": "Deaktiviert",
+        "force_single_phase": "1-phasig",
+        "force_three_phase": "3-phasig"
+      }
+    },
+    "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
+      "options": {
+        "high": "Hoch",
+        "low": "Gering",
+        "medium": "Mittel"
+      }
+    },
+    "ctrlgridoptimizedcharge_s_l_a_s_h_mode": {
+      "options": {
+        "automatic": "Automatisch",
+        "manual": "Manuell",
+        "off": "Aus"
+      }
+    },
+    "ctrlioheatingelement_s_l_a_s_h_defaultlevel": {
+      "options": {
+        "level_1": "Level 1",
+        "level_2": "Level 2",
+        "level_3": "Level 3"
+      }
+    },
+    "ctrlioheatingelement_s_l_a_s_h_mode": {
+      "options": {
+        "automatic": "Automatisch",
+        "manual_on": "An",
+        "manual_off": "Aus"
+      }
+    },
+    "ctrlioheatingelement_s_l_a_s_h_workmode": {
+      "options": {
+        "time": "Garantierte Mindestzeit",
+        "none": "Überschussleistung, ausschließlich"
+      }
+    }
+  },
+  "device_automation": {
+    "action_type": {
+      "update_component_config": "Komponentenkonfiguration ändern"
+    }
+  },
+  "exceptions": {
+    "no_component_device": {
+      "message": "Gerät {device_id} ist keine OpenEMS Komponente einer geladenen Edge."
+    },
+    "unknown_property": {
+      "message": "Komponente {component} hat keine Eigenschaft {property}. Gültige Eigenschaften: {valid_properties}"
+    },
+    "invalid_property_value": {
+      "message": "Ungültiger Wert {value} für Eigenschaft {property} der Komponente {component}."
+    }
+  },
+  "services": {
+    "update_component_config": {
+      "name": "Komponentenkonfiguration ändern",
+      "description": "Ändert Eigenschaften von OpenEMS-Komponenten. Alle Eigenschaften einer Komponente werden in einer einzigen updateComponentConfig-Anfrage gesendet. Grenzwerte von Zahlen werden nicht geprüft.",
+      "fields": {
+        "device_id": {
+          "name": "Komponenten-Geräte",
+          "description": "OpenEMS-Komponenten-Geräte, deren Eigenschaften geändert werden. Pro Gerät wird eine einzige updateComponentConfig-Anfrage gesendet."
+        },
+        "properties": {
+          "name": "Eigenschaften",
+          "description": "Zu ändernde Eigenschaften der ausgewählten Komponenten-Geräte, z. B. enabledCharging: true und chargeMode: force_charge. Verwende den Konfigurationsnamen (chargeMode) oder den Kanalnamen (_PropertyChargeMode). Werte werden wie bei den zugehörigen Entitäten angegeben: Auswahloptionen in snake_case, Zahlen skaliert wie bei der Zahlen-Entität, Uhrzeiten als HH:MM."
+        }
+      }
+    },
+    "rest_write_sensor": {
+      "name": "REST-Schreiben Sensor",
+      "description": "Sendet zyklisch einen Wert für den Kanal einer Sensor-Entität per REST an das Backend. Per REST geschriebene Werte werden vom Backend nicht zurückgemeldet und sind daher in Home Assistant nicht sichtbar.",
+      "fields": {
+        "value": {
+          "name": "Wert",
+          "description": "Der neue Zielwert."
+        },
+        "timeout": {
+          "name": "Zeitlimit",
+          "description": "Dauer, bis zu der zyklische Aktualisierungen gesendet werden. 0 sendet Werte bis zum nächsten Aktionsaufruf für dieselbe Entität."
+        },
+        "update_cycle": {
+          "name": "Aktualisierungszyklus",
+          "description": "Zyklus, in dem eine neue Anfrage gesendet wird. Notwendig, da FEMS per REST geschriebene Werte standardmäßig nach 60 Sekunden zurücksetzt. 0 sendet nur einen einzelnen REST-Aufruf."
+        }
+      }
+    },
+    "rest_write_binary_sensor": {
+      "name": "REST-Schreiben Binärsensor",
+      "description": "Sendet zyklisch einen Wert für den Kanal einer Binärsensor-Entität per REST an das Backend. Per REST geschriebene Werte werden vom Backend nicht zurückgemeldet und sind daher in Home Assistant nicht sichtbar.",
+      "fields": {
+        "value": {
+          "name": "Wert",
+          "description": "Der neue Zielwert."
+        },
+        "timeout": {
+          "name": "Zeitlimit",
+          "description": "Dauer, bis zu der zyklische Aktualisierungen gesendet werden. 0 sendet Werte bis zum nächsten Aktionsaufruf für dieselbe Entität."
+        },
+        "update_cycle": {
+          "name": "Aktualisierungszyklus",
+          "description": "Zyklus, in dem eine neue Anfrage gesendet wird. Notwendig, da FEMS per REST geschriebene Werte standardmäßig nach 60 Sekunden zurücksetzt. 0 sendet nur einen einzelnen REST-Aufruf."
+        }
+      }
     }
   }
 }
