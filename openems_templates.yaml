@@ -125,6 +125,122 @@ decluttering_templates:
                 data:
                   option: manual_on
                   entity_id: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mode
+  heatpump_template:
+    default:
+      - ctrlioheatpump_id: 0
+    card:
+      type: grid
+      square: false
+      columns: 1
+      cards:
+        - type: heading
+          icon: mdi:heat-pump
+          heading: SG-Ready Wärmepumpe
+          heading_style: title
+        - type: entities
+          entities:
+            - type: simple-entity
+              entity: sensor.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_status
+              name: Zustand
+            - type: simple-entity
+              entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
+              name: Modus
+          state_color: false
+        - type: horizontal-stack
+          cards:
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
+              name: Manuell # codespell:ignore manuell
+              icon: mdi:tune-variant
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: manual
+                  color: green
+                  styles:
+                    card:
+                      - background-color: rgba(0,255,0,0.1)
+                - value: manual
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: manual
+                  entity_id: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
+            - type: custom:button-card
+              show_name: true
+              show_icon: true
+              entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
+              name: Automatisch
+              icon: mdi:auto-mode
+              styles:
+                card:
+                  - height: 80px
+              state:
+                - value: automatic
+                  color: green
+                  styles:
+                    card:
+                      - background-color: rgba(0,100,255,0.1)
+                - value: automatic
+                  operator: "!="
+                  styles:
+                    name:
+                      - filter: opacity(70%)
+                    icon:
+                      - filter: opacity(70%)
+              tap_action:
+                action: call-service
+                service: select.select_option
+                data:
+                  option: automatic
+                  entity_id: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
+        - type: entities
+          entities:
+            - entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_manualstate
+              name: Betriebszustand
+          state_color: false
+          visibility:
+            - condition: state
+              entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
+              state: manual
+        - type: entities
+          entities:
+            - entity: switch.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticrecommendationctrlenabled
+              name: Einschaltempfehlung
+            - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticrecommendationsurpluspower
+              name: Ab Überschusseinspeisung von [W]
+            - type: divider
+            - entity: switch.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticforceonctrlenabled
+              name: Einschaltbefehl
+            - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticforceonsurpluspower
+              name: Ab Überschusseinspeisung von [W]
+            - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticforceonsoc
+              name: und ab Ladezustand von [%]
+            - type: divider
+            - entity: switch.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticlockctrlenabled
+              name: Sperre
+            - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticlockgridbuypower
+              name: Ab Netzbezug von [W]
+            - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticlocksoc
+              name: und ab Ladezustand von [%]
+            - type: divider
+            - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_minimumswitchingtime
+              name: Mindestumschaltzeit [s]
+          state_color: false
+          visibility:
+            - condition: state
+              entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
+              state: automatic
   ess_template:
     default:
       - ctrlemergencycapacityreserve_id: 0

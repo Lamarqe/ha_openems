@@ -1,67 +1,120 @@
 [
-    {
-        "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+",
-        "channels": [
-            {
-                "id": "_PropertyManualEnergySessionLimit",
-                "limit": {
-                    "lower": "0",
-                    "upper": "100000"
-                }
-            }
-        ]
-    },
-    {
-        "component_regexp": "ctrlEvcs\\d+",
-        "channels": [
-            {
-                "id": "_PropertyEnergySessionLimit",
-                "limit": {
-                    "lower": "0",
-                    "upper": "100000"
-                }
-            },
-            {
-                "id": "_PropertyForceChargeMinPower",
-                "multiplier": "{{$evcs.id/Phases}}",
-                "limit": {
-                    "lower": "{{$evcs.id/MinimumHardwarePower}} / {{$evcs.id/Phases}}",
-                    "upper": "{{$evcs.id/MaximumHardwarePower}} / {{$evcs.id/Phases}}"
-                }
-            },
-            {
-                "id": "_PropertyDefaultChargeMinPower",
-                "limit": {
-                    "lower": "{{$evcs.id/MinimumHardwarePower}}",
-                    "upper": "{{$evcs.id/MaximumHardwarePower}}"
-                }
-            }
-        ]
-    },
-    {
-        "component_regexp": "ctrlEmergencyCapacityReserve\\d+",
-        "channels": [
-            {
-                "id": "_PropertyReserveSoc",
-                "limit": {
-                    "lower": "5",
-                    "upper": "100"
-
-                }
-            }
-        ]
-    },
-    {
-        "component_regexp": "ctrlIoHeatingElement\\d+",
-        "channels": [
-            {
-                "id": "_PropertyMinTime",
-                "limit": {
-                    "lower": "1",
-                    "upper": "10"
-
-                }
-            }
-        ]
-    }
+  {
+    "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+",
+    "channels": [
+      {
+        "id": "_PropertyManualEnergySessionLimit",
+        "limit": {
+          "lower": "0",
+          "upper": "100000"
+        }
+      }
+    ]
+  },
+  {
+    "component_regexp": "ctrlEvcs\\d+",
+    "channels": [
+      {
+        "id": "_PropertyEnergySessionLimit",
+        "limit": {
+          "lower": "0",
+          "upper": "100000"
+        }
+      },
+      {
+        "id": "_PropertyForceChargeMinPower",
+        "multiplier": "{{$evcs.id/Phases}}",
+        "limit": {
+          "lower": "{{$evcs.id/MinimumHardwarePower}} / {{$evcs.id/Phases}}",
+          "upper": "{{$evcs.id/MaximumHardwarePower}} / {{$evcs.id/Phases}}"
+        }
+      },
+      {
+        "id": "_PropertyDefaultChargeMinPower",
+        "limit": {
+          "lower": "{{$evcs.id/MinimumHardwarePower}}",
+          "upper": "{{$evcs.id/MaximumHardwarePower}}"
+        }
+      }
+    ]
+  },
+  {
+    "component_regexp": "ctrlEmergencyCapacityReserve\\d+",
+    "channels": [
+      {
+        "id": "_PropertyReserveSoc",
+        "limit": {
+          "lower": "5",
+          "upper": "100"
+        }
+      }
+    ]
+  },
+  {
+    "component_regexp": "ctrlIoHeatingElement\\d+",
+    "channels": [
+      {
+        "id": "_PropertyMinTime",
+        "limit": {
+          "lower": "1",
+          "upper": "10"
+        }
+      }
+    ]
+  },
+  {
+    "component_regexp": "ctrlIoHeatPump\\d+",
+    "channels": [
+      {
+        "id": "_PropertyAutomaticForceOnSoc",
+        "limit": {
+          "lower": "0",
+          "upper": "100"
+        }
+      },
+      {
+        "id": "_PropertyAutomaticLockSoc",
+        "limit": {
+          "lower": "0",
+          "upper": "100"
+        }
+      },
+      {
+        "id": "_PropertyAutomaticRecommendationSurplusPower",
+        "mode": "box",
+        "step": 1,
+        "limit": {
+          "lower": "0",
+          "upper": "100000"
+        }
+      },
+      {
+        "id": "_PropertyAutomaticForceOnSurplusPower",
+        "mode": "box",
+        "step": 1,
+        "limit": {
+          "lower": "0",
+          "upper": "100000"
+        }
+      },
+      {
+        "id": "_PropertyAutomaticLockGridBuyPower",
+        "mode": "box",
+        "step": 1,
+        "limit": {
+          "lower": "0",
+          "upper": "100000"
+        }
+      },
+      {
+        "id": "_PropertyMinimumSwitchingTime",
+        "mode": "box",
+        "step": 1,
+        "limit": {
+          "lower": "0",
+          "upper": "3600"
+        }
+      }
+    ]
+  }
 ]

@@ -110,6 +110,20 @@
           "time": "Garantierte Mindestzeit",
           "none": "Überschussleistung, ausschließlich"
         }
+      },
+      "ctrlioheatpump_s_l_a_s_h_mode": {
+        "state": {
+          "manual": "Manuell",
+          "automatic": "Automatisch"
+        }
+      },
+      "ctrlioheatpump_s_l_a_s_h_manualstate": {
+        "state": {
+          "lock": "Sperre",
+          "regular": "Normalbetrieb",
+          "recommendation": "Einschaltempfehlung",
+          "force_on": "Einschaltbefehl"
+        }
       }
     },
     "sensor": {
@@ -1853,6 +1867,15 @@
           "ok": "In Ordnung (OK)",
           "warning": "Warnung"
         }
+      },
+      "ctrlioheatpump_s_l_a_s_h_status": {
+        "state": {
+          "undefined": "Unbekannt",
+          "blocks_everything_till_an_internal_maximum_time_of_default_two_hours": "Sperre",
+          "default_energy-efficient_operation": "Normal",
+          "recommendation_to_use_more_available_power": "Einschaltempfehlung",
+          "force_all_possible_consumption_of_the_heat_pump": "Einschaltbefehl"
+        }
       }
     }
   },
@@ -1949,6 +1972,20 @@
       "options": {
         "time": "Garantierte Mindestzeit",
         "none": "Überschussleistung, ausschließlich"
+      }
+    },
+    "ctrlioheatpump_s_l_a_s_h_mode": {
+      "options": {
+        "manual": "Manuell",
+        "automatic": "Automatisch"
+      }
+    },
+    "ctrlioheatpump_s_l_a_s_h_manualstate": {
+      "options": {
+        "lock": "Sperre",
+        "regular": "Normalbetrieb",
+        "recommendation": "Einschaltempfehlung",
+        "force_on": "Einschaltbefehl"
       }
     }
   },

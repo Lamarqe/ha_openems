@@ -137,5 +137,18 @@
         "options": ["TIME", "NONE"]
       }
     ]
+  },
+  {
+    "component_regexp": "ctrlIoHeatPump\\d+",
+    "channels": [
+      {
+        "id": "_PropertyMode",
+        "options": ["MANUAL", "AUTOMATIC"]
+      },
+      {
+        "id": "_PropertyManualState",
+        "options": ["LOCK", "REGULAR", "RECOMMENDATION", "FORCE_ON"]
+      }
+    ]
   }
 ]

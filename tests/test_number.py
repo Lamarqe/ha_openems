@@ -2,7 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
@@ -134,6 +134,39 @@ async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) ->
     assert isinstance(created[0], OpenEMSNumberEntity)
 
 
+async def test_async_setup_entry_number_mode_from_config(hass: HomeAssistant) -> None:
+    """Numbers configured with mode "box" become input fields, others sliders."""
+    mock_component = MagicMock()
+    mock_component.name = "ctrlIoHeatPump0"
+    mock_component.alias = "Heat pump"
+    mock_component.edge.hostname = "host"
+    mock_component.create_entities = True
+    channels = []
+    for name in ("_PropertyMinimumSwitchingTime", "_PropertyAutomaticLockSoc"):
+        channel = MagicMock()
+        channel.name = name
+        channel.unit = ""
+        channel.unique_id.return_value = f"host/edge-1/ctrlIoHeatPump0/{name}"
+        channel.orig_json = {}
+        channel.component = mock_component
+        channels.append(channel)
+    mock_component.number_properties = channels
+
+    mock_entry = MagicMock()
+    mock_entry.entry_id = "test-entry-id"
+    mock_entry.runtime_data.backend.the_edge.components = {
+        "ctrlIoHeatPump0": mock_component
+    }
+    mock_entry.runtime_data.add_component_callbacks = {}
+
+    created: list[OpenEMSNumberEntity] = []
+    with patch("custom_components.openems.number.dr.async_get", return_value=MagicMock()):
+        await number.async_setup_entry(hass, mock_entry, created.extend)
+
+    modes = [entity.entity_description.mode for entity in created]
+    assert modes == [NumberMode.BOX, NumberMode.SLIDER]
+
+
 async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -> None:
     mock_component = MagicMock()
     mock_component.name = "ignored"
@@ -152,7 +185,7 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     with patch("custom_components.openems.number.dr.async_get", return_value=MagicMock()):
         await number.async_setup_entry(hass, mock_entry, created.extend)
 
-    assert created == []
+    assert not created
 
 
 async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssistant) -> None:
