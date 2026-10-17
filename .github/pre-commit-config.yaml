@@ -91,11 +91,11 @@ repos:
         files: ^(AGENTS\.md|\.claude/skills/(?!github-pr-reviewer/).+/SKILL\.md|\.github/copilot-instructions\.md|script/gen_copilot_instructions\.py)$
       - id: hassfest
         name: hassfest
-        entry: script/run-in-env.sh python3 -m script.hassfest
+        entry: script/run-in-env.sh script/hassfest
         pass_filenames: false
         language: script
         types: [text]
-        files: ^(homeassistant/.+/(icons|manifest|strings)\.json|homeassistant/.+/(conditions|quality_scale|services|triggers)\.yaml|homeassistant/brands/.*\.json|script/hassfest/(?!metadata|mypy_config).+\.py|homeassistant/components/sensor/const\.py|requirements.+\.txt)$
+        files: ^(custom_components/openems/.+|script/hassfest)$
       - id: hassfest-mypy-config
         name: hassfest-mypy-config
         entry: script/run-in-env.sh python3 -m script.hassfest -p mypy_config

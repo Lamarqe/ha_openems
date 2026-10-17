@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Run Home Assistant's hassfest validation against custom_components/openems.
+#
+# hassfest is part of the Home Assistant core repository. This script caches a
+# sparse checkout of it, matching the installed homeassistant version, together
+# with the extra packages hassfest needs to start (outside of the project
+# environment). Network access is only needed on the first run per version.
+#
+# CI runs the same validation via the home-assistant/actions/hassfest action.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+repo_dir=$(pwd)
+
+ha_version=$(python3 -c "from homeassistant.const import __version__; print(__version__)")
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/ha_openems/hassfest/${ha_version}"
+core_dir="${cache_dir}/core"
+deps_dir="${cache_dir}/deps"
+
+# Packages imported by hassfest itself, but not installed with homeassistant.
+# Their versions are taken from the Home Assistant core checkout.
+extra_packages=(infrared-protocols)
+
+if [ ! -f "${cache_dir}/.complete" ]; then
+    echo "Preparing hassfest for Home Assistant ${ha_version} in ${cache_dir}"
+    rm -rf "${cache_dir}"
+    mkdir -p "${cache_dir}"
+    git -c advice.detachedHead=false clone --quiet --depth 1 --branch "${ha_version}" --filter=blob:none \
+        --sparse https://github.com/home-assistant/core.git "${core_dir}"
+    # root files (requirements, pyproject.toml) are part of the sparse checkout,
+    # script/ contains hassfest and modules it imports (e.g. script/translations)
+    git -C "${core_dir}" sparse-checkout set script
+
+    requirements=()
+    for package in "${extra_packages[@]}"; do
+        requirements+=("$(grep -i "^${package}==" "${core_dir}/requirements_all.txt")")
+    done
+    # hassfest formats generated code with the ruff version required by core
+    requirements+=("$(grep "^ruff==" "${core_dir}/requirements_test_pre_commit.txt")")
+    python3 -m pip install --quiet --target "${deps_dir}" "${requirements[@]}"
+
+    touch "${cache_dir}/.complete"
+fi
+
+cd "${core_dir}"
+PATH="${deps_dir}/bin:${PATH}" PYTHONPATH="${deps_dir}" \
+    python3 -m script.hassfest \
+    --integration-path "${repo_dir}/custom_components/openems" "$@"

@@ -71,7 +71,7 @@ def setup_evcs_component(hass: HomeAssistant) -> LoadedComponent:
     component_device = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, HOSTNAME + " ctrlEvcs0")},
-        via_device=(DOMAIN, HOSTNAME),
+        via_device_id=edge_device.id,
     )
     return LoadedComponent(
         hass=hass,
