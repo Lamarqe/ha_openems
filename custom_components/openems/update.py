@@ -44,7 +44,7 @@ async def async_setup_entry(
 
 @dataclass(frozen=True, kw_only=True)
 class OpenEMSUpdateDescription(UpdateEntityDescription):
-    """Defintion of OpenEMS sensor attributes."""
+    """Definition of OpenEMS sensor attributes."""
 
     has_entity_name = True
     entity_registry_enabled_default = True
@@ -85,7 +85,7 @@ class OpenEMSUpdateEntity(UpdateEntity):
                 await self.async_update()
                 self.async_write_ha_state()
                 if not self.in_progress:
-                    _LOGGER.info("Update finished succesfully: %s", self.unique_id)
+                    _LOGGER.info("Update finished successfully: %s", self.unique_id)
                     return
                 await asyncio.sleep(10)
             _LOGGER.info(

@@ -1,5 +1,5 @@
-
 # ha_openems
+
 Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 
 [![releasebadge]][release]
@@ -9,29 +9,31 @@ Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 
 ## Overview
 
-* The integration provides full read and write access to Fenecon and OpenEMS systems. Every property which is accessible or configurable via the regular UI is made available equally in the Home Assistant UI.
-* Integration of every backend property, even if not accessible via the regular UI.
-* Backend system configuration is made fully visible and accessible to the Home Assistant UI:
-	*	[Components](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_openems_component) are made available as Home Assistant service devices. 
-	*	[Channels](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_channel) are made available as entities.\
-   		<img src="screenshots/config_entry.jpg" width="600"/>
-*	Pre-configured UI cards for Storage, Charging Station and Optimized Charges apps. These cards are equal in the offered functionality as the regular Fenecon/OpenEMS built-in UI components.
-* Works with Fenecon and OpenEMS single and multi-edge systems.
-* Advanced configuration options to support non-standard connection types.
-* FEMS update discovery and installation option
-* Access to REST write App (if installed)
+- The integration provides full read and write access to Fenecon and OpenEMS systems. Every property which is accessible or configurable via the regular UI is made available equally in the Home Assistant UI.
+- Integration of every backend property, even if not accessible via the regular UI.
+- Backend system configuration is made fully visible and accessible to the Home Assistant UI:
+  - [Components](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_openems_component) are made available as Home Assistant service devices.
+  - [Channels](https://openems.github.io/openems.io/openems/latest/coreconcepts.html#_channel) are made available as entities.\
+     <img src="screenshots/config_entry.jpg" width="600"/>
+- Pre-configured UI cards for Storage, Charging Station and Optimized Charges apps. These cards are equal in the offered functionality as the regular Fenecon/OpenEMS built-in UI components.
+- Works with Fenecon and OpenEMS single and multi-edge systems.
+- Advanced configuration options to support non-standard connection types.
+- FEMS update discovery and installation option
+- Access to REST write App (if installed)
 
 ## Table of contents
 
-  * [Features / Common Use-cases](#features--common-use-cases)
-  * [Installation](#installation)
-  * [Configuration](#configuration)
-  * [Disclaimer](#disclaimer) 
+- [Features / Common Use-cases](#features--common-use-cases)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Disclaimer](#disclaimer)
 
 ## Features / Common Use-cases:
 
 ### Energy Dashboard
+
 Use the following entities to configure the Energy Dashboard:
+
 <table>
   <tr><th>Area</th><th>Option</th><th>Component</th><th>Channel</th><th><i>comment</i></th></tr>
   <tr><td rowspan="2">Electricity Grid</td><td>Grid Consumption </td><td>_sum</td><td>GridBuyActiveEnergy</td><td></td></tr>
@@ -46,7 +48,9 @@ Use the following entities to configure the Energy Dashboard:
 </table>
 
 ### [Power Flow card plus](https://github.com/flixlix/power-flow-card-plus)
+
 Use the following entities to configure the Power Flow card plus:
+
 <table>
   <tr><th>Area</th><th>Option</th><th>Component</th><th>Channel</th></tr>
   <tr><td>Grid</td><td>Combined</td><td>_sum</td><td>GridActivePower</td></tr>
@@ -59,20 +63,23 @@ Use the following entities to configure the Power Flow card plus:
 ### Apps (template UI cards)
 
 To use the template cards, do the following:
+
 1. The template cards depend on the following prerequisites (Please install via HACS):
-     * [Decluttering card](https://github.com/custom-cards/decluttering-card)
-     * [Config template card](https://github.com/iantrich/config-template-card)
-     * [Button card](https://github.com/custom-cards/button-card)
-     * [Template entity row](https://github.com/thomasloven/lovelace-template-entity-row)
-3. Navigate to the dashboard in which you want to use the card
-4. Select edit mode (pencil on the top right corner)
-5. From the 3-dots menu in the top right corner, select "raw editor"
-6. Paste the full contents of [openems_templates.yaml](openems_templates.yaml) before the dashboard contents
-7. Go back to regular edit mode
-8. add a new user-defined card, using yaml. 
+   - [Decluttering card](https://github.com/custom-cards/decluttering-card)
+   - [Config template card](https://github.com/iantrich/config-template-card)
+   - [Button card](https://github.com/custom-cards/button-card)
+   - [Template entity row](https://github.com/thomasloven/lovelace-template-entity-row)
+2. Navigate to the dashboard in which you want to use the card
+3. Select edit mode (pencil on the top right corner)
+4. From the 3-dots menu in the top right corner, select "raw editor"
+5. Paste the full contents of [openems_templates.yaml](openems_templates.yaml) before the dashboard contents
+6. Go back to regular edit mode
+7. add a new user-defined card, using yaml.
 
 #### EV Charging
+
 **Sample Card config**
+
 ```
 type: custom:decluttering-card
 template: evcs_template
@@ -83,15 +90,18 @@ variables:
 ```
 
 **Card variables**
-* `system`: Set to your FEMS/OpenEMS system name
-* `evcs_id`: Set to your EVCS AppID. Eg `0` if your EVCS component is called `evcs0`. Default value: 0
-* `ctrlevcs_id`: Set to your CtrlEVCS AppID. Eg `1` if your EVCS component is called `ctrlEvcs1`. Default value: 0
+
+- `system`: Set to your FEMS/OpenEMS system name
+- `evcs_id`: Set to your EVCS AppID. Eg `0` if your EVCS component is called `evcs0`. Default value: 0
+- `ctrlevcs_id`: Set to your CtrlEVCS AppID. Eg `1` if your EVCS component is called `ctrlEvcs1`. Default value: 0
 
 **Card screenshot** (German version)\
 ![image](screenshots/evcs.jpg)
 
 #### Grid Optimized Charge
+
 **Sample Card config**
+
 ```
 type: custom:decluttering-card
 template: optchrg_template
@@ -101,15 +111,18 @@ variables:
 ```
 
 **Card variables**
-* `system`: Set to your FEMS/OpenEMS system name
-* `ctrlgridoptimizedcharge_id`: Set to your grid optimized charge AppID. Eg `5` if your optchrg component is called `ctrlGridOptimizedCharge5`. Default value: 0
+
+- `system`: Set to your FEMS/OpenEMS system name
+- `ctrlgridoptimizedcharge_id`: Set to your grid optimized charge AppID. Eg `5` if your optchrg component is called `ctrlGridOptimizedCharge5`. Default value: 0
 
 **Card screenshot** (German version)\
 _Note: unapplicable options are automatically hidden and thus not visible in the screenshot_
 ![image](screenshots/gridoptimizedcharge.jpg)
 
 #### Emergency Capacity Reserve
+
 **Sample Card config**
+
 ```
 type: custom:decluttering-card
 template: ess_template
@@ -119,14 +132,17 @@ variables:
 ```
 
 **Card variables**
-* `system`: Set to your FEMS/OpenEMS system name
-* `ctrlemergencycapacityreserve_id`: Set to your emergency capacity AppID. Eg `0` if the component is called `ctrlEmergencyCapacityReserve0`. Default value: 0
+
+- `system`: Set to your FEMS/OpenEMS system name
+- `ctrlemergencycapacityreserve_id`: Set to your emergency capacity AppID. Eg `0` if the component is called `ctrlEmergencyCapacityReserve0`. Default value: 0
 
 **Card screenshot** (German version)\
 ![image](screenshots/ess.jpg)
 
 #### Heating Element
+
 **Sample Card config**
+
 ```
 type: custom:decluttering-card
 template: heating_template
@@ -136,27 +152,30 @@ variables:
 ```
 
 **Card variables**
-* `system`: Set to your FEMS/OpenEMS system name
-* `ctrlioheatingelement_id`: Set to your heating element AppID. Eg `0` if the component is called `ctrlioheatingelement0`. Default value: 0
+
+- `system`: Set to your FEMS/OpenEMS system name
+- `ctrlioheatingelement_id`: Set to your heating element AppID. Eg `0` if the component is called `ctrlioheatingelement0`. Default value: 0
 
 **Card screenshot** (German version)\
 ![image](screenshots/heatingelement.png)
 
-### Detailed battery diagnosis dashboard (component: battery*)
+### Detailed battery diagnosis dashboard (component: battery\*)
+
 The integration is supports calculation of additional information, derived from other sensors, which are not provided by FEMS by default.
-By that, ΔU calculations for the entire battery system and indiviual battery modules are provided.
+By that, ΔU calculations for the entire battery system and individual battery modules are provided.
 A pre-configured dashboard [battery_diagnosis_dashboard_fems12345.yaml](battery_diagnosis_dashboard_fems12345.yaml) can be used as a starting point for a personal dashboard configuration:
 <img src="screenshots/battery_diagnosis_dashboard.jpg" width="800"/>
 
-Before using the default dashboard (by copying the files content and pasting it into the dashboard raw yaml editor), please replace all occurences of the string "fems12345" with the ID of your personal FEMS or openems system.
+Before using the default dashboard (by copying the files content and pasting it into the dashboard raw yaml editor), please replace all occurrences of the string "fems12345" with the ID of your personal FEMS or openems system.
 
-Furthermore, the dashboard uses the following entities which are to the majority not enabled by default. Before using the dashboard, please enable the components and entities as described in the Configuration chapter further below in this manual. 
+Furthermore, the dashboard uses the following entities which are to the majority not enabled by default. Before using the dashboard, please enable the components and entities as described in the Configuration chapter further below in this manual.
 
 The dashboard also makes use of the [Mushroom](https://github.com/piitaya/lovelace-mushroom) and [Button card](https://github.com/custom-cards/button-card) UI widgets. In order to use these, please install via HACS.
 
 Entities to be enabled, used within the default dashboard configuration:
-- **_sum**
-  - `ConsumptionActiveEnergy`, `ConsumptionActivePower`, `ConsumptionActivePowerL1`, `ConsumptionActivePowerL2`, `ConsumptionActivePowerL3`, `EssActiveChargeEnergy`, `EssActiveDischargeEnergy`, `EssActivePower`, `EssActivePowerL1`, `EssActivePowerL1`, `EssActivePowerL3`, `EssDcChargeEnergy`, `EssDcDischargeEnergy`, `GridActivePower`, `GridActivePowerL1`, `GridActivePowerL2`, `GridActivePowerL3`, `GridBuyActiveEnergy`, `GridSellActiveEnergy`, `ProductionActiveEnergy`, `ProductionDcActualPower` 
+
+- **\_sum**
+  - `ConsumptionActiveEnergy`, `ConsumptionActivePower`, `ConsumptionActivePowerL1`, `ConsumptionActivePowerL2`, `ConsumptionActivePowerL3`, `EssActiveChargeEnergy`, `EssActiveDischargeEnergy`, `EssActivePower`, `EssActivePowerL1`, `EssActivePowerL1`, `EssActivePowerL3`, `EssDcChargeEnergy`, `EssDcDischargeEnergy`, `GridActivePower`, `GridActivePowerL1`, `GridActivePowerL2`, `GridActivePowerL3`, `GridBuyActiveEnergy`, `GridSellActiveEnergy`, `ProductionActiveEnergy`, `ProductionDcActualPower`
 - **battery0**
   - `Current`, `Level1CellUnderVoltage`, `Level2CellUnderVoltage`, `LowMinVoltageFault`, `LowMinVoltageFaultBatteryStopped`, `LowMinVoltageWarning`, `MaxCellTemperature`, `MaxCellVoltage`, `MinCellTemperature`, `MinCellVoltage`, `ModbusCommunicationFailed`, `RunFailed`, `Soc`, `Soh`, `StatusAlarm`, `StatusWarning`, `Tower0Level1CellUnderVoltage`, `Tower0Level2CellUnderVoltage`, `Tower0Module0CellVoltageDifference`, `Tower0Module1CellVoltageDifference`, `Tower0Module2CellVoltageDifference`, `Tower0Module3CellVoltageDifference`, `Tower0PackVoltage`, `Tower0StatusAlarm`, `Tower0StatusFault`, `Tower0StatusWarning`, `VoltageDifference`
 - **charger0**
@@ -166,25 +185,31 @@ Entities to be enabled, used within the default dashboard configuration:
 
 ### Additional commonly used components
 
-#### BatteryInverter*
+#### BatteryInverter\*
+
 Contains entities for inverter properties like:
+
 - temperatures of inverter, air, ...
   - `bmspacktemperature`
   - `airtemperature`
   - `radiatortemperature`
 - The state of health: `bmssoh`
-<img src="screenshots/batteryinverter.png" width="250"/>
+  <img src="screenshots/batteryinverter.png" width="250"/>
 
-#### CtrlIoHeatPump*
+#### CtrlIoHeatPump\*
+
 Here you will find the current state of your SG ready connected heatpump.\
 <img src="screenshots/heatpump.jpg" width="250"/>
 
-#### meter*
+#### meter\*
+
 Here you find the grids frequency.\
 <img src="screenshots/meter.jpg" width="400"/>
 
 ### REST Write App
+
 Use the service **rest_write_sensor** to cyclically send REST commands to the backend:
+
 <table>
   <tr><th>Parameter</th><th>Meaning</th><th>Default value</th></tr>
   <tr><td>entity</td><td>The channel to update</td><td></td></tr>
@@ -195,6 +220,27 @@ Use the service **rest_write_sensor** to cyclically send REST commands to the ba
 
 _Note: Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant._
 
+### Update multiple component properties at once
+
+Calling e.g. `switch.turn_on` and `select.select_option` one after the other sends one `updateComponentConfig` request per action.
+Use the action **openems.update_component_config** with a component device as target to send several properties of a component in a single request:
+
+```yaml
+action: openems.update_component_config
+target:
+  device_id: <device id of "fems12345 ctrlEvcs0">
+data:
+  properties:
+    enabledCharging: true
+    chargeMode: force_charge
+```
+
+Property names are the component configuration names (e.g. `chargeMode`) or channel names (e.g. `_PropertyChargeMode`). Values are given like in the corresponding entities: options of selects in snake_case, numbers scaled like the number entity, times as `HH:MM`. Number limits are not checked.
+
+In the automation editor, the same is available as device action "Update component configuration", which offers one field per property of the selected component.
+
+The previous form with number entities as target and a single `value` is still supported.
+
 ## Installation
 
 ### HACS
@@ -203,31 +249,36 @@ _Note: Values sent via REST write are not reflected by the backend and thus not 
 2. Select and enable "Fenecon FEMS & OpenEMS" Integration
 
 ## Configuration
+
 Navigate to Settings -> Devices & Services -> Integrations. Click "Add Integration" and select "Fenecon FEMS & OpenEMS" from the list.
+
 ### Main configuration dialog
-Enter your connection details: 
+
+Enter your connection details:
 Parameter | Description
------- | ---------- 
+------ | ----------
 Host | The hostname or IP address of your Fenecon or OpenEMS system. E.g. `fems12345` or `192.168.1.100`
 Username | The username to access the system. Use `x` for local monitoring access. For FEMS online monitoring, your Email address is used as username
 Password | For local monitoring of FEMS systems, common values are `user` (read-only access) or `owner` (write access)
-Connection Type<br> | Choose 1 of the 5 supported connection types:<br><li>FEMS local monitoring (port 80)</li><li>OpenEMS local monitoring (port 8082)</li><li>Direct edge Websocket connection (port 8085). This is the standard connection type and pre-selected by default</li><li>Fenecon online monitoring at portal.fenecon.de (hostname option will not be used)</li><li>Custom Websocket URL (hostname option will not be used)</li>
-Custom URL* | Custom Websocket URL, eg: `ws://192.168.1.100:8888/websocket`
+Connection Type<br> | Choose 1 of the 5 supported connection types:<br><li>FEMS local monitoring (port 80)</li><li>OpenEMS local monitoring (port 8082)</li><li>Direct edge Websocket connection (port 8085). This is the standard connection type and preselected by default</li><li>Fenecon online monitoring at portal.fenecon.de (hostname option will not be used)</li><li>Custom Websocket URL (hostname option will not be used)</li>
+Custom URL\* | Custom Websocket URL, eg: `ws://192.168.1.100:8888/websocket`
 
-*Options _Connection Type_ and _Custom URL_ are visible only after expanding the  **More options** section.
+\*Options _Connection Type_ and _Custom URL_ are visible only after expanding the **More options** section.
 
 #### Advanced options
+
 In order to change advanced options, start the options flow by selecting the Configure option right next to the config entry name:
 
 <img src="screenshots/options_flow.jpg" width="400"/>
 Afterwards, a menu will show up. Here, select "advanced options. A dialog will appear which allows to change advanced options. The following options are available currently:
 
-Parameter | Description
------- | ---------- 
-Ignore decreasing if total increasing | For entities which are reported with state class "Total increasing", drop values from the backend which are smaller than the current value.
-Limit data updates | In order to reduce the amout of recorder data and the overall system load, this option allows to reduce the update frequency of entity values. Value in seconds. Zero means, values are published immediately after being received (typically 1x per second).
+| Parameter                             | Description                                                                                                                                                                                                                                                    |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ignore decreasing if total increasing | For entities which are reported with state class "Total increasing", drop values from the backend which are smaller than the current value.                                                                                                                    |
+| Limit data updates                    | In order to reduce the amount of recorder data and the overall system load, this option allows to reduce the update frequency of entity values. Value in seconds. Zero means, values are published immediately after being received (typically 1x per second). |
 
 #### Selection of components and channels to be integrated
+
 After setting up the config entry, there is a [default list](https://github.com/Lamarqe/ha_openems/blob/main/custom_components/openems/config/default_channels.json) of entities which is enabled. Entities for channels outside of these components are initially not created. Other entities within the created components are disabled by default.
 
 In order to add or remove entities of additional or unwanted components, start the options flow by selecting the Configure option right next to the config entry name:
@@ -237,7 +288,8 @@ Afterwards, a menu will show up. Choose the component selection option. A dialog
 
 <img src="screenshots/options_dialog.jpg" width="200"/>
 
-#### Select entities that will be active in Home Assistant 
+#### Select entities that will be active in Home Assistant
+
 Also for enabled components, most of the entities created are disabled by default. In order to adjust the selection, click the entities number of the config entry ("1038 entities" in the screenshot above).
 This will open the entities dialog. In this dialog, (1) activate multi-select, (2) select the entities you want to enable or disable, then (3) enable / disable the selected items via the 3 dot menu on the top right:
 
@@ -245,35 +297,34 @@ This will open the entities dialog. In this dialog, (1) activate multi-select, (
 **Only enabled entities will be subscribed in the backed!**
 
 #### Check the backend for configuration changes, change connection details
+
 In case of changes in the backend, users can check the backend for changes and with that update the config entries list of components and channels.
 In order to do so, select the 3 dots next to the config entry. From the resulting menu, select **Reload**
 
-Futhermore, in case the connection details shall be adjusted, you can use the same menu and select **Reconfigure**. This will bring up the main config dialog and allow you to make all necessary changes.
+Furthermore, in case the connection details shall be adjusted, you can use the same menu and select **Reconfigure**. This will bring up the main config dialog and allow you to make all necessary changes.
 
 <img src="screenshots/reload_reconfigure.jpg" width="600"/>
-
-
 
 ## Disclaimer
 
 ### Tested Setups
 
-* Fenecon Home 10 systems with 
-	* EV Chargers
-		* Keba 
-		* Hardy Barth
-	* FEMS Relaisboard
-	* Heatpumps (Fenecon App Power to Heat)
-		*  Vaillant
+- Fenecon Home 10 systems with
+  - EV Chargers
+    - Keba
+    - Hardy Barth
+  - FEMS Relaisboard
+  - Heatpumps (Fenecon App Power to Heat)
+    - Vaillant
 
 ### Limitations
 
 - This integration is not affiliated with Fenecon.
-	- Fenecon might change APIs with upcoming version.
-	- The developers take no responsibility for anything that happens to your equipment due to this integration. I.e., 
-		- Please be careful with controlling entities which are not enabled by default.
-		-  By default, only a few pre-configured channels are enabled per component. However, there is no limitation how many channels can be enabled in parallel. Please be careful about expanding to very large numbers (multiple hundreds).
- 
+  - Fenecon might change APIs with upcoming version.
+  - The developers take no responsibility for anything that happens to your equipment due to this integration. I.e.,
+    - Please be careful with controlling entities which are not enabled by default.
+    - By default, only a few pre-configured channels are enabled per component. However, there is no limitation how many channels can be enabled in parallel. Please be careful about expanding to very large numbers (multiple hundreds).
+
 [license-shield]: https://img.shields.io/github/license/Lamarqe/ha_openems.svg?style=for-the-badge
 [release]: https://github.com/Lamarqe/ha_openems/releases
 [releasebadge]: https://img.shields.io/github/v/release/Lamarqe/ha_openems?style=for-the-badge
@@ -281,4 +332,3 @@ Futhermore, in case the connection details shall be adjusted, you can use the sa
 [hainstallbadge]: https://img.shields.io/badge/dynamic/json?style=for-the-badge&logo=home-assistant&logoColor=ccc&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.openems.total
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Default-green.svg?style=for-the-badge
-

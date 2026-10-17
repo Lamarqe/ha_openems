@@ -178,8 +178,8 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             try:
                 # connect
                 await asyncio.wait_for(connection.connect_to_server(), timeout=2)
-            except jsonrpc_base.TransportError as te:
-                errors[CONF_HOST] = f"{te.args[0]}: {te.args[1]}"
+            except jsonrpc_base.TransportError as err:
+                errors[CONF_HOST] = f"{err.args[0]}: {err.args[1]}"
                 return self._show_form(user_input, errors)
 
             try:

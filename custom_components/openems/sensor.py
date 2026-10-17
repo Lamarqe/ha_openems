@@ -140,7 +140,7 @@ async def async_setup_entry(
 
 @dataclass(frozen=True, kw_only=True)
 class OpenEMSSensorDescription(SensorEntityDescription):
-    """Defintion of OpenEMS sensor attributes."""
+    """Definition of OpenEMS sensor attributes."""
 
     has_entity_name = True
 

@@ -4,11 +4,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntFlag
 import re
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import (
     CONF_HOST,
     CONF_PASSWORD,
@@ -16,19 +16,23 @@ from homeassistant.const import (
     CONF_URL,
     CONF_USERNAME,
 )
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN, SLASH_ESC
 from .entry_data import ConnectionProperties
+from .helpers import to_snake_case
 from .openems import (
     OpenEMSBackend,
     OpenEMSChannel,
     OpenEMSComponent,
     OpenEMSDataHandler,
+    OpenEMSEnumProperty,
+    OpenEMSNumberProperty,
     OpenEMSProperty,
+    OpenEMSTimeProperty,
 )
-
-SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
 
 
 @dataclass
@@ -155,6 +159,67 @@ def component_device(
     )
 
 
+def component_from_device(hass: HomeAssistant, device_id: str) -> OpenEMSComponent:
+    """Return the OpenEMSComponent represented by a device.
+
+    Raise ServiceValidationError if the device does not represent a component of a loaded edge.
+    """
+    device = dr.async_get(hass).async_get(device_id)
+    if device is not None:
+        for domain, identifier in device.identifiers:
+            if domain != DOMAIN:
+                continue
+            for entry_id in device.config_entries:
+                entry: OpenEMSConfigEntry | None = hass.config_entries.async_get_entry(
+                    entry_id
+                )
+                if (
+                    entry is None
+                    or entry.domain != DOMAIN
+                    or entry.state is not ConfigEntryState.LOADED
+                ):
+                    continue
+                edge = entry.runtime_data.backend.the_edge
+                # identifier structure: "<hostname> <component name>", see component_identifier.
+                # The hostname may contain spaces itself (multi edge setups).
+                prefix = edge.hostname + " "
+                if identifier.startswith(prefix) and (
+                    component := edge.components.get(identifier.removeprefix(prefix))
+                ):
+                    return component
+    raise ServiceValidationError(
+        translation_domain=DOMAIN,
+        translation_key="no_component_device",
+        translation_placeholders={"device_id": device_id},
+    )
+
+
+def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
+    """Return the selector config matching the type of the property."""
+    if isinstance(prop, OpenEMSEnumProperty):
+        return {
+            "select": {
+                "options": [to_snake_case(o) for o in prop.property_options],
+                "mode": "dropdown",
+                # option translations in section "selector" of strings.json
+                "translation_key": translation_key(prop),
+            }
+        }
+    if isinstance(prop, OpenEMSNumberProperty):
+        number_config: dict[str, Any] = {
+            "min": prop.lower_limit,
+            "max": prop.upper_limit,
+            "step": prop.step,
+            "mode": "box",
+        }
+        if prop.unit:
+            number_config["unit_of_measurement"] = unit_description(prop.unit).unit
+        return {"number": number_config}
+    if isinstance(prop, OpenEMSTimeProperty):
+        return {"time": {}}
+    return {"boolean": {}}
+
+
 def find_channel_in_backend(
     backend: OpenEMSBackend, unique_id: str
 ) -> OpenEMSDataHandler | None:
@@ -168,12 +233,6 @@ def find_channel_in_backend(
                 return channel
     # not found.
     return None
-
-
-def to_snake_case(name: str) -> str:
-    """Convert given name to snake_case."""
-    name = SNAKE_REPLACE_PATTERN.sub("_", name).lower()
-    return re.sub(r"[_-]{2,}", "_", name).strip("-_")
 
 
 def translation_key(channel: OpenEMSDataHandler) -> str:
