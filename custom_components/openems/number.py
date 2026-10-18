@@ -45,11 +45,12 @@ async def async_setup_entry(
         for channel in channel_list:
             entity_enabled = CONFIG.is_channel_enabled(component.name, channel.name)
             unit_desc: OpenEMSUnitClass = unit_description(channel.unit)
+            number_mode = CONFIG.get_number_mode(component.name, channel.name)
             entity_description = OpenEMSNumberDescription(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                mode=NumberMode.SLIDER,
+                mode=NumberMode.BOX if number_mode == "box" else NumberMode.SLIDER,
                 # remove "_Property" prefix
                 name=channel.name[9:],
                 device_class=unit_desc.number_device_class,

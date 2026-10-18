@@ -63,6 +63,18 @@ class OpenEMSConfig:
             self.number_properties, "multiplier", component_name, channel_name
         )
 
+    def get_number_step(self, component_name, channel_name) -> float | None:
+        """Return the fixed step size for a given component/channel."""
+        return self._get_config_property(
+            self.number_properties, "step", component_name, channel_name
+        )
+
+    def get_number_mode(self, component_name, channel_name) -> str | None:
+        """Return the display mode ("box" or "slider") for a given component/channel."""
+        return self._get_config_property(
+            self.number_properties, "mode", component_name, channel_name
+        )
+
     def is_component_enabled(self, comp_name: str) -> bool:
         """Return if there is at least one channel enabled by default."""
         for entry in self.default_channels:

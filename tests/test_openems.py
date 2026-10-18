@@ -4,6 +4,8 @@ These tests exercise the OpenEMS channel/property/component logic without
 network calls by using small dummy objects.
 """
 from datetime import time
+import json
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.core import HomeAssistant
@@ -12,7 +14,8 @@ from yarl import URL
 
 from custom_components.openems import openems
 from custom_components.openems.const import SLASH_ESC
-from custom_components.openems.helpers import wrap_jsonrpc
+from custom_components.openems.helpers import to_snake_case, wrap_jsonrpc
+from custom_components.openems.helpers_ha import translation_key
 from custom_components.openems.helpers_openems import prepare_ref_value
 
 
@@ -358,3 +361,81 @@ def test_to_backend_value_conversions() -> None:
     for invalid in ("nope", 7):
         with pytest.raises(ValueError):
             time_prop.to_backend_value(invalid)
+
+
+async def test_heat_pump_sg_ready_properties() -> None:
+    """SG-Ready heat pump properties become selects and numbers (issue #61)."""
+    component_config = {
+        "_host": {"Hostname": "h1"},
+        "ctrlIoHeatPump0": {
+            "_PropertyAlias": "Heat pump",
+            "properties": {},
+            # enum properties are reported by OpenEMS as STRING without options
+            "channels": [
+                make_channel_json("_PropertyMode", "STRING", ""),
+                make_channel_json("_PropertyManualState", "STRING", ""),
+                make_channel_json("_PropertyAutomaticForceOnSoc", "INTEGER", ""),
+                make_channel_json("_PropertyAutomaticLockSoc", "INTEGER", ""),
+                make_channel_json("_PropertyAutomaticLockCtrlEnabled", "BOOLEAN", ""),
+                make_channel_json("_PropertyAutomaticLockGridBuyPower", "INTEGER", ""),
+                make_channel_json("_PropertyMinimumSwitchingTime", "INTEGER", ""),
+                {
+                    "id": "Status",
+                    "type": "INTEGER",
+                    "category": "ENUM",
+                    "unit": "",
+                    "options": {
+                        "Undefined": -1,
+                        "Blocks everything till an internal maximum time of default two hours": 0,
+                        "Default energy-efficient operation": 1,
+                        "Recommendation to use more available power": 2,
+                        "Force all possible consumption of the heat pump": 3,
+                    },
+                },
+            ],
+        },
+    }
+    edge = openems.OpenEMSEdge(_make_backend(), "edge-1", component_config)
+    try:
+        comp = edge.components["ctrlIoHeatPump0"]
+        comp.update_config = AsyncMock()
+        selects = {p.name: p for p in comp.enum_properties}
+        assert selects["_PropertyMode"].property_options == ["MANUAL", "AUTOMATIC"]
+        assert selects["_PropertyManualState"].property_options == [
+            "LOCK",
+            "REGULAR",
+            "RECOMMENDATION",
+            "FORCE_ON",
+        ]
+        numbers = {p.name: p for p in comp.number_properties}
+        for name in ("_PropertyAutomaticForceOnSoc", "_PropertyAutomaticLockSoc"):
+            assert (numbers[name].lower_limit, numbers[name].upper_limit) == (0, 100)
+            assert numbers[name].step == 1
+        # thresholds: fixed step 1 instead of the calculated 1000 / 100
+        threshold_limits = {
+            "_PropertyAutomaticLockGridBuyPower": (0, 100000),
+            "_PropertyMinimumSwitchingTime": (0, 3600),
+        }
+        for name, limits in threshold_limits.items():
+            assert (numbers[name].lower_limit, numbers[name].upper_limit) == limits
+            assert numbers[name].step == 1
+            assert openems.CONFIG.get_number_mode("ctrlIoHeatPump0", name) == "box"
+
+        status = next(c for c in comp.sensors if c.name == "Status")
+        for name in (*selects, *numbers, "_PropertyAutomaticLockCtrlEnabled", "Status"):
+            assert openems.CONFIG.is_channel_enabled("ctrlIoHeatPump0", name), name
+
+        # no update group: each property is sent individually
+        await selects["_PropertyManualState"].update_value("RECOMMENDATION")
+        comp.update_config.assert_awaited_once_with([("manualState", "RECOMMENDATION")])
+
+        strings = json.loads(
+            (Path(openems.__file__).parent / "strings.json").read_text(encoding="utf-8")
+        )
+        for prop in selects.values():
+            states = strings["entity"]["select"][translation_key(prop)]["state"]
+            assert set(states) == {o.lower() for o in prop.property_options}
+        status_states = strings["entity"]["sensor"][translation_key(status)]["state"]
+        assert set(status_states) == {to_snake_case(o) for o in status.options.values()}
+    finally:
+        edge.stop()

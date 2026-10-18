@@ -416,6 +416,8 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         self.upper_limit_def: Template = Template(str(self.upper_limit))
 
         self.step: float = 1.0
+        # fixed step size from the config, replaces the calculated step size
+        self.fixed_step: float | None = None
         self.reference_channels: dict[str, str | float | None] = {}
 
     @property
@@ -485,12 +487,15 @@ class OpenEMSNumberProperty(OpenEMSProperty):
                 )
             lower_scaled = lower_noscale * multiplier
             upper_scaled = upper_noscale * multiplier
-            # split range into 200, but assure min step size of 1
-            min_step_range = max(
-                1, (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
-            )
-            # align step size with a power of 10
-            step = 10 ** math.ceil(math.log10(min_step_range))
+            if self.fixed_step is not None:
+                step = self.fixed_step
+            else:
+                # split range into 200, but assure min step size of 1
+                min_step_range = max(
+                    1, (upper_scaled - lower_scaled) / OpenEMSNumberProperty.STEPS
+                )
+                # align step size with a power of 10
+                step = 10 ** math.ceil(math.log10(min_step_range))
             lower_limit = math.ceil(float(lower_scaled) / step) * step
             upper_limit = math.ceil(float(upper_scaled) / step) * step
 
@@ -538,6 +543,11 @@ class OpenEMSNumberProperty(OpenEMSProperty):
         else:
             for ref in multiplier_references:
                 self.reference_channels[ref] = None
+
+    def set_step(self, step: float):
+        """Initialize a fixed step size of the number channel."""
+        self.fixed_step = step
+        self.step = step
 
     def set_limit_def(self, limit_def):
         """Initialize the limits of the number channel."""
@@ -672,6 +682,12 @@ class OpenEMSComponent:
                                 )
                                 if multiplier is not None:
                                     prop.set_multiplier_def(multiplier)
+                                if (
+                                    step := CONFIG.get_number_step(
+                                        self.name, channel_json["id"]
+                                    )
+                                ) is not None:
+                                    prop.set_step(step)
                                 prop.set_limit_def(limit_def)
                                 self.number_properties.append(prop)
                             except (

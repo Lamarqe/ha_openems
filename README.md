@@ -159,6 +159,26 @@ variables:
 **Card screenshot** (German version)\
 ![image](screenshots/heatingelement.png)
 
+#### SG-Ready Heat Pump
+
+**Sample Card config**
+
+```
+type: custom:decluttering-card
+template: heatpump_template
+variables:
+  - system: fems12345
+  - ctrlioheatpump_id: 0
+```
+
+**Card variables**
+
+- `system`: Set to your FEMS/OpenEMS system name
+- `ctrlioheatpump_id`: Set to your heat pump AppID. Eg `0` if the component is called `ctrlIoHeatPump0`. Default value: 0
+
+**Card screenshot** (German version)\
+![image](screenshots/heatpump.jpg)
+
 ### Detailed battery diagnosis dashboard (component: battery\*)
 
 The integration is supports calculation of additional information, derived from other sensors, which are not provided by FEMS by default.
@@ -195,11 +215,6 @@ Contains entities for inverter properties like:
   - `radiatortemperature`
 - The state of health: `bmssoh`
   <img src="screenshots/batteryinverter.png" width="250"/>
-
-#### CtrlIoHeatPump\*
-
-Here you will find the current state of your SG ready connected heatpump.\
-<img src="screenshots/heatpump.jpg" width="250"/>
 
 #### meter\*
 
