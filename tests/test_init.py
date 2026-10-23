@@ -165,6 +165,31 @@ async def test_setup_entry_transport_error_raises_not_ready(
         await async_setup_entry(hass, entry)
 
 
+async def test_setup_entry_transport_error_on_login_raises_not_ready(
+    hass: HomeAssistant,
+) -> None:
+    """A TransportError during login (e.g. connection lost) raises ConfigEntryNotReady."""
+    entry = await _create_real_entry(hass)
+
+    mock_conn = MagicMock()
+    mock_conn.connect_to_server = AsyncMock()
+    mock_conn.login_to_server = AsyncMock(
+        side_effect=TransportError("Connection closed before a response was received")
+    )
+    mock_conn.stop = AsyncMock()
+    mock_conn.conn_url.host = "192.0.2.1"
+
+    with (
+        patch(
+            "custom_components.openems.OpenEMSWebSocketConnection",
+            return_value=mock_conn,
+        ),
+        pytest.raises(ConfigEntryNotReady),
+    ):
+        await async_setup_entry(hass, entry)
+    mock_conn.stop.assert_awaited_once()
+
+
 async def test_setup_entry_auth_error_code_1003_raises_auth_failed(
     hass: HomeAssistant,
 ) -> None:

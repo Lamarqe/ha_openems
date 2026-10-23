@@ -92,6 +92,11 @@ async def async_setup_entry(
         raise ConfigEntryNotReady(
             f"Server error during login to {connection.conn_url.host}: {ex}"
         ) from ex
+    except TransportError as ex:
+        await connection.stop()
+        raise ConfigEntryNotReady(
+            f"Connection lost during login to {connection.conn_url.host}"
+        ) from ex
 
     # 3. Reload component list in case explicit user request to reload (hass.is_running)
     if hass.is_running or not data_copy["components"]:

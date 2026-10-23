@@ -1,4 +1,4 @@
-jsonrpc-websocket==3.2.0
+jsonrpc-websocket==4.1.0
 pytest
 pytest-asyncio
 pytest-cov

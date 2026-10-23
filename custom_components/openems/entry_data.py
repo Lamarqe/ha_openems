@@ -11,7 +11,11 @@ import jsonrpc_base
 import jsonrpc_websocket
 from yarl import URL
 
-from .const import CONN_TYPE_CUSTOM_URL, CURRENT_DATA_TIMEOUT_SECONDS
+from .const import (
+    CONN_TYPE_CUSTOM_URL,
+    CURRENT_DATA_TIMEOUT_SECONDS,
+    WEBSOCKET_HEARTBEAT_SECONDS,
+)
 from .helpers import connection_url, wrap_jsonrpc
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,7 +48,7 @@ class OpenEMSWebSocketConnection:
         self.password: str = conn_props["password"]
 
         self.rpc_server = jsonrpc_websocket.Server(
-            self.conn_url, session=None, heartbeat=5
+            self.conn_url, session=None, heartbeat=WEBSOCKET_HEARTBEAT_SECONDS
         )
         self.rpc_server_task: asyncio.Task | None = None
         self._reconnect_task: asyncio.Task | None = None
@@ -233,7 +237,7 @@ class OpenEMSConfigReader:
         rpc_server = jsonrpc_websocket.Server(
             url=self.connection.conn_url,
             session=None,
-            heartbeat=5,
+            heartbeat=WEBSOCKET_HEARTBEAT_SECONDS,
         )
 
         await rpc_server.ws_connect()
