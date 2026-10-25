@@ -1,0 +1,48 @@
+name: Create release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag, e.g. v1.8.1 or v1.8.1_RC4"
+        required: true
+      prerelease:
+        description: "Mark as pre-release"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest version
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          EXPECTED="${TAG#v}"            # v1.8.1_RC4 -> 1.8.1_RC4
+          EXPECTED="${EXPECTED//_/-}"    # -> 1.8.1-RC4
+          ACTUAL="$(jq -r .version custom_components/openems/manifest.json)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::manifest.json has version '$ACTUAL' but tag $TAG expects '$EXPECTED'"
+            exit 1
+          fi
+
+      - name: Build zip
+        run: |
+          cd custom_components/openems
+          zip -r ../../ha_openems.zip ./ -x "*__pycache__*" "*.pyc" ".DS_Store"
+
+      - name: Create release with zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          FLAGS=""
+          [ "$PRERELEASE" = "true" ] && FLAGS="--prerelease"
+          gh release create "$TAG" ha_openems.zip \
+            --target "${{ github.sha }}" --title "$TAG" --generate-notes $FLAGS
