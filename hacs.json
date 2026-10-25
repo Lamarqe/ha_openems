@@ -2,5 +2,7 @@
   "name": "Fenecon FEMS & OpenEMS",
   "hide_default_branch": false,
   "homeassistant": "2026.8.0",
-  "hacs": "2.0.5"
+  "hacs": "2.0.5",
+  "filename": "ha_openems.zip",
+  "zip_release": true
 }
