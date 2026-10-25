@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import gc
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -62,6 +63,32 @@ async def test_login_raises_on_not_connected() -> None:
     mock_server.connected = False
     with pytest.raises(ConnectionError):
         await conn.login_to_server()
+
+
+async def test_connection_loop_exception_is_retrieved() -> None:
+    """A websocket loop ending with an error (e.g. heartbeat timeout) is not reported as unretrieved."""
+    conn, mock_server = _make_conn()
+
+    async def _ws_loop():
+        raise jsonrpc_base.jsonrpc.TransportError(
+            "Websocket error detected. Connection closed."
+        )
+
+    mock_server.ws_connect = AsyncMock(
+        side_effect=lambda: asyncio.create_task(_ws_loop())
+    )
+    loop = asyncio.get_running_loop()
+    unretrieved = []
+    loop.set_exception_handler(lambda _loop, context: unretrieved.append(context))
+    try:
+        await conn.connect_to_server()
+        await asyncio.wait([conn.rpc_server_task])
+        await asyncio.sleep(0)  # let done callbacks run
+        conn.rpc_server_task = None
+        gc.collect()
+    finally:
+        loop.set_exception_handler(None)
+    assert not unretrieved
 
 
 # ---------------------------------------------------------------------------
@@ -455,7 +482,7 @@ class _MockJsonrpcServer:
     def __init__(self) -> None:
         object.__setattr__(self, "_edgeRpc_handler", None)
         object.__setattr__(self, "_edgeRpc_send", AsyncMock())
-        self.ws_connect = AsyncMock()
+        self.ws_connect = AsyncMock(return_value=MagicMock(spec=asyncio.Task))
         self.authenticateWithPassword = AsyncMock()
         self.close = AsyncMock()
         self.subscribeEdges = AsyncMock()
@@ -808,6 +835,45 @@ async def test_get_channel_values_returns_current_data() -> None:
         username="user", password="pass"
     )
     mock_server.close.assert_called_once()
+
+
+async def test_get_channel_values_ws_loop_exception_is_retrieved() -> None:
+    """The dedicated websocket's loop ending with an error is not reported as unretrieved."""
+    conn, _ = _make_conn()
+    mock_server = _MockJsonrpcServer()
+
+    async def _ws_loop():
+        raise jsonrpc_base.jsonrpc.TransportError(
+            "Websocket error detected. Connection closed."
+        )
+
+    ws_loop_tasks = []
+
+    def _ws_connect():
+        ws_loop_tasks.append(asyncio.create_task(_ws_loop()))
+        return ws_loop_tasks[-1]
+
+    mock_server.ws_connect = AsyncMock(side_effect=_ws_connect)
+    mock_server.subscribeEdges = AsyncMock(
+        side_effect=lambda edges: mock_server.push_current_data(_CURRENT_DATA_PARAMS)
+    )
+    loop = asyncio.get_running_loop()
+    unretrieved = []
+    loop.set_exception_handler(lambda _loop, context: unretrieved.append(context))
+    try:
+        with patch(
+            "custom_components.openems.entry_data.jsonrpc_websocket.Server",
+            return_value=mock_server,
+        ):
+            reader = OpenEMSConfigReader(conn, edge_id="0")
+            await reader.get_channel_values_via_websocket(list(_CURRENT_DATA_PARAMS))
+        await asyncio.wait(ws_loop_tasks)
+        await asyncio.sleep(0)  # let done callbacks run
+        ws_loop_tasks.clear()
+        gc.collect()
+    finally:
+        loop.set_exception_handler(None)
+    assert not unretrieved
 
 
 async def test_get_channel_values_ignores_non_current_data_push() -> None:

@@ -3,6 +3,7 @@
 import asyncio
 from collections.abc import Callable
 import contextlib
+import functools
 import logging
 import time
 from typing import TypedDict
@@ -19,6 +20,12 @@ from .const import (
 from .helpers import connection_url, wrap_jsonrpc
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _ws_loop_ended(host: str | None, task: asyncio.Task) -> None:
+    """Retrieve the exception of an ended websocket loop to avoid unhandled task errors."""
+    if not task.cancelled() and (ex := task.exception()):
+        _LOGGER.debug("Websocket to host %s closed: %s", host, ex)
 
 
 class ConnectionProperties(TypedDict):
@@ -57,6 +64,9 @@ class OpenEMSWebSocketConnection:
     async def connect_to_server(self):
         "Establish websocket connection."
         self.rpc_server_task = await self.rpc_server.ws_connect()
+        self.rpc_server_task.add_done_callback(
+            functools.partial(_ws_loop_ended, self.conn_url.host)
+        )
 
     async def login_to_server(self) -> dict:
         "Authenticate with username and password."
@@ -240,7 +250,10 @@ class OpenEMSConfigReader:
             heartbeat=WEBSOCKET_HEARTBEAT_SECONDS,
         )
 
-        await rpc_server.ws_connect()
+        ws_loop_task = await rpc_server.ws_connect()
+        ws_loop_task.add_done_callback(
+            functools.partial(_ws_loop_ended, self.connection.conn_url.host)
+        )
         _LOGGER.debug("wsocket component info request: login")
         await rpc_server.authenticateWithPassword(
             username=self.connection.username, password=self.connection.password
