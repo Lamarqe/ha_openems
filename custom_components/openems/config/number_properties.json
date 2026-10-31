@@ -1,5 +1,19 @@
 [
   {
+    "component_regexp": "ctrlBalancing\\d+",
+    "channels": [
+      {
+        "id": "_PropertyTargetGridSetpoint",
+        "mode": "box",
+        "step": 100,
+        "limit": {
+          "lower": "0-{{$ess.id/MaxApparentPower}}",
+          "upper": "{{$ess.id/MaxApparentPower}}"
+        }
+      }
+    ]
+  },
+  {
     "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+",
     "channels": [
       {
