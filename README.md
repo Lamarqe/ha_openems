@@ -23,10 +23,18 @@ Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 
 ## Table of contents
 
+- [Disclaimer](#disclaimer)
 - [Features / Common Use-cases](#features--common-use-cases)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Disclaimer](#disclaimer)
+
+## Disclaimer
+
+- This integration is not affiliated with Fenecon. The developers take no responsibility for anything that happens to your equipment due to this integration. I.e:
+  - All component updates triggered from the integration are persisted to the system flash storage. Setting up automations which trigger such actions at high frequency, will lead to flash memory degradation, significantly shortening the lifespan of the card and increase the risk of immediate data corruption.
+  - Be careful with controlling entities which are not enabled by default and for which you have not understood their impact.
+  - By default, only a few pre-configured channels are enabled per component. However, there is no limitation how many channels can be enabled in parallel. Increasing the number too high numbers (100+), might overload the FEMS system, with unknown functional impact.
+  - Functionality might break during FEMS & OpenEMS updates, as Fenecon might change APIs with upcoming version.
 
 ## Features / Common Use-cases:
 
@@ -316,26 +324,6 @@ In order to do so, select the 3 dots next to the config entry. From the resultin
 Furthermore, in case the connection details shall be adjusted, you can use the same menu and select **Reconfigure**. This will bring up the main config dialog and allow you to make all necessary changes.
 
 <img src="screenshots/reload_reconfigure.jpg" width="600"/>
-
-## Disclaimer
-
-### Tested Setups
-
-- Fenecon Home 10 systems with
-  - EV Chargers
-    - Keba
-    - Hardy Barth
-  - FEMS Relaisboard
-  - Heatpumps (Fenecon App Power to Heat)
-    - Vaillant
-
-### Limitations
-
-- This integration is not affiliated with Fenecon.
-  - Fenecon might change APIs with upcoming version.
-  - The developers take no responsibility for anything that happens to your equipment due to this integration. I.e.,
-    - Please be careful with controlling entities which are not enabled by default.
-    - By default, only a few pre-configured channels are enabled per component. However, there is no limitation how many channels can be enabled in parallel. Please be careful about expanding to very large numbers (multiple hundreds).
 
 [license-shield]: https://img.shields.io/github/license/Lamarqe/ha_openems.svg?style=for-the-badge
 [release]: https://github.com/Lamarqe/ha_openems/releases
