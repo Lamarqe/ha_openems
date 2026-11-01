@@ -4,12 +4,8 @@
 import json
 from pathlib import Path
 
-EN_TRANSLATIONS_PATH = Path(
-    "/workspaces/ha_core/homeassistant/components/openems/translations/en.json"
-)
-DE_TRANSLATIONS_PATH = Path(
-    "/workspaces/ha_core/homeassistant/components/openems/translations/de.json"
-)
+EN_TRANSLATIONS_PATH = Path("custom_components/openems/translations/en.json")
+DE_TRANSLATIONS_PATH = Path("custom_components/openems/translations/de.json")
 
 
 def add_missing_values(english: dict, german: dict) -> None:

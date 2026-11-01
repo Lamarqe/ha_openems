@@ -51,22 +51,26 @@
     "sensor": {
       "ctrlevsesingle_s_l_a_s_h_actualmode": {
         "state": {
-          "zero": "Off",
-          "minimum": "Minimal",
-          "surplus": "PV",
-          "force": "Fast"
+          "force": "Force",
+          "minimum": "Minimum",
+          "surplus": "Surplus",
+          "zero": "Zero"
         }
       },
       "ctrlevsesingle_s_l_a_s_h_statemachine": {
         "state": {
-          "ev_not_connected": "EV not connected",
-          "ev_connected": "EV connected",
+          "charge_disabled": "Charging disabled",
+          "charge_paused": "Paused (low surplus)",
+          "charge_resuming": "Waiting for EV",
           "charging": "Charging",
-          "finished_ev_stop": "Charging finished by EV",
-          "finished_energy_session_limit": "Charging finished by energy limit",
-          "phase_switch_to_three_phase": "Switch to 3-phase",
-          "phase_switch_to_single_phase": "Switch to 1-phase",
-          "phase_switch": "Manual Phaseswitch"
+          "ev_connected": "EV connected",
+          "ev_not_connected": "EV not connected",
+          "finished_energy_session_limit": "Energy limit reached",
+          "finished_ev_stop": "Stopped by EV",
+          "not_ready": "Not ready",
+          "phase_switch_to_single_phase": "Switching to 1-phase",
+          "phase_switch_to_three_phase": "Switching to 3-phase",
+          "undefined": "Undefined"
         }
       },
       "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
@@ -86,14 +90,13 @@
       },
       "evcs_s_l_a_s_h_status": {
         "state": {
-          "charging": "Charging",
-          "charging_rejected": "Charging rejected",
-          "error": "Error",
-          "not_ready_for_charging": "Not ready for Charging",
-          "ready_for_charging": "Ready for Charging",
-          "starting": "Starting",
-          "the_charging_limit_reached": "The charging limit reached",
-          "undefined": "Undefined"
+          "charging_with_ventilation_required_d": "Charging with ventilation required (D)",
+          "error_communication_problem_e": "Error – communication problem (E)",
+          "error_serious_fault_f": "Error – serious fault (F)",
+          "no_vehicle_connected_a": "No vehicle connected (A)",
+          "undefined": "Undefined",
+          "vehicle_connected_and_charging_c": "Vehicle connected and charging (C)",
+          "vehicle_connected_not_charging_b": "Vehicle connected, not charging (B)"
         }
       },
       "battery_s_l_a_s_h_state": {
@@ -1358,20 +1361,21 @@
       },
       "ctrlesssohcycle_s_l_a_s_h_statemachine": {
         "state": {
-          "check_balancing": "CHECK_BALANCING",
-          "done": "DONE",
-          "error_abort": "ERROR_ABORT",
-          "evaluate_result": "EVALUATE_RESULT",
-          "idle": "IDLE",
-          "measurement_cycle_charging": "MEASUREMENT_CYCLE_CHARGING",
-          "measurement_cycle_charging_wait": "MEASUREMENT_CYCLE_CHARGING_WAIT",
-          "measurement_cycle_discharging": "MEASUREMENT_CYCLE_DISCHARGING",
-          "measurement_cycle_discharging_wait": "MEASUREMENT_CYCLE_DISCHARGING_WAIT",
-          "prepare": "PREPARE",
-          "reference_cycle_charging": "REFERENCE_CYCLE_CHARGING",
-          "reference_cycle_charging_wait": "REFERENCE_CYCLE_CHARGING_WAIT",
-          "reference_cycle_discharging": "REFERENCE_CYCLE_DISCHARGING",
-          "reference_cycle_discharging_wait": "REFERENCE_CYCLE_DISCHARGING_WAIT"
+          "check_balancing": "Checking balancing",
+          "done": "Done",
+          "error_abort": "Aborted (error)",
+          "evaluate_result": "Evaluating result",
+          "idle": "Idle",
+          "measurement_cycle_charging": "Measurement: charging",
+          "measurement_cycle_charging_wait": "Measurement: rest after charge",
+          "measurement_cycle_discharging": "Measurement: discharging",
+          "measurement_cycle_discharging_wait": "Measurement: rest after discharge",
+          "prepare": "Discharging to 0 %",
+          "prepare_precharge": "Pre-charging",
+          "reference_cycle_charging": "Reference: charging",
+          "reference_cycle_charging_wait": "Reference: rest after charge",
+          "reference_cycle_discharging": "Reference: discharging",
+          "reference_cycle_discharging_wait": "Reference: rest after discharge"
         }
       },
       "ctrlesssohcycle_s_l_a_s_h_state": {
@@ -1800,6 +1804,37 @@
           "default_energy-efficient_operation": "Normal",
           "recommendation_to_use_more_available_power": "Switch-on recommendation",
           "force_all_possible_consumption_of_the_heat_pump": "Switch-on command"
+        }
+      },
+      "ctrlevsecluster_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "evcs_s_l_a_s_h_devicerole": {
+        "state": {
+          "master": "Master",
+          "slave": "Slave",
+          "unknown": "Unknown"
+        }
+      },
+      "evseelectricvehicle_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
         }
       }
     },

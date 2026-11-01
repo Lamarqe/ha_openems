@@ -47,6 +47,11 @@
       }
     }
   },
+  "device_automation": {
+    "action_type": {
+      "update_component_config": "Update component configuration"
+    }
+  },
   "entity": {
     "select": {
       "ctrlevcs_s_l_a_s_h_chargemode": {
@@ -111,18 +116,18 @@
           "time": "Guaranteed minimum time"
         }
       },
-      "ctrlioheatpump_s_l_a_s_h_mode": {
-        "state": {
-          "manual": "Manual",
-          "automatic": "Automatic"
-        }
-      },
       "ctrlioheatpump_s_l_a_s_h_manualstate": {
         "state": {
+          "force_on": "Switch-on command",
           "lock": "Lock",
-          "regular": "Normal operation",
           "recommendation": "Switch-on recommendation",
-          "force_on": "Switch-on command"
+          "regular": "Normal operation"
+        }
+      },
+      "ctrlioheatpump_s_l_a_s_h_mode": {
+        "state": {
+          "automatic": "Automatic",
+          "manual": "Manual"
         }
       }
     },
@@ -1433,20 +1438,21 @@
       },
       "ctrlesssohcycle_s_l_a_s_h_statemachine": {
         "state": {
-          "check_balancing": "CHECK_BALANCING",
-          "done": "DONE",
-          "error_abort": "ERROR_ABORT",
-          "evaluate_result": "EVALUATE_RESULT",
-          "idle": "IDLE",
-          "measurement_cycle_charging": "MEASUREMENT_CYCLE_CHARGING",
-          "measurement_cycle_charging_wait": "MEASUREMENT_CYCLE_CHARGING_WAIT",
-          "measurement_cycle_discharging": "MEASUREMENT_CYCLE_DISCHARGING",
-          "measurement_cycle_discharging_wait": "MEASUREMENT_CYCLE_DISCHARGING_WAIT",
-          "prepare": "PREPARE",
-          "reference_cycle_charging": "REFERENCE_CYCLE_CHARGING",
-          "reference_cycle_charging_wait": "REFERENCE_CYCLE_CHARGING_WAIT",
-          "reference_cycle_discharging": "REFERENCE_CYCLE_DISCHARGING",
-          "reference_cycle_discharging_wait": "REFERENCE_CYCLE_DISCHARGING_WAIT"
+          "check_balancing": "Checking balancing",
+          "done": "Done",
+          "error_abort": "Aborted (error)",
+          "evaluate_result": "Evaluating result",
+          "idle": "Idle",
+          "measurement_cycle_charging": "Measurement: charging",
+          "measurement_cycle_charging_wait": "Measurement: rest after charge",
+          "measurement_cycle_discharging": "Measurement: discharging",
+          "measurement_cycle_discharging_wait": "Measurement: rest after discharge",
+          "prepare": "Discharging to 0 %",
+          "prepare_precharge": "Pre-charging",
+          "reference_cycle_charging": "Reference: charging",
+          "reference_cycle_charging_wait": "Reference: rest after charge",
+          "reference_cycle_discharging": "Reference: discharging",
+          "reference_cycle_discharging_wait": "Reference: rest after discharge"
         }
       },
       "ctrlesssurplusfeedtogrid_s_l_a_s_h_state": {
@@ -1465,24 +1471,44 @@
           "warning": "Warning"
         }
       },
+      "ctrlevsecluster_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
       "ctrlevsesingle_s_l_a_s_h_actualmode": {
         "state": {
-          "force": "Fast",
-          "minimum": "Minimal",
-          "surplus": "PV",
-          "zero": "Off"
+          "force": "Force",
+          "minimum": "Minimum",
+          "surplus": "Surplus",
+          "zero": "Zero"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
         }
       },
       "ctrlevsesingle_s_l_a_s_h_statemachine": {
         "state": {
+          "charge_disabled": "Charging disabled",
+          "charge_paused": "Paused (low surplus)",
+          "charge_resuming": "Waiting for EV",
           "charging": "Charging",
           "ev_connected": "EV connected",
           "ev_not_connected": "EV not connected",
-          "finished_energy_session_limit": "Charging finished by energy limit",
-          "finished_ev_stop": "Charging finished by EV",
-          "phase_switch": "Manual Phaseswitch",
-          "phase_switch_to_single_phase": "Switch to 1-phase",
-          "phase_switch_to_three_phase": "Switch to 3-phase"
+          "finished_energy_session_limit": "Energy limit reached",
+          "finished_ev_stop": "Stopped by EV",
+          "not_ready": "Not ready",
+          "phase_switch_to_single_phase": "Switching to 1-phase",
+          "phase_switch_to_three_phase": "Switching to 3-phase",
+          "undefined": "Undefined"
         }
       },
       "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
@@ -1518,6 +1544,15 @@
           "info": "Info",
           "ok": "Ok",
           "warning": "Warning"
+        }
+      },
+      "ctrlioheatpump_s_l_a_s_h_status": {
+        "state": {
+          "blocks_everything_till_an_internal_maximum_time_of_default_two_hours": "Lock",
+          "default_energy-efficient_operation": "Normal",
+          "force_all_possible_consumption_of_the_heat_pump": "Switch-on command",
+          "recommendation_to_use_more_available_power": "Switch-on recommendation",
+          "undefined": "Undefined"
         }
       },
       "ctrlpreparebatteryextension_s_l_a_s_h_state": {
@@ -1616,6 +1651,13 @@
           "undefined": "Undefined"
         }
       },
+      "evcs_s_l_a_s_h_devicerole": {
+        "state": {
+          "master": "Master",
+          "slave": "Slave",
+          "unknown": "Unknown"
+        }
+      },
       "evcs_s_l_a_s_h_phases": {
         "state": {
           "one_phase": "One Phase",
@@ -1633,17 +1675,24 @@
       },
       "evcs_s_l_a_s_h_status": {
         "state": {
-          "charging": "Charging",
-          "charging_rejected": "Charging rejected",
-          "error": "Error",
-          "not_ready_for_charging": "Not ready for Charging",
-          "ready_for_charging": "Ready for Charging",
-          "starting": "Starting",
-          "the_charging_limit_reached": "The charging limit reached",
-          "undefined": "Undefined"
+          "charging_with_ventilation_required_d": "Charging with ventilation required (D)",
+          "error_communication_problem_e": "Error \u2013 communication problem (E)",
+          "error_serious_fault_f": "Error \u2013 serious fault (F)",
+          "no_vehicle_connected_a": "No vehicle connected (A)",
+          "undefined": "Undefined",
+          "vehicle_connected_and_charging_c": "Vehicle connected and charging (C)",
+          "vehicle_connected_not_charging_b": "Vehicle connected, not charging (B)"
         }
       },
       "evcsslowpowerincreasefilter_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fault",
+          "info": "Info",
+          "ok": "Ok",
+          "warning": "Warning"
+        }
+      },
+      "evseelectricvehicle_s_l_a_s_h_state": {
         "state": {
           "fault": "Fault",
           "info": "Info",
@@ -1867,16 +1916,18 @@
           "ok": "Ok",
           "warning": "Warning"
         }
-      },
-      "ctrlioheatpump_s_l_a_s_h_status": {
-        "state": {
-          "undefined": "Undefined",
-          "blocks_everything_till_an_internal_maximum_time_of_default_two_hours": "Lock",
-          "default_energy-efficient_operation": "Normal",
-          "recommendation_to_use_more_available_power": "Switch-on recommendation",
-          "force_all_possible_consumption_of_the_heat_pump": "Switch-on command"
-        }
       }
+    }
+  },
+  "exceptions": {
+    "invalid_property_value": {
+      "message": "Invalid value {value} for property {property} of component {component}."
+    },
+    "no_component_device": {
+      "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
+    },
+    "unknown_property": {
+      "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
     }
   },
   "options": {
@@ -1974,87 +2025,71 @@
         "time": "Guaranteed minimum time"
       }
     },
-    "ctrlioheatpump_s_l_a_s_h_mode": {
-      "options": {
-        "manual": "Manual",
-        "automatic": "Automatic"
-      }
-    },
     "ctrlioheatpump_s_l_a_s_h_manualstate": {
       "options": {
+        "force_on": "Switch-on command",
         "lock": "Lock",
-        "regular": "Normal operation",
         "recommendation": "Switch-on recommendation",
-        "force_on": "Switch-on command"
+        "regular": "Normal operation"
       }
-    }
-  },
-  "device_automation": {
-    "action_type": {
-      "update_component_config": "Update component configuration"
-    }
-  },
-  "exceptions": {
-    "no_component_device": {
-      "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
     },
-    "unknown_property": {
-      "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
-    },
-    "invalid_property_value": {
-      "message": "Invalid value {value} for property {property} of component {component}."
+    "ctrlioheatpump_s_l_a_s_h_mode": {
+      "options": {
+        "automatic": "Automatic",
+        "manual": "Manual"
+      }
     }
   },
   "services": {
+    "rest_write_binary_sensor": {
+      "description": "Cyclically sends a value for the channel of a binary sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
+      "fields": {
+        "timeout": {
+          "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity.",
+          "name": "Timeout"
+        },
+        "update_cycle": {
+          "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only.",
+          "name": "Update cycle"
+        },
+        "value": {
+          "description": "The new target value.",
+          "name": "Value"
+        }
+      },
+      "name": "REST write binary sensor"
+    },
+    "rest_write_sensor": {
+      "description": "Cyclically sends a value for the channel of a sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
+      "fields": {
+        "timeout": {
+          "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity.",
+          "name": "Timeout"
+        },
+        "update_cycle": {
+          "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only.",
+          "name": "Update cycle"
+        },
+        "value": {
+          "description": "The new target value.",
+          "name": "Value"
+        }
+      },
+      "name": "REST write sensor"
+    },
     "update_component_config": {
-      "name": "Update component configuration",
       "description": "Changes properties of OpenEMS components. All properties of a component are sent in a single updateComponentConfig request. Number limits are not checked.",
       "fields": {
         "device_id": {
-          "name": "Component devices",
-          "description": "OpenEMS component devices whose properties are changed. A single updateComponentConfig request is sent per device."
+          "description": "OpenEMS component devices whose properties are changed. A single updateComponentConfig request is sent per device.",
+          "name": "Component devices"
         },
         "properties": {
-          "name": "Properties",
-          "description": "Properties to change on the selected component devices, e.g. enabledCharging: true and chargeMode: force_charge. Use the configuration name (chargeMode) or the channel name (_PropertyChargeMode). Values are given like in the corresponding entities: select options in snake_case, numbers scaled like the number entity, times as HH:MM."
+          "description": "Properties to change on the selected component devices, e.g. enabledCharging: true and chargeMode: force_charge. Use the configuration name (chargeMode) or the channel name (_PropertyChargeMode). Values are given like in the corresponding entities: select options in snake_case, numbers scaled like the number entity, times as HH:MM.",
+          "name": "Properties"
         }
-      }
-    },
-    "rest_write_sensor": {
-      "name": "REST write sensor",
-      "description": "Cyclically sends a value for the channel of a sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
-      "fields": {
-        "value": {
-          "name": "Value",
-          "description": "The new target value."
-        },
-        "timeout": {
-          "name": "Timeout",
-          "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity."
-        },
-        "update_cycle": {
-          "name": "Update cycle",
-          "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only."
-        }
-      }
-    },
-    "rest_write_binary_sensor": {
-      "name": "REST write binary sensor",
-      "description": "Cyclically sends a value for the channel of a binary sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
-      "fields": {
-        "value": {
-          "name": "Value",
-          "description": "The new target value."
-        },
-        "timeout": {
-          "name": "Timeout",
-          "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity."
-        },
-        "update_cycle": {
-          "name": "Update cycle",
-          "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only."
-        }
-      }
+      },
+      "name": "Update component configuration"
     }
   }
 }

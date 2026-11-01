@@ -137,14 +137,18 @@
       },
       "ctrlevsesingle_s_l_a_s_h_statemachine": {
         "state": {
+          "charge_disabled": "Laden deaktiviert",
+          "charge_paused": "Pause (wenig Überschuss)",
+          "charge_resuming": "Warte auf Fahrzeug",
           "charging": "Lädt",
-          "ev_connected": "EV verbunden",
-          "ev_not_connected": "EV nicht verbunden",
-          "finished_energy_session_limit": "Ladevorgang beendet durch Energielimit",
-          "finished_ev_stop": "Ladevorgang beendet durch EV",
-          "phase_switch": "Manuelles Phasenwechseln",
+          "ev_connected": "Fahrzeug verbunden",
+          "ev_not_connected": "Fahrzeug nicht verbunden",
+          "finished_energy_session_limit": "Energielimit erreicht",
+          "finished_ev_stop": "Vom Fahrzeug beendet",
+          "not_ready": "Nicht bereit",
           "phase_switch_to_single_phase": "Wechsel auf 1-phasig",
-          "phase_switch_to_three_phase": "Wechsel auf 3-phasig"
+          "phase_switch_to_three_phase": "Wechsel auf 3-phasig",
+          "undefined": "Unbekannt"
         }
       },
       "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
@@ -171,7 +175,13 @@
           "ready_for_charging": "Bereit zum Laden",
           "starting": "Starte...",
           "the_charging_limit_reached": "Ladelimit erreicht",
-          "undefined": "Nicht definiert"
+          "undefined": "Nicht definiert",
+          "charging_with_ventilation_required_d": "Laden mit Belüftung erforderlich (D)",
+          "error_communication_problem_e": "Fehler – Kommunikationsproblem (E)",
+          "error_serious_fault_f": "Fehler – schwere Störung (F)",
+          "no_vehicle_connected_a": "Kein Fahrzeug verbunden (A)",
+          "vehicle_connected_and_charging_c": "Fahrzeug verbunden und lädt (C)",
+          "vehicle_connected_not_charging_b": "Fahrzeug verbunden, lädt nicht (B)"
         }
       },
       "battery_s_l_a_s_h_batteryhardwaretype": {
@@ -1477,7 +1487,8 @@
           "reference_cycle_charging": "REFERENZZYKLUS_LADEN",
           "reference_cycle_charging_wait": "REFERENZZYKLUS_LADEN_WARTEN",
           "reference_cycle_discharging": "REFERENZZYKLUS_ENTLADEN",
-          "reference_cycle_discharging_wait": "REFERENZZYKLUS_ENTLADEN_WARTEN"
+          "reference_cycle_discharging_wait": "REFERENZZYKLUS_ENTLADEN_WARTEN",
+          "prepare_precharge": "Pre-charging"
         }
       },
       "ctrlesssurplusfeedtogrid_s_l_a_s_h_state": {
@@ -1822,7 +1833,7 @@
           "none": "Keine",
           "optimize_by_keeping_all_inverters_equal": "Optimierung durch Gleichbehandlung aller Wechselrichter",
           "optimize_by_keeping_all_inverters_nearly_equal": "Optimierung durch annähernde Gleichbehandlung aller Wechselrichter",
-          "optimize_by_keeping_ess_ in_balance": "Optimierung durch Balancieren des ESS (Speichersystems)",
+          "optimize_by_keeping_ess_in_balance": "Optimierung durch Balancieren des ESS (Speichersystems)",
           "optimize_by_keeping_target_direction_and_maximizing_in_order": "Optimierung durch Beibehaltung der Zielrichtung und Maximierung nach Reihenfolge",
           "optimize_by_moving_towards_target": "Optimierung durch Annäherung an das Ziel",
           "undefined": "Nicht definiert"
@@ -1875,6 +1886,37 @@
           "default_energy-efficient_operation": "Normal",
           "recommendation_to_use_more_available_power": "Einschaltempfehlung",
           "force_all_possible_consumption_of_the_heat_pump": "Einschaltbefehl"
+        }
+      },
+      "ctrlevsecluster_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fehler",
+          "info": "Info",
+          "ok": "In Ordnung (OK)",
+          "warning": "Warnung"
+        }
+      },
+      "ctrlevsesingle_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fehler",
+          "info": "Info",
+          "ok": "In Ordnung (OK)",
+          "warning": "Warnung"
+        }
+      },
+      "evcs_s_l_a_s_h_devicerole": {
+        "state": {
+          "master": "Master",
+          "slave": "Slave",
+          "unknown": "Unbekannt"
+        }
+      },
+      "evseelectricvehicle_s_l_a_s_h_state": {
+        "state": {
+          "fault": "Fehler",
+          "info": "Info",
+          "ok": "In Ordnung (OK)",
+          "warning": "Warnung"
         }
       }
     }

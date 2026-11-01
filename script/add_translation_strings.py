@@ -5,8 +5,10 @@ import json
 import re
 from pathlib import Path
 
-CONFIG_ENTRIES_PATH = Path("/workspaces/ha_core/config/.storage/core.config_entries")
-STRINGS_PATH = Path("/workspaces/ha_core/homeassistant/components/openems/strings.json")
+# CONFIG_ENTRIES_PATH = Path("/workspaces/ha_core/config/.storage/core.config_entries")
+# STRINGS_PATH = Path("/workspaces/ha_core/homeassistant/components/openems/strings.json")
+CONFIG_ENTRIES_PATH = Path("./core.config_entries")
+STRINGS_PATH = Path("custom_components/openems/strings.json")
 SLASH_ESC = "_s_l_a_s_h_"
 SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
 
