@@ -5,10 +5,10 @@ import copy
 import logging
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
-import voluptuous as vol
+import probatio
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 import homeassistant.helpers.config_validation as cv
@@ -49,7 +49,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     try:
         config = CONFIG_SCHEMA(config)
-    except vol.Invalid as err:
+    except probatio.ValidationError as err:
         # Handle invalid configuration
         _LOGGER.error("Invalid yaml configuration: %s", err)
 
@@ -60,7 +60,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: OpenEMSConfigEntry,
-) -> bool:
+) -> None:
     """Set up HA OpenEMS from a config entry."""
     # 0. Copy config data because we will hand over ownership to backend
     data_copy = copy.deepcopy(
@@ -99,7 +99,7 @@ async def async_setup_entry(
         ) from ex
 
     # 3. Reload component list in case explicit user request to reload (hass.is_running)
-    if hass.is_running or not data_copy["components"]:
+    if hass.state == CoreState.running:
         config_reader = OpenEMSConfigReader(connection, edge_id)
 
         components = await config_reader.read_edge_components()
@@ -154,16 +154,15 @@ async def async_setup_entry(
 
     # 9. Start backend
     backend.start()
-    return True
 
 
 async def async_unload_entry(
     hass: HomeAssistant, config_entry: OpenEMSConfigEntry
-) -> bool:
+) -> None:
     """Unload a config entry."""
     backend: OpenEMSBackend = config_entry.runtime_data.backend
     await backend.stop()
-    return await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
+    await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
 
 
 async def async_migrate_entry(
