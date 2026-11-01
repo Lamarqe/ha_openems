@@ -5,9 +5,7 @@ import logging
 from typing import Any
 
 import jsonrpc_base
-import voluptuous as vol
-from yarl import URL
-
+import probatio
 from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
     ConfigFlow,
@@ -34,6 +32,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
 )
+from yarl import URL
 
 from . import const as c
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
@@ -53,24 +52,26 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         """Initialize."""
         self._config_data: dict[str, Any] = {}
 
-    def _step_user_data_schema(self, user_input=None) -> vol.Schema:
+    def _step_user_data_schema(self, user_input=None) -> probatio.Schema:
         """Define the config flow input options."""
         if not user_input:
             user_input = {}
         collapased = user_input.get(CONF_TYPE) == c.CONN_TYPE_DIRECT_EDGE
-        schema: vol.Schema = vol.Schema(
+        schema: probatio.Schema = probatio.Schema(
             {
-                vol.Optional(CONF_HOST, default=user_input.get(CONF_HOST, "")): str,
-                vol.Required(
+                probatio.Optional(
+                    CONF_HOST, default=user_input.get(CONF_HOST, "")
+                ): str,
+                probatio.Required(
                     CONF_USERNAME, default=user_input.get(CONF_USERNAME, "")
                 ): str,
-                vol.Required(
+                probatio.Required(
                     CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
                 ): str,
-                vol.Required(c.CONF_MORE_OPTIONS): section(
-                    vol.Schema(
+                probatio.Required(c.CONF_MORE_OPTIONS): section(
+                    probatio.Schema(
                         {
-                            vol.Required(
+                            probatio.Required(
                                 CONF_TYPE,
                                 default=user_input.get(
                                     CONF_TYPE, c.CONN_TYPE_DIRECT_EDGE
@@ -89,7 +90,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                                     mode=SelectSelectorMode.LIST,
                                 )
                             ),
-                            vol.Optional(
+                            probatio.Optional(
                                 CONF_URL, default=user_input.get(CONF_URL, "")
                             ): str,
                         }
@@ -100,11 +101,13 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         )
         return schema
 
-    def _step_edges_data_schema(self, edge_response: dict, default_edge) -> vol.Schema:
+    def _step_edges_data_schema(
+        self, edge_response: dict, default_edge
+    ) -> probatio.Schema:
         """Define the edges step input options."""
-        return vol.Schema(
+        return probatio.Schema(
             {
-                vol.Required(
+                probatio.Required(
                     c.CONF_EDGES,
                     default=default_edge,
                 ): SelectSelector(
@@ -354,10 +357,10 @@ class OpenEMSOptionsFlow(OptionsFlow):
             return self.async_create_entry(data=options)
 
         backend: OpenEMSBackend = self.config_entry.runtime_data.backend
-        schema: vol.Schema = vol.Schema({})
+        schema: probatio.Schema = probatio.Schema({})
         for comp_name, comp in backend.the_edge.components.items():
             bool_selector = BooleanSelector(BooleanSelectorConfig())
-            schema_entry = vol.Required(comp_name, default=comp.create_entities)
+            schema_entry = probatio.Required(comp_name, default=comp.create_entities)
             schema = schema.extend({schema_entry: bool_selector})
 
         return self.async_show_form(
@@ -374,13 +377,13 @@ class OpenEMSOptionsFlow(OptionsFlow):
             return self.async_create_entry(data=options)
 
         advanced = self.config_entry.options[c.CONF_ADVANCED_OPTIONS]
-        schema = vol.Schema(
+        schema = probatio.Schema(
             {
-                vol.Required(
+                probatio.Required(
                     c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
                     default=advanced[c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING],
                 ): BooleanSelector(BooleanSelectorConfig()),
-                vol.Required(
+                probatio.Required(
                     c.CONF_FORWARD_INTERVAL,
                     default=advanced[c.CONF_FORWARD_INTERVAL],
                 ): NumberSelector(

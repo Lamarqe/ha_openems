@@ -2,16 +2,15 @@
 
 from collections.abc import Generator
 
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
+import probatio
 import pytest
-import voluptuous as vol
-
 from custom_components.openems.const import DOMAIN
 from custom_components.openems.services import (
     SERVICE_UPDATE_COMPONENT_CONFIG,
     async_setup_services,
 )
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 
 from .helpers_component import LoadedComponent, setup_evcs_component
 
@@ -139,5 +138,5 @@ async def test_schema_requires_device_and_properties(
     hass: HomeAssistant, loaded: LoadedComponent, data: dict
 ) -> None:
     """Device and properties are required, the legacy fields are rejected."""
-    with pytest.raises(vol.Invalid):
+    with pytest.raises(probatio.Invalid):
         await _call(hass, data)

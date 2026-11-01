@@ -2,12 +2,12 @@
 
 from typing import Any
 
-import voluptuous as vol
-
+import probatio
 from homeassistant.const import ATTR_DEVICE_ID, CONF_DEVICE_ID, CONF_DOMAIN, CONF_TYPE
 from homeassistant.core import Context, HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import config_validation as cv, selector
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import selector
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
 from .const import ATTR_PROPERTIES, DOMAIN
@@ -24,8 +24,8 @@ RESERVED_KEYS = {
 }
 
 ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
-    {vol.Required(CONF_TYPE): ACTION_TYPE_UPDATE_COMPONENT_CONFIG},
-    extra=vol.ALLOW_EXTRA,
+    {probatio.Required(CONF_TYPE): ACTION_TYPE_UPDATE_COMPONENT_CONFIG},
+    extra=probatio.ALLOW_EXTRA,
 )
 
 
@@ -60,16 +60,16 @@ async def async_get_actions(
 
 async def async_get_action_capabilities(
     hass: HomeAssistant, config: ConfigType
-) -> dict[str, vol.Schema]:
+) -> dict[str, probatio.Schema]:
     """List one optional field per property of the component."""
     try:
         component = component_from_device(hass, config[CONF_DEVICE_ID])
     except ServiceValidationError:
         return {}
     return {
-        "extra_fields": vol.Schema(
+        "extra_fields": probatio.Schema(
             {
-                vol.Optional(field_name(prop)): selector.selector(
+                probatio.Optional(field_name(prop)): selector.selector(
                     property_selector(prop)
                 )
                 for prop in sorted(component.properties, key=field_name)

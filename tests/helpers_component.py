@@ -3,14 +3,13 @@
 from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock
 
+from custom_components.openems import openems
+from custom_components.openems.const import DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from yarl import URL
-
-from custom_components.openems import openems
-from custom_components.openems.const import DOMAIN
 
 HOSTNAME = "h1"
 

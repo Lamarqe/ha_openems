@@ -5,13 +5,12 @@ from unittest.mock import AsyncMock, patch
 import jsonrpc_base
 import jsonrpc_base.jsonrpc
 import pytest
+from custom_components.openems.const import CONF_EDGE, CONF_EDGES, DOMAIN
+from custom_components.openems.entry_data import OpenEMSConfigReader
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType, InvalidData
-
-from custom_components.openems.const import CONF_EDGE, CONF_EDGES, DOMAIN
-from custom_components.openems.entry_data import OpenEMSConfigReader
 
 from .helpers_flow import make_mock_connection
 
@@ -44,8 +43,7 @@ def _multi_edge_patches(login_response: dict | None = None):
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
-        patch.object(OpenEMSConfigReader, "read_edges",
-                     return_value=_EDGES_RESPONSE),
+        patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
         patch.object(
             OpenEMSConfigReader, "read_edge_components", return_value=_COMPONENTS
         ),
@@ -87,7 +85,7 @@ async def test_multi_edge_form_only_lists_online_edges(
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "edges"
 
-    # voluptuous rejects offline ids because they are not in the SelectSelector options
+    # probatio rejects offline ids because they are not in the SelectSelector options
     with pytest.raises(InvalidData):
         await hass.config_entries.flow.async_configure(
             result["flow_id"], {CONF_EDGES: "edge-offline-1"}

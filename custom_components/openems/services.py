@@ -3,14 +3,14 @@
 from collections import defaultdict
 from typing import Any
 
-import voluptuous as vol
-
+import probatio
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import ATTR_DEVICE_ID
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import config_validation as cv, service
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import service
 
 from .const import ATTR_PROPERTIES, ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import component_from_device
@@ -18,10 +18,10 @@ from .openems import OpenEMSComponent, OpenEMSProperty
 
 SERVICE_UPDATE_COMPONENT_CONFIG = "update_component_config"
 
-UPDATE_COMPONENT_CONFIG_SCHEMA = vol.Schema(
+UPDATE_COMPONENT_CONFIG_SCHEMA = probatio.Schema(
     {
-        vol.Required(ATTR_DEVICE_ID): vol.All(cv.ensure_list, [cv.string]),
-        vol.Required(ATTR_PROPERTIES): vol.Schema({cv.string: object}),
+        probatio.Required(ATTR_DEVICE_ID): probatio.All(cv.ensure_list, [cv.string]),
+        probatio.Required(ATTR_PROPERTIES): probatio.Schema({cv.string: object}),
     }
 )
 
@@ -80,9 +80,9 @@ def async_setup_services(hass: HomeAssistant) -> None:
     )
 
     rest_schema = {
-        vol.Required(ATTR_VALUE): vol.Coerce(float),
-        vol.Optional(ATTR_UPDATE_CYCLE, default=30): vol.Coerce(int),
-        vol.Optional(ATTR_TIMEOUT, default=0): vol.Coerce(int),
+        probatio.Required(ATTR_VALUE): probatio.Coerce(float),
+        probatio.Optional(ATTR_UPDATE_CYCLE, default=30): probatio.Coerce(int),
+        probatio.Optional(ATTR_TIMEOUT, default=0): probatio.Coerce(int),
     }
     service.async_register_platform_entity_service(
         hass,
