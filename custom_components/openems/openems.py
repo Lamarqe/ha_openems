@@ -27,7 +27,12 @@ from .const import (
 )
 from .entry_data import OpenEMSWebSocketConnection
 from .helpers import connection_url, to_snake_case, wrap_jsonrpc
-from .helpers_openems import expand_sensor_def, prepare_ref_value
+from .helpers_openems import (
+    OpenEMSAccessMode,
+    access_mode,
+    expand_sensor_def,
+    prepare_ref_value,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -971,6 +976,15 @@ class OpenEMSEdge:
     def register_channel(self, channel_names: set[str], handler: OpenEMSDataHandler):
         """Register a channel and its dependent channels for updates."""
         for channel_name in channel_names:
+            if (
+                isinstance(handler, OpenEMSChannel)
+                and access_mode(handler) & OpenEMSAccessMode.READ == 0
+            ):
+                _LOGGER.info(
+                    "Skipping subscription for channel %s without READ access",
+                    channel_name,
+                )
+                continue
             if channel_name not in self._registered_handlers:
                 self._registered_handlers[channel_name] = {handler}
             else:

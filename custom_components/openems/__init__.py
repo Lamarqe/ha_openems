@@ -21,7 +21,6 @@ from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from .helpers_ha import (
     DeviceRuntimeData,
     OpenEMSConfigEntry,
-    OpenEMSEntityFeature,  # noqa: F401
     RuntimeData,
     component_identifier,
     map_user_input,

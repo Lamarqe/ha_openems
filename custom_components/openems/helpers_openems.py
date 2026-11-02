@@ -1,5 +1,6 @@
 """Helper methods using openems classes, eg during channel creation."""
 
+from enum import IntFlag
 import re
 from typing import TYPE_CHECKING
 
@@ -8,7 +9,15 @@ from jinja2 import Template
 from .const import SLASH_ESC
 
 if TYPE_CHECKING:
-    from .openems import OpenEMSComponent
+    from .openems import OpenEMSChannel, OpenEMSComponent
+
+
+class OpenEMSAccessMode(IntFlag):
+    """Access modes of openems channels."""
+
+    NONE = 0
+    READ = 1
+    WRITE = 2
 
 
 def prepare_ref_value(
@@ -36,7 +45,8 @@ def prepare_ref_value(
             linked_channels.append(linked_channel)
         return linked_channel
 
-    value_expr = "{{" + re.sub(r"{{(.*?)}}", calc_component_reference, expr) + "}}"
+    value_expr = "{{" + \
+        re.sub(r"{{(.*?)}}", calc_component_reference, expr) + "}}"
     return Template(value_expr), linked_channels
 
 
@@ -66,7 +76,8 @@ def expand_sensor_def(
     for t in template_variables:
         for channel_id in channel_ids:
             if match := re.fullmatch(t[1], channel_id):
-                keys = [v for k, v in match.groupdict().items() if k in key_groups]
+                keys = [v for k, v in match.groupdict().items()
+                        if k in key_groups]
                 key_tuple = tuple(keys)
                 values = {
                     k: v for k, v in match.groupdict().items() if k not in key_groups
@@ -98,7 +109,8 @@ def expand_sensor_def(
                 )
             # replace the resulting list with a string representation of the content, to be used in the template
             expanded_template_vars[template_var] = (
-                "{{" + "}}, {{".join(expanded_template_vars[template_var]) + "}}"
+                "{{" +
+                "}}, {{".join(expanded_template_vars[template_var]) + "}}"
             )
             expanded_def = re.sub(
                 var_pattern,
@@ -114,3 +126,16 @@ def expand_sensor_def(
         expanded_defs.append(added_def)
 
     return expanded_defs
+
+
+def access_mode(channel: OpenEMSChannel) -> OpenEMSAccessMode:
+    """Derive access mode for given channel."""
+    match channel.orig_json.get("accessMode", ""):
+        case "RO":
+            return OpenEMSAccessMode.READ
+        case "RW":
+            return OpenEMSAccessMode.READ | OpenEMSAccessMode.WRITE
+        case "WO":
+            return OpenEMSAccessMode.WRITE
+        case _:
+            return OpenEMSAccessMode.NONE

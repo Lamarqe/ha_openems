@@ -2,7 +2,6 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import IntFlag
 import re
 from typing import Any, ClassVar
 
@@ -25,7 +24,6 @@ from .entry_data import ConnectionProperties
 from .helpers import to_snake_case
 from .openems import (
     OpenEMSBackend,
-    OpenEMSChannel,
     OpenEMSComponent,
     OpenEMSDataHandler,
     OpenEMSEnumProperty,
@@ -63,13 +61,6 @@ class OpenEMSUnitClass:
     sensor_device_class: SensorDeviceClass | None = None
     number_device_class: NumberDeviceClass | None = None
     state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT
-
-
-class OpenEMSEntityFeature(IntFlag):
-    """Supported features of openems sensor entities."""
-
-    READ = 1
-    WRITE = 2
 
 
 def unit_description(unit: str) -> OpenEMSUnitClass:
@@ -126,19 +117,6 @@ def unit_description(unit: str) -> OpenEMSUnitClass:
             sensor_type.sensor_device_class = SensorDeviceClass.TEMPERATURE
             sensor_type.number_device_class = NumberDeviceClass.TEMPERATURE
     return sensor_type
-
-
-def supported_features(channel: OpenEMSChannel) -> OpenEMSEntityFeature | None:
-    """Derive supported features for given channel."""
-    match channel.orig_json.get("accessMode", ""):
-        case "RO":
-            return OpenEMSEntityFeature.READ
-        case "RW":
-            return OpenEMSEntityFeature.READ | OpenEMSEntityFeature.WRITE
-        case "WO":
-            return OpenEMSEntityFeature.WRITE
-        case _:
-            return None
 
 
 def component_identifier(component: OpenEMSComponent) -> tuple[str, str]:
@@ -215,7 +193,8 @@ def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
             "mode": "box",
         }
         if prop.unit:
-            number_config["unit_of_measurement"] = unit_description(prop.unit).unit
+            number_config["unit_of_measurement"] = unit_description(
+                prop.unit).unit
         return {"number": number_config}
     if isinstance(prop, OpenEMSTimeProperty):
         return {"time": {}}

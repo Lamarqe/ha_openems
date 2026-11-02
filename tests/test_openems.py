@@ -3,20 +3,20 @@
 These tests exercise the OpenEMS channel/property/component logic without
 network calls by using small dummy objects.
 """
-from datetime import time
+
 import json
+from datetime import time
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
-from homeassistant.core import HomeAssistant
 import pytest
-from yarl import URL
-
 from custom_components.openems import openems
 from custom_components.openems.const import SLASH_ESC
 from custom_components.openems.helpers import to_snake_case, wrap_jsonrpc
 from custom_components.openems.helpers_ha import translation_key
 from custom_components.openems.helpers_openems import prepare_ref_value
+from homeassistant.core import HomeAssistant
+from yarl import URL
 
 
 def _make_backend():
@@ -38,9 +38,9 @@ def _make_component(name="ctrlEvcs1"):
     return comp
 
 
-def make_channel_json(id_, type_, unit="unit"):
+def make_channel_json(id_, type_, unit="unit", accessMode="RO"):
     """Create a simple channel JSON dict for tests."""
-    return {"id": id_, "type": type_, "unit": unit}
+    return {"id": id_, "type": type_, "unit": unit, "accessMode": accessMode}
 
 
 def test_wrap_jsonrpc() -> None:
@@ -81,7 +81,8 @@ def test_component_boolean_property() -> None:
         assert "comp1" in edge.components
         comp = edge.components["comp1"]
         assert any(
-            p.name == "_PropertyEnabledCharging" for p in comp.boolean_properties)
+            p.name == "_PropertyEnabledCharging" for p in comp.boolean_properties
+        )
 
         prop = comp.boolean_properties[0]
         called = False
@@ -105,7 +106,8 @@ def test_enum_property_behavior() -> None:
     enum_json = {"id": "_PropertyChargeMode", "type": "STRING", "unit": "u"}
     options = ["EXCESS_POWER", "MANUAL", "OFF"]
     prop = openems.OpenEMSEnumProperty(
-        component=comp, channel_json=enum_json, options=options)
+        component=comp, channel_json=enum_json, options=options
+    )
     prop.handle_data_update("_PropertyChargeMode", "EXCESS_POWER")
     assert prop.current_option == "EXCESS_POWER"
     # unknown option is ignored
@@ -116,8 +118,7 @@ def test_enum_property_behavior() -> None:
 def test_time_property_behavior() -> None:
     """Test time property parsing."""
     comp = _make_component()
-    time_json = {"id": "_PropertyManualTargetTime",
-                 "type": "STRING", "unit": "u"}
+    time_json = {"id": "_PropertyManualTargetTime", "type": "STRING", "unit": "u"}
     prop = openems.OpenEMSTimeProperty(component=comp, channel_json=time_json)
     prop.handle_data_update("_PropertyManualTargetTime", "12:34")
     assert prop.native_value == time(12, 34)
@@ -129,8 +130,7 @@ def test_time_property_behavior() -> None:
 def test_number_property_multiplier_and_limits() -> None:
     """Test number property applies multiplier on data update."""
     comp = _make_component()
-    num_json = {"id": "_PropertyEnergySessionLimit",
-                "type": "INTEGER", "unit": "W"}
+    num_json = {"id": "_PropertyEnergySessionLimit", "type": "INTEGER", "unit": "W"}
     prop = openems.OpenEMSNumberProperty(component=comp, channel_json=num_json)
     prop.set_multiplier_def("2")
     prop.set_limit_def({"lower": "1", "upper": "100"})
@@ -157,8 +157,7 @@ def _make_component_with_edge(name: str = "ctrlEvcs1"):
 
         def register_channel(self, channel_names, handler):
             for ch_name in channel_names:
-                self._registered_handlers.setdefault(
-                    ch_name, set()).add(handler)
+                self._registered_handlers.setdefault(ch_name, set()).add(handler)
 
         def unregister_channel(self, handler):
             for ch_name, handlers in list(self._registered_handlers.items()):
@@ -213,10 +212,8 @@ def test_number_property_with_template_references() -> None:
     # needed for $evcs.id resolution
     comp.json_properties["evcs.id"] = comp.name
 
-    num_json = {"id": "_PropertyForceChargeMinPower",
-                "type": "INTEGER", "unit": "W"}
-    num_prop = openems.OpenEMSNumberProperty(
-        component=comp, channel_json=num_json)
+    num_json = {"id": "_PropertyForceChargeMinPower", "type": "INTEGER", "unit": "W"}
+    num_prop = openems.OpenEMSNumberProperty(component=comp, channel_json=num_json)
 
     mult_def = "{{$evcs.id/Phases}}"
     _, refs = prepare_ref_value(mult_def, comp)
@@ -233,7 +230,9 @@ def test_number_property_with_template_references() -> None:
     assert num_prop.multiplier == 3.0
 
 
-async def test_entity_lifecycle_and_unique_id(hass: HomeAssistant, dummy_backend) -> None:
+async def test_entity_lifecycle_and_unique_id(
+    hass: HomeAssistant, dummy_backend
+) -> None:
     """Test entities are prepared and unique_ids are stable."""
     comp = {
         "_PropertyAlias": "a",
@@ -250,6 +249,55 @@ async def test_entity_lifecycle_and_unique_id(hass: HomeAssistant, dummy_backend
         assert len(comp_obj.sensors) >= 1
         for s in comp_obj.sensors:
             assert s.unique_id().startswith("edge1")
+    finally:
+        edge.stop()
+
+
+def test_register_channel_skips_channels_without_read_access(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Only channels with READ access are registered for subscriptions."""
+    component_config = {
+        "_host": {"Hostname": "h1"},
+        "comp1": {
+            "_PropertyAlias": "component",
+            "properties": {},
+            "channels": [
+                {
+                    "id": "ReadOnly",
+                    "type": "INTEGER",
+                    "unit": "u",
+                    "accessMode": "RO",
+                },
+                {
+                    "id": "ReadWrite",
+                    "type": "INTEGER",
+                    "unit": "u",
+                    "accessMode": "RW",
+                },
+                {
+                    "id": "WriteOnly",
+                    "type": "INTEGER",
+                    "unit": "u",
+                    "accessMode": "WO",
+                },
+                {"id": "Unknown", "type": "INTEGER", "unit": "u"},
+            ],
+        },
+    }
+    edge = openems.OpenEMSEdge(_make_backend(), "edge-1", component_config)
+    caplog.set_level("INFO")
+
+    try:
+        for channel in edge.components["comp1"].sensors:
+            edge.register_channel({f"comp1/{channel.name}"}, channel)
+
+        assert set(edge.registered_channels) == {
+            "comp1/ReadOnly",
+            "comp1/ReadWrite",
+        }
+        assert "Skipping subscription for channel comp1/WriteOnly" in caplog.text
+        assert "Skipping subscription for channel comp1/Unknown" in caplog.text
     finally:
         edge.stop()
 

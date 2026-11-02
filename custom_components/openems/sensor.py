@@ -163,7 +163,6 @@ class OpenEMSSensorEntity(SensorEntity):
         self._attr_device_info = device_info
         self._attr_should_poll = False
         self.previous_increasing_value_not_null: float | None = None
-        # self._attr_supported_features = supported_features(channel)
         if isinstance(channel, OpenEMSChannel):
             self._attr_extra_state_attributes = channel.orig_json
 
