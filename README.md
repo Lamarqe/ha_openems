@@ -263,10 +263,7 @@ In the automation editor, the same is available as device action "Update compone
 
 ## Installation
 
-### HACS
-
-1. Install HACS (https://hacs.xyz/docs/setup/download)
-2. Select and enable "Fenecon FEMS & OpenEMS" Integration
+For installation, select "Fenecon FEMS & OpenEMS" integration directly from the home assistant marketplace.
 
 ## Configuration
 
