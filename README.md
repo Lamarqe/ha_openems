@@ -72,7 +72,7 @@ Use the following entities to configure the Power Flow card plus:
 
 To use the template cards, do the following:
 
-1. The template cards depend on the following prerequisites (Please install via HACS):
+1. The template cards depend on the following prerequisites (Please install via the marketplace):
    - [Decluttering card](https://github.com/custom-cards/decluttering-card)
    - [Config template card](https://github.com/iantrich/config-template-card)
    - [Button card](https://github.com/custom-cards/button-card)
@@ -198,7 +198,7 @@ Before using the default dashboard (by copying the files content and pasting it 
 
 Furthermore, the dashboard uses the following entities which are to the majority not enabled by default. Before using the dashboard, please enable the components and entities as described in the Configuration chapter further below in this manual.
 
-The dashboard also makes use of the [Mushroom](https://github.com/piitaya/lovelace-mushroom) and [Button card](https://github.com/custom-cards/button-card) UI widgets. In order to use these, please install via HACS.
+The dashboard also makes use of the [Mushroom](https://github.com/piitaya/lovelace-mushroom) and [Button card](https://github.com/custom-cards/button-card) UI widgets. In order to use these, please install via the marketplace.
 
 Entities to be enabled, used within the default dashboard configuration:
 
@@ -328,4 +328,4 @@ Furthermore, in case the connection details shall be adjusted, you can use the s
 [hainstall]: https://my.home-assistant.io/redirect/config_flow_start/?domain=openems
 [hainstallbadge]: https://img.shields.io/badge/dynamic/json?style=for-the-badge&logo=home-assistant&logoColor=ccc&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.openems.total
 [market]: https://my.home-assistant.io/redirect/marketplace_browse/?search=openems
-[marketbadge]: https://img.shields.io/badge/HACS-Default-green.svg?style=for-the-badge
+[marketbadge]: https://img.shields.io/badge/Marketplace-Default-green.svg?style=for-the-badge
