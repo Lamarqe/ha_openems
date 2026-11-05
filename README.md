@@ -5,7 +5,7 @@ Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 [![releasebadge]][release]
 [![License][license-shield]](LICENSE)
 [![hainstall][hainstallbadge]][hainstall]
-[![hacs][hacsbadge]][hacs]
+[![market][marketbadge]][market]
 
 ## Overview
 
@@ -327,5 +327,5 @@ Furthermore, in case the connection details shall be adjusted, you can use the s
 [releasebadge]: https://img.shields.io/github/v/release/Lamarqe/ha_openems?style=for-the-badge
 [hainstall]: https://my.home-assistant.io/redirect/config_flow_start/?domain=openems
 [hainstallbadge]: https://img.shields.io/badge/dynamic/json?style=for-the-badge&logo=home-assistant&logoColor=ccc&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.openems.total
-[hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Default-green.svg?style=for-the-badge
+[market]: https://my.home-assistant.io/redirect/marketplace
+[marketbadge]: https://img.shields.io/badge/HACS-Default-green.svg?style=for-the-badge
