@@ -76,7 +76,7 @@ To use the template cards, do the following:
    - [Decluttering card](https://github.com/custom-cards/decluttering-card)
    - [Config template card](https://github.com/iantrich/config-template-card)
    - [Button card](https://github.com/custom-cards/button-card)
-   - [Template entity row](https://github.com/thomasloven/lovelace-template-entity-row)
+   - [Template entity row](https://github.com/Lint-Free-Technology/lovelace-template-entity-row) -> THIS IS A FORK, NOT THE DEFAULT REPO!!!
 2. Navigate to the dashboard in which you want to use the card
 3. Select edit mode (pencil on the top right corner)
 4. From the 3-dots menu in the top right corner, select "raw editor"
