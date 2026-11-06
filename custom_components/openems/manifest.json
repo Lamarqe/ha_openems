@@ -1,6 +1,7 @@
 {
   "domain": "openems",
   "name": "Fenecon FEMS & OpenEMS",
+  "categories": ["energy","energy.ev_charging","energy.solar_batteries"],
   "codeowners": ["@Lamarqe"],
   "config_flow": true,
   "dependencies": [],
