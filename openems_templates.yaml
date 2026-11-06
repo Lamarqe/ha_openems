@@ -20,7 +20,9 @@ decluttering_templates:
         - type: entities
           entities:
             - entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_defaultlevel
-              name: Level
+              name:
+                type: entity
+                text: Level
           state_color: false
           visibility:
             - condition: state
@@ -29,11 +31,17 @@ decluttering_templates:
         - type: entities
           entities:
             - entity: select.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_defaultlevel
-              name: Level
+              name:
+                type: entity
+                text: Level
             - entity: time.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_endtime
-              name: Endzeit
+              name:
+                type: entity
+                text: Endzeit
             - entity: number.[[system]]_ctrlioheatingelement[[ctrlioheatingelement_id]]_mintime
-              name: Mindestlaufzeit [h]
+              name:
+                type: entity
+                text: Mindestlaufzeit [h]
           state_color: false
           visibility:
             - condition: state
@@ -57,7 +65,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(255,0,0,0.1)
                 - value: manual_off
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -85,7 +93,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,100,255,0.1)
                 - value: automatic
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -113,7 +121,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,255,0,0.1)
                 - value: manual_on
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -141,10 +149,14 @@ decluttering_templates:
           entities:
             - type: simple-entity
               entity: sensor.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_status
-              name: Zustand
+              name:
+                type: entity
+                text: Zustand
             - type: simple-entity
               entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
-              name: Modus
+              name:
+                type: entity
+                text: Modus
           state_color: false
         - type: horizontal-stack
           cards:
@@ -152,7 +164,7 @@ decluttering_templates:
               show_name: true
               show_icon: true
               entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_mode
-              name: Manuell # codespell:ignore manuell
+              name: Manuell
               icon: mdi:tune-variant
               styles:
                 card:
@@ -164,7 +176,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,255,0,0.1)
                 - value: manual
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -192,7 +204,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,100,255,0.1)
                 - value: automatic
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -207,7 +219,9 @@ decluttering_templates:
         - type: entities
           entities:
             - entity: select.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_manualstate
-              name: Betriebszustand
+              name:
+                type: entity
+                text: Betriebszustand
           state_color: false
           visibility:
             - condition: state
@@ -216,26 +230,44 @@ decluttering_templates:
         - type: entities
           entities:
             - entity: switch.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticrecommendationctrlenabled
-              name: Einschaltempfehlung
+              name:
+                type: entity
+                text: Einschaltempfehlung
             - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticrecommendationsurpluspower
-              name: Ab Überschusseinspeisung von [W]
+              name:
+                type: entity
+                text: Ab Überschusseinspeisung von [W]
             - type: divider
             - entity: switch.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticforceonctrlenabled
-              name: Einschaltbefehl
+              name:
+                type: entity
+                text: Einschaltbefehl
             - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticforceonsurpluspower
-              name: Ab Überschusseinspeisung von [W]
+              name:
+                type: entity
+                text: Ab Überschusseinspeisung von [W]
             - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticforceonsoc
-              name: und ab Ladezustand von [%]
+              name:
+                type: entity
+                text: und ab Ladezustand von [%]
             - type: divider
             - entity: switch.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticlockctrlenabled
-              name: Sperre
+              name:
+                type: entity
+                text: Sperre
             - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticlockgridbuypower
-              name: Ab Netzbezug von [W]
+              name:
+                type: entity
+                text: Ab Netzbezug von [W]
             - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_automaticlocksoc
-              name: und ab Ladezustand von [%]
+              name:
+                type: entity
+                text: und ab Ladezustand von [%]
             - type: divider
             - entity: number.[[system]]_ctrlioheatpump[[ctrlioheatpump_id]]_minimumswitchingtime
-              name: Mindestumschaltzeit [s]
+              name:
+                type: entity
+                text: Mindestumschaltzeit [s]
           state_color: false
           visibility:
             - condition: state
@@ -259,22 +291,31 @@ decluttering_templates:
             type: heading
             icon: mdi:battery-lock
             heading_style: title
-            heading: ${ device_model(device_id('switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled')) }
+            heading: >-
+              ${
+              device_model(device_id('switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled'))
+              }
         - type: entities
           entities:
             - entity: switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
+              name:
+                type: entity
               secondary_info: none
               icon: mdi:battery-lock
           show_header_toggle: false
         - type: entities
           entities:
             - entity: number.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_reservesoc
+              name:
+                type: entity
             - entity: switch.[[system]]_meta_isesschargefromgridallowed
+              name:
+                type: entity
           show_header_toggle: false
           visibility:
             - condition: state
               entity: switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
-              state: "on"
+              state: 'on'
   evcs_template:
     default:
       - evcs_id: 0
@@ -289,15 +330,20 @@ decluttering_templates:
             device_model: |
               temp => {return this.hass.devices[temp].model}
           entities:
-            - sensor.[[system]]_evcs[[evcs_id]]_state
+            - entity: sensor.[[system]]_evcs[[evcs_id]]_state
           card:
             type: heading
             icon: mdi:ev-station
             heading_style: title
-            heading: ${ device_model(device_id('sensor.[[system]]_evcs[[evcs_id]]_state')) }
+            heading: >-
+              ${
+              device_model(device_id('sensor.[[system]]_evcs[[evcs_id]]_state'))
+              }
         - type: entities
           entities:
             - entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
+              name:
+                type: entity
               secondary_info: none
               icon: mdi:ev-station
           show_header_toggle: false
@@ -306,9 +352,17 @@ decluttering_templates:
             - type: entities
               entities:
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_status
+                  name:
+                    type: entity
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_setchargepowerlimit
+                  name:
+                    type: entity
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_chargepower
+                  name:
+                    type: entity
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_energysession
+                  name:
+                    type: entity
               show_header_toggle: false
             - type: horizontal-stack
               cards:
@@ -331,7 +385,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force_charge
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -362,7 +416,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: excess_power
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -377,6 +431,8 @@ decluttering_templates:
             - type: entities
               entities:
                 - entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_forcechargeminpower
+                  name:
+                    type: entity
                   icon: mdi:arrow-collapse-up
               show_header_toggle: false
               visibility:
@@ -388,6 +444,8 @@ decluttering_templates:
                 - type: entities
                   entities:
                     - entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_defaultchargeminpower
+                      name:
+                        type: entity
                       icon: mdi:arrow-collapse-down
                   show_header_toggle: false
                 - type: custom:button-card
@@ -409,7 +467,7 @@ decluttering_templates:
                     action: call-service
                     service: openems.update_component_config
                     data:
-                      device_id: "[[[ return hass.entities[entity.entity_id].device_id ]]]"
+                      device_id: '[[[ return hass.entities[entity.entity_id].device_id ]]]'
                       properties:
                         defaultChargeMinPower: 0
               visibility:
@@ -437,7 +495,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: car
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -468,7 +526,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: storage
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -489,6 +547,8 @@ decluttering_templates:
                 - type: entities
                   entities:
                     - entity: number.[[system]]_ctrlevcs[[ctrlevcs_id]]_energysessionlimit
+                      name:
+                        type: entity
                       icon: mdi:arrow-collapse-up
                   show_header_toggle: false
                 - type: custom:button-card
@@ -516,7 +576,7 @@ decluttering_templates:
           visibility:
             - condition: state
               entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
-              state: "on"
+              state: 'on'
   evse_template:
     default:
       - ctrlevse_id: single0
@@ -538,12 +598,15 @@ decluttering_templates:
             heading_style: title
             heading: >-
               ${
-              device_model(device_id('sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode')) }
+              device_model(device_id('sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode'))
+              }
         - type: vertical-stack
           cards:
             - type: entities
               entities:
                 - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_statemachine
+                  name:
+                    type: entity
               show_header_toggle: false
             - type: horizontal-stack
               cards:
@@ -566,7 +629,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: zero
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -597,7 +660,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: surplus
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -628,7 +691,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: minimum
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -659,7 +722,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -674,14 +737,22 @@ decluttering_templates:
             - type: entities
               entities:
                 - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_actualmode
+                  name:
+                    type: entity
                 - entity: sensor.[[system]]_evcs[[evcs_id]]_activepower
+                  name:
+                    type: entity
                 - entity: sensor.[[system]]_ctrlevse[[ctrlevse_id]]_sessionenergy
+                  name:
+                    type: entity
               show_header_toggle: false
             - type: horizontal-stack
               cards:
                 - type: entities
                   entities:
                     - entity: number.[[system]]_ctrlevse[[ctrlevse_id]]_manualenergysessionlimit
+                      name:
+                        type: entity
                       icon: mdi:arrow-collapse-down
                   show_header_toggle: false
                 - type: custom:button-card
@@ -703,7 +774,7 @@ decluttering_templates:
                     action: call-service
                     service: openems.update_component_config
                     data:
-                      device_id: "[[[ return hass.entities[entity.entity_id].device_id ]]]"
+                      device_id: '[[[ return hass.entities[entity.entity_id].device_id ]]]'
                       properties:
                         manualEnergySessionLimit: 0
             - type: horizontal-stack
@@ -727,7 +798,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: automatic
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -758,7 +829,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force_single_phase
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -789,7 +860,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force_three_phase
-                      operator: "!="
+                      operator: '!='
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -819,14 +890,23 @@ decluttering_templates:
             type: heading
             icon: mdi:transmission-tower-import
             heading_style: title
-            heading: ${ device_model(device_id('sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute')) }
+            heading: >-
+              ${
+              device_model(device_id('sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute'))
+              }
         - type: entities
           entities:
             - entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargestate
+              name:
+                type: entity
             - entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_delaychargemaximumchargelimit
+              name:
+                type: entity
             - type: custom:template-entity-row
               icon: mdi:clock
               entity: sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute
+              name:
+                type: entity
               state: >-
                 {% set x =
                 as_timedelta(states.sensor.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_targetminute.state)
@@ -847,13 +927,13 @@ decluttering_templates:
                 card:
                   - height: 80px
               state:
-                - value: "off"
+                - value: 'off'
                   color: red
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: "off"
-                  operator: "!="
+                - value: 'off'
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -863,7 +943,7 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: "off"
+                  option: 'off'
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
             - type: custom:button-card
               show_name: true
@@ -884,7 +964,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: automatic
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -915,7 +995,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: manual
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -948,7 +1028,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: low
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -979,7 +1059,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: medium
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -1010,7 +1090,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: high
-                  operator: "!="
+                  operator: '!='
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -1029,6 +1109,8 @@ decluttering_templates:
         - type: entities
           entities:
             - entity: time.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_manualtargettime
+              name:
+                type: entity
           visibility:
             - condition: state
               entity: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
