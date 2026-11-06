@@ -11,6 +11,6 @@
   "loggers": ["custom_components.openems"],
   "requirements": ["jsonrpc-websocket==4.1.0"],
   "ssdp": [],
-  "version": "1.8.5",
+  "version": "1.9.0",
   "zeroconf": []
 }
