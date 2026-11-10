@@ -11,10 +11,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.openems import openems
 from custom_components.openems.const import DOMAIN, SLASH_ESC
-from custom_components.openems.helpers_ha import (component_from_device,
-                                                  to_snake_case,
-                                                  translation_key,
-                                                  unit_description)
+from custom_components.openems.helpers_ha import (
+    component_from_device,
+    to_snake_case,
+    translation_key,
+    unit_description,
+)
 
 
 def test_unit_description_various() -> None:

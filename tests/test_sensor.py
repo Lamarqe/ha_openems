@@ -2,17 +2,21 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
-                                             SensorStateClass)
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import sensor
-from custom_components.openems.const import \
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
+from custom_components.openems.const import CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
 from custom_components.openems.openems import OpenEMSChannel
-from custom_components.openems.sensor import (OpenEMSSensorDescription,
-                                              OpenEMSSensorEntity)
+from custom_components.openems.sensor import (
+    OpenEMSSensorDescription,
+    OpenEMSSensorEntity,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -36,6 +40,7 @@ def _make_entity(channel=None, state_class=None) -> OpenEMSSensorEntity:
 # ---------------------------------------------------------------------------
 # native_value behaviour
 # ---------------------------------------------------------------------------
+
 
 def test_native_value_none_when_channel_has_no_value() -> None:
     """Entity returns None when the underlying channel carries no value."""
@@ -65,8 +70,7 @@ def test_native_value_total_increasing_ignores_decrease_when_enabled() -> None:
     channel.component.edge.advanced_options = {
         CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True
     }
-    entity = _make_entity(
-        channel, state_class=SensorStateClass.TOTAL_INCREASING)
+    entity = _make_entity(channel, state_class=SensorStateClass.TOTAL_INCREASING)
     entity.previous_increasing_value_not_null = 100.0
 
     assert entity.native_value == 100.0
@@ -80,8 +84,7 @@ def test_native_value_total_increasing_accepts_new_higher_value() -> None:
     channel.component.edge.advanced_options = {
         CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True
     }
-    entity = _make_entity(
-        channel, state_class=SensorStateClass.TOTAL_INCREASING)
+    entity = _make_entity(channel, state_class=SensorStateClass.TOTAL_INCREASING)
     entity.previous_increasing_value_not_null = 100.0
 
     assert entity.native_value == 150.0
@@ -95,8 +98,7 @@ def test_native_value_total_increasing_decrease_allowed_when_disabled() -> None:
     channel.component.edge.advanced_options = {
         CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False
     }
-    entity = _make_entity(
-        channel, state_class=SensorStateClass.TOTAL_INCREASING)
+    entity = _make_entity(channel, state_class=SensorStateClass.TOTAL_INCREASING)
     entity.previous_increasing_value_not_null = 100.0
 
     assert entity.native_value == 50.0
@@ -106,6 +108,7 @@ def test_native_value_total_increasing_decrease_allowed_when_disabled() -> None:
 # ---------------------------------------------------------------------------
 # Callback wiring
 # ---------------------------------------------------------------------------
+
 
 async def test_async_added_registers_callback_on_channel() -> None:
     """async_added_to_hass passes the HA-update callback to the channel."""
@@ -176,6 +179,7 @@ def test_enum_channel_maps_integer_to_snake_case_option() -> None:
 # async_setup_entry
 # ---------------------------------------------------------------------------
 
+
 async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) -> None:
     """async_setup_entry creates one entity per sensor in the component."""
     mock_channel = MagicMock()
@@ -183,8 +187,7 @@ async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) ->
     mock_channel.unit = "W"
     mock_channel.name = "ActivePower"
     mock_channel.unique_id.return_value = "test-host/edge-1/comp1/ActivePower"
-    mock_channel.orig_json = {
-        "id": "ActivePower", "type": "INTEGER", "unit": "W"}
+    mock_channel.orig_json = {"id": "ActivePower", "type": "INTEGER", "unit": "W"}
 
     mock_component = MagicMock()
     mock_component.name = "comp1"
@@ -207,7 +210,9 @@ async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) ->
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSSensorEntity] = []
-    with patch("custom_components.openems.sensor.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
+    ):
         await sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert len(created) == 1
@@ -232,7 +237,9 @@ async def test_async_setup_entry_skips_component_with_create_entities_false(
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list = []
-    with patch("custom_components.openems.sensor.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
+    ):
         await sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
@@ -252,7 +259,9 @@ async def test_async_setup_entry_registers_add_component_callback(
     mock_entry.runtime_data.backend = mock_backend
     mock_entry.runtime_data.add_component_callbacks = callbacks
 
-    with patch("custom_components.openems.sensor.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
+    ):
         await sensor.async_setup_entry(hass, mock_entry, MagicMock())
 
     assert "sensor" in callbacks

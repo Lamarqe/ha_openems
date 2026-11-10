@@ -8,12 +8,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import time as time_module
-from custom_components.openems.time import (OpenEMSTimeDescription,
-                                            OpenEMSTimeEntity)
+from custom_components.openems.time import OpenEMSTimeDescription, OpenEMSTimeEntity
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_channel(native_value=None):
     ch = MagicMock()
@@ -34,6 +34,7 @@ def _make_entity(channel=None) -> OpenEMSTimeEntity:
 # native_value
 # ---------------------------------------------------------------------------
 
+
 def test_native_value_none_when_channel_has_no_value() -> None:
     assert _make_entity(_make_channel(native_value=None)).native_value is None
 
@@ -46,6 +47,7 @@ def test_native_value_proxied_from_channel() -> None:
 # ---------------------------------------------------------------------------
 # async_set_value
 # ---------------------------------------------------------------------------
+
 
 async def test_async_set_value_calls_channel() -> None:
     """async_set_value must delegate to the channel's async_set_value."""
@@ -64,6 +66,7 @@ async def test_async_set_value_calls_channel() -> None:
 # Callback wiring
 # ---------------------------------------------------------------------------
 
+
 async def test_async_added_registers_callback() -> None:
     channel = _make_channel()
     entity = _make_entity(channel)
@@ -72,7 +75,8 @@ async def test_async_added_registers_callback() -> None:
         await entity.async_added_to_hass()
 
     channel.register_callback.assert_called_once_with(
-        entity.async_schedule_update_ha_state)
+        entity.async_schedule_update_ha_state
+    )
 
 
 async def test_async_will_remove_unregisters_callback() -> None:
@@ -88,6 +92,7 @@ async def test_async_will_remove_unregisters_callback() -> None:
 # ---------------------------------------------------------------------------
 # async_setup_entry
 # ---------------------------------------------------------------------------
+
 
 async def test_async_setup_entry_creates_time_entities(hass: HomeAssistant) -> None:
     mock_channel = MagicMock()
@@ -141,7 +146,9 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     assert created == []
 
 
-async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssistant) -> None:
+async def test_async_setup_entry_registers_add_component_callback(
+    hass: HomeAssistant,
+) -> None:
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
     mock_backend.the_edge.components = {}

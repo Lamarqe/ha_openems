@@ -5,8 +5,7 @@ from unittest.mock import AsyncMock, patch
 import jsonrpc_base
 import jsonrpc_base.jsonrpc
 from homeassistant import config_entries
-from homeassistant.const import (CONF_HOST, CONF_PASSWORD, CONF_URL,
-                                 CONF_USERNAME)
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_URL, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
@@ -39,10 +38,10 @@ def _success_patches(conn_url: str | None = None):
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
-        patch.object(OpenEMSConfigReader, "read_edges",
-                     return_value=_EDGES_RESPONSE),
-        patch.object(OpenEMSConfigReader, "read_edge_components",
-                     return_value=_COMPONENTS),
+        patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
+        patch.object(
+            OpenEMSConfigReader, "read_edge_components", return_value=_COMPONENTS
+        ),
     )
 
 
@@ -114,8 +113,7 @@ async def test_form_cannot_connect(
 
     error_conn = make_mock_connection()
     error_conn.connect_to_server = AsyncMock(
-        side_effect=jsonrpc_base.TransportError(
-            "Connection refused", None, "errno 111")
+        side_effect=jsonrpc_base.TransportError("Connection refused", None, "errno 111")
     )
     with patch(
         "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
@@ -336,10 +334,8 @@ async def test_web_fenecon_multi_edge_shows_edge_selection(
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
-        patch.object(OpenEMSConfigReader, "read_edges",
-                     return_value=_multi_edges),
-        patch.object(OpenEMSConfigReader,
-                     "read_edge_components", return_value={}),
+        patch.object(OpenEMSConfigReader, "read_edges", return_value=_multi_edges),
+        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], _USER_INPUT_WEB_FENECON

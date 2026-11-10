@@ -115,7 +115,6 @@ init-hook = """\
 load-plugins = [
   "pylint.extensions.code_style",
   "pylint.extensions.typing",
-  "pylint_home_assistant",
   "pylint_per_file_ignores",
 ]
 persistent = false
@@ -172,9 +171,6 @@ disable = [
   "consider-using-namedtuple-or-dataclass",
   "consider-using-assignment-expr",
   "possibly-used-before-assignment",
-
-  # Disabled while existing violations are being cleaned up
-  "home-assistant-unused-test-fixture-argument",
 
   # Handled by ruff
   # Ref: <https://github.com/astral-sh/ruff/issues/970>
@@ -645,7 +641,7 @@ exclude_lines = [
 ]
 
 [tool.ruff]
-required-version = ">=0.15.20"
+required-version = ">=0.17.3"
 extend-exclude = ["tests"]
 
 [tool.ruff.lint]

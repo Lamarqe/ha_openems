@@ -3,11 +3,11 @@
 from typing import Any
 
 import probatio
+
 from homeassistant.const import ATTR_DEVICE_ID, CONF_DEVICE_ID, CONF_DOMAIN, CONF_TYPE
 from homeassistant.core import Context, HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import selector
+from homeassistant.helpers import config_validation as cv, selector
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
 from .const import ATTR_PROPERTIES, DOMAIN

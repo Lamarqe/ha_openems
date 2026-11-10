@@ -2,4 +2,4 @@ jsonrpc-websocket==4.1.0
 pytest
 pytest-asyncio
 pytest-cov
-pytest-homeassistant-custom-component
+pytest-homeassistant-custom-component==0.13.371

@@ -1,6 +1,5 @@
 [
   {
-    "component_regexp": "battery\\d+",
     "combined_sensors": [
       {
         "id": "VoltageDifference",
@@ -12,6 +11,7 @@
         "template": "[{{Tower{tId}Module{mId}Cell{cId}Voltage}}] | max - [{{Tower{tId}Module{mId}Cell{cId}Voltage}}] | min",
         "unit_of_measurement": "mV"
       }
-    ]
+    ],
+    "component_regexp": "battery\\d+"
   }
 ]

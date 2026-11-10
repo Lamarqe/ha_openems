@@ -130,8 +130,7 @@ class OpenEMSWebSocketConnection:
                 _LOGGER.debug("Reconnected to host %s", self.conn_url.host)
                 # connected. Lets login
                 await self.login_to_server()
-                _LOGGER.info("Connection to host %s reestablished",
-                             self.conn_url.host)
+                _LOGGER.info("Connection to host %s reestablished", self.conn_url.host)
             except (
                 jsonrpc_base.jsonrpc.TransportError,
                 jsonrpc_base.jsonrpc.ProtocolError,
@@ -168,8 +167,7 @@ class OpenEMSConfigReader:
     async def read_edge_components(self) -> dict:
         """Read components of the edge."""
         if not self.edge_id:
-            raise EdgeNotDefinedError(
-                "No edge ID defined for reading components.")
+            raise EdgeNotDefinedError("No edge ID defined for reading components.")
 
         # read component list
         edge_call = wrap_jsonrpc("getEdgeConfig")
@@ -240,8 +238,7 @@ class OpenEMSConfigReader:
     async def get_channel_values_via_websocket(self, channels: list[str]) -> dict:
         """Read channels via dedicated websocket connection."""
         if not self.edge_id:
-            raise EdgeNotDefinedError(
-                "No edge ID defined for reading components.")
+            raise EdgeNotDefinedError("No edge ID defined for reading components.")
 
         # create new connection and login
         rpc_server = jsonrpc_websocket.Server(
@@ -275,8 +272,7 @@ class OpenEMSConfigReader:
         rpc_server.edgeRpc = _handle_callback
         await rpc_server.subscribeEdges(edges=[self.edge_id])
 
-        subscribe_call = wrap_jsonrpc(
-            "subscribeChannels", count=0, channels=channels)
+        subscribe_call = wrap_jsonrpc("subscribeChannels", count=0, channels=channels)
         # pyright: ignore[reportGeneralTypeIssues]
         await rpc_server.edgeRpc(edgeId=self.edge_id, payload=subscribe_call)
 

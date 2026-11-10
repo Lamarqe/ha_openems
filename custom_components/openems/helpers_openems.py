@@ -45,8 +45,7 @@ def prepare_ref_value(
             linked_channels.append(linked_channel)
         return linked_channel
 
-    value_expr = "{{" + \
-        re.sub(r"{{(.*?)}}", calc_component_reference, expr) + "}}"
+    value_expr = "{{" + re.sub(r"{{(.*?)}}", calc_component_reference, expr) + "}}"
     return Template(value_expr), linked_channels
 
 
@@ -76,8 +75,7 @@ def expand_sensor_def(
     for t in template_variables:
         for channel_id in channel_ids:
             if match := re.fullmatch(t[1], channel_id):
-                keys = [v for k, v in match.groupdict().items()
-                        if k in key_groups]
+                keys = [v for k, v in match.groupdict().items() if k in key_groups]
                 key_tuple = tuple(keys)
                 values = {
                     k: v for k, v in match.groupdict().items() if k not in key_groups
@@ -109,8 +107,7 @@ def expand_sensor_def(
                 )
             # replace the resulting list with a string representation of the content, to be used in the template
             expanded_template_vars[template_var] = (
-                "{{" +
-                "}}, {{".join(expanded_template_vars[template_var]) + "}}"
+                "{{" + "}}, {{".join(expanded_template_vars[template_var]) + "}}"
             )
             expanded_def = re.sub(
                 var_pattern,

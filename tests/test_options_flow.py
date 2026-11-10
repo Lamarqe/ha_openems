@@ -7,8 +7,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.openems.const import (
-    CONF_ADVANCED_OPTIONS, CONF_COMPONENTS, CONF_FORWARD_INTERVAL,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING, DOMAIN)
+    CONF_ADVANCED_OPTIONS,
+    CONF_COMPONENTS,
+    CONF_FORWARD_INTERVAL,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+    DOMAIN,
+)
 from custom_components.openems.entry_data import OpenEMSConfigReader
 
 from .helpers_flow import make_mock_connection
@@ -42,10 +46,8 @@ def _setup_patches():
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
-        patch.object(OpenEMSConfigReader, "read_edges",
-                     return_value=_EDGES_RESPONSE),
-        patch.object(OpenEMSConfigReader,
-                     "read_edge_components", return_value={}),
+        patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
+        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
     )
 
 
@@ -109,9 +111,7 @@ async def test_select_components_shows_form(hass: HomeAssistant) -> None:
     backend = _make_mock_backend()
     entry.runtime_data = MagicMock(backend=backend)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     result = await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "select_components"}
     )
@@ -129,9 +129,7 @@ async def test_select_components_enables_component(hass: HomeAssistant) -> None:
     backend = _make_mock_backend()
     entry.runtime_data = MagicMock(backend=backend)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "select_components"}
     )
@@ -149,9 +147,7 @@ async def test_select_components_disables_component(hass: HomeAssistant) -> None
     backend = _make_mock_backend()
     entry.runtime_data = MagicMock(backend=backend)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "select_components"}
     )
@@ -160,19 +156,18 @@ async def test_select_components_disables_component(hass: HomeAssistant) -> None
     )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_COMPONENTS] == {
-        "comp-a": False, "comp-b": False}
+    assert result["data"][CONF_COMPONENTS] == {"comp-a": False, "comp-b": False}
 
 
-async def test_select_components_preserves_advanced_options(hass: HomeAssistant) -> None:
+async def test_select_components_preserves_advanced_options(
+    hass: HomeAssistant,
+) -> None:
     """Submitting component selection must not overwrite existing advanced options."""
     entry = await _create_entry(hass)
     backend = _make_mock_backend()
     entry.runtime_data = MagicMock(backend=backend)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "select_components"}
     )
@@ -181,7 +176,9 @@ async def test_select_components_preserves_advanced_options(hass: HomeAssistant)
     )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_ADVANCED_OPTIONS] == _DEFAULT_OPTIONS[CONF_ADVANCED_OPTIONS]
+    assert (
+        result["data"][CONF_ADVANCED_OPTIONS] == _DEFAULT_OPTIONS[CONF_ADVANCED_OPTIONS]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -193,9 +190,7 @@ async def test_advanced_options_shows_form(hass: HomeAssistant) -> None:
     """Navigating to advanced_options must show a form with the two known fields."""
     entry = await _create_entry(hass)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     result = await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "advanced_options"}
     )
@@ -211,9 +206,7 @@ async def test_advanced_options_saves_forward_interval(hass: HomeAssistant) -> N
     """Changing the forward_interval must be stored in options."""
     entry = await _create_entry(hass)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "advanced_options"}
     )
@@ -233,9 +226,7 @@ async def test_advanced_options_saves_ignore_decreasing(hass: HomeAssistant) -> 
     """Enabling ignore_decreasing_if_total_increasing must be stored in options."""
     entry = await _create_entry(hass)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "advanced_options"}
     )
@@ -248,16 +239,21 @@ async def test_advanced_options_saves_ignore_decreasing(hass: HomeAssistant) -> 
     )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_ADVANCED_OPTIONS][CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING] is True
+    assert (
+        result["data"][CONF_ADVANCED_OPTIONS][
+            CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
+        ]
+        is True
+    )
 
 
-async def test_advanced_options_preserves_component_selection(hass: HomeAssistant) -> None:
+async def test_advanced_options_preserves_component_selection(
+    hass: HomeAssistant,
+) -> None:
     """Submitting advanced options must not overwrite existing component selections."""
     entry = await _create_entry(hass)
 
-    flow_id = (
-        await hass.config_entries.options.async_init(entry.entry_id)
-    )["flow_id"]
+    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
     await hass.config_entries.options.async_configure(
         flow_id, {"next_step_id": "advanced_options"}
     )

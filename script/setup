@@ -11,4 +11,7 @@ script/install/pip_packages \
     --requirement requirements_core_min.txt \
     --requirement requirements_test.txt
 
+# prettier + prettier-plugin-sort-json for the VS Code prettier extension
+npm ci --no-audit --no-fund
+
 pre-commit  install --config .github/pre-commit-config.yaml

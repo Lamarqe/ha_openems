@@ -7,12 +7,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import switch
-from custom_components.openems.switch import (OpenEMSSwitchDescription,
-                                              OpenEMSSwitchEntity)
+from custom_components.openems.switch import (
+    OpenEMSSwitchDescription,
+    OpenEMSSwitchEntity,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_channel(is_on=None):
     ch = MagicMock()
@@ -33,6 +36,7 @@ def _make_entity(channel=None) -> OpenEMSSwitchEntity:
 # is_on
 # ---------------------------------------------------------------------------
 
+
 def test_is_on_true_when_channel_is_on() -> None:
     assert _make_entity(_make_channel(is_on=True)).is_on is True
 
@@ -48,6 +52,7 @@ def test_is_on_none_when_channel_has_no_value() -> None:
 # ---------------------------------------------------------------------------
 # async_turn_on / async_turn_off
 # ---------------------------------------------------------------------------
+
 
 async def test_async_turn_on_calls_channel_update_with_true() -> None:
     channel = _make_channel()
@@ -75,6 +80,7 @@ async def test_async_turn_off_calls_channel_update_with_false() -> None:
 # Callback wiring
 # ---------------------------------------------------------------------------
 
+
 async def test_async_added_registers_callback() -> None:
     channel = _make_channel()
     entity = _make_entity(channel)
@@ -83,7 +89,8 @@ async def test_async_added_registers_callback() -> None:
         await entity.async_added_to_hass()
 
     channel.register_callback.assert_called_once_with(
-        entity.async_schedule_update_ha_state)
+        entity.async_schedule_update_ha_state
+    )
 
 
 async def test_async_will_remove_unregisters_callback() -> None:
@@ -99,6 +106,7 @@ async def test_async_will_remove_unregisters_callback() -> None:
 # ---------------------------------------------------------------------------
 # async_setup_entry
 # ---------------------------------------------------------------------------
+
 
 async def test_async_setup_entry_creates_switch_entities(hass: HomeAssistant) -> None:
     mock_channel = MagicMock()
@@ -124,7 +132,9 @@ async def test_async_setup_entry_creates_switch_entities(hass: HomeAssistant) ->
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSSwitchEntity] = []
-    with patch("custom_components.openems.switch.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.switch.dr.async_get", return_value=MagicMock()
+    ):
         await switch.async_setup_entry(hass, mock_entry, created.extend)
 
     assert len(created) == 1
@@ -146,13 +156,17 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list = []
-    with patch("custom_components.openems.switch.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.switch.dr.async_get", return_value=MagicMock()
+    ):
         await switch.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
 
 
-async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssistant) -> None:
+async def test_async_setup_entry_registers_add_component_callback(
+    hass: HomeAssistant,
+) -> None:
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
     mock_backend.the_edge.components = {}
@@ -163,7 +177,9 @@ async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssi
     mock_entry.runtime_data.backend = mock_backend
     mock_entry.runtime_data.add_component_callbacks = callbacks
 
-    with patch("custom_components.openems.switch.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.switch.dr.async_get", return_value=MagicMock()
+    ):
         await switch.async_setup_entry(hass, mock_entry, MagicMock())
 
     assert "switch" in callbacks

@@ -65,7 +65,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(255,0,0,0.1)
                 - value: manual_off
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -93,7 +93,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,100,255,0.1)
                 - value: automatic
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -121,7 +121,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,255,0,0.1)
                 - value: manual_on
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -176,7 +176,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,255,0,0.1)
                 - value: manual
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -204,7 +204,7 @@ decluttering_templates:
                     card:
                       - background-color: rgba(0,100,255,0.1)
                 - value: automatic
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -315,7 +315,7 @@ decluttering_templates:
           visibility:
             - condition: state
               entity: switch.[[system]]_ctrlemergencycapacityreserve[[ctrlemergencycapacityreserve_id]]_isreservesocenabled
-              state: 'on'
+              state: "on"
   evcs_template:
     default:
       - evcs_id: 0
@@ -385,7 +385,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force_charge
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -416,7 +416,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: excess_power
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -467,7 +467,7 @@ decluttering_templates:
                     action: call-service
                     service: openems.update_component_config
                     data:
-                      device_id: '[[[ return hass.entities[entity.entity_id].device_id ]]]'
+                      device_id: "[[[ return hass.entities[entity.entity_id].device_id ]]]"
                       properties:
                         defaultChargeMinPower: 0
               visibility:
@@ -495,7 +495,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: car
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -526,7 +526,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: storage
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(70%)
@@ -576,7 +576,7 @@ decluttering_templates:
           visibility:
             - condition: state
               entity: switch.[[system]]_ctrlevcs[[ctrlevcs_id]]_enabledcharging
-              state: 'on'
+              state: "on"
   evse_template:
     default:
       - ctrlevse_id: single0
@@ -629,7 +629,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: zero
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -660,7 +660,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: surplus
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -691,7 +691,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: minimum
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -722,7 +722,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -774,7 +774,7 @@ decluttering_templates:
                     action: call-service
                     service: openems.update_component_config
                     data:
-                      device_id: '[[[ return hass.entities[entity.entity_id].device_id ]]]'
+                      device_id: "[[[ return hass.entities[entity.entity_id].device_id ]]]"
                       properties:
                         manualEnergySessionLimit: 0
             - type: horizontal-stack
@@ -798,7 +798,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: automatic
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -829,7 +829,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force_single_phase
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -860,7 +860,7 @@ decluttering_templates:
                         card:
                           - background-color: var(--paper-item-icon-active-color)
                     - value: force_three_phase
-                      operator: '!='
+                      operator: "!="
                       styles:
                         name:
                           - filter: opacity(50%)
@@ -927,13 +927,13 @@ decluttering_templates:
                 card:
                   - height: 80px
               state:
-                - value: 'off'
+                - value: "off"
                   color: red
                   styles:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
-                - value: 'off'
-                  operator: '!='
+                - value: "off"
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -943,7 +943,7 @@ decluttering_templates:
                 action: call-service
                 service: select.select_option
                 data:
-                  option: 'off'
+                  option: "off"
                   entity_id: select.[[system]]_ctrlgridoptimizedcharge[[ctrlgridoptimizedcharge_id]]_mode
             - type: custom:button-card
               show_name: true
@@ -964,7 +964,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: automatic
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -995,7 +995,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: manual
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -1028,7 +1028,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: low
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -1059,7 +1059,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: medium
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)
@@ -1090,7 +1090,7 @@ decluttering_templates:
                     card:
                       - background-color: var(--paper-item-icon-active-color)
                 - value: high
-                  operator: '!='
+                  operator: "!="
                   styles:
                     name:
                       - filter: opacity(70%)

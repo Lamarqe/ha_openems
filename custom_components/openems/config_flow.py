@@ -6,6 +6,8 @@ from typing import Any
 
 import jsonrpc_base
 import probatio
+from yarl import URL
+
 from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
     ConfigFlow,
@@ -32,7 +34,6 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
 )
-from yarl import URL
 
 from . import const as c
 from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection

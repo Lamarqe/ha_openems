@@ -90,10 +90,8 @@ async def _create_real_entry(hass: HomeAssistant) -> config_entries.ConfigEntry:
             "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
-        patch.object(OpenEMSConfigReader, "read_edges",
-                     return_value=_EDGES_RESPONSE),
-        patch.object(OpenEMSConfigReader,
-                     "read_edge_components", return_value={}),
+        patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
+        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
         patch("custom_components.openems.async_setup_entry", return_value=True),
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -129,10 +127,8 @@ async def test_setup_entry_success(hass: HomeAssistant) -> None:
     conn_patch, _ = _make_conn_patches()
     with (
         conn_patch,
-        patch.object(OpenEMSConfigReader,
-                     "read_edge_components", return_value={}),
-        patch("custom_components.openems.OpenEMSBackend",
-              return_value=mock_backend),
+        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
+        patch("custom_components.openems.OpenEMSBackend", return_value=mock_backend),
         patch.object(
             hass.config_entries,
             "async_forward_entry_setups",
@@ -177,8 +173,7 @@ async def test_setup_entry_transport_error_on_login_raises_not_ready(
     mock_conn = MagicMock()
     mock_conn.connect_to_server = AsyncMock()
     mock_conn.login_to_server = AsyncMock(
-        side_effect=TransportError(
-            "Connection closed before a response was received")
+        side_effect=TransportError("Connection closed before a response was received")
     )
     mock_conn.stop = AsyncMock()
     mock_conn.conn_url.host = "192.0.2.1"
@@ -253,8 +248,7 @@ async def test_unload_entry_stops_backend(hass: HomeAssistant) -> None:
 
     mock_backend = MagicMock()
     mock_backend.stop = AsyncMock()
-    entry.runtime_data = RuntimeData(
-        backend=mock_backend, edge_device=MagicMock())
+    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
 
     with patch.object(
         hass.config_entries,
@@ -277,8 +271,7 @@ async def test_update_config_applies_advanced_options(hass: HomeAssistant) -> No
 
     mock_backend = MagicMock()
     mock_backend.the_edge.components = {}
-    entry.runtime_data = RuntimeData(
-        backend=mock_backend, edge_device=MagicMock())
+    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
 
     new_advanced = {
         CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True,
@@ -291,8 +284,7 @@ async def test_update_config_applies_advanced_options(hass: HomeAssistant) -> No
 
     await update_config(hass, entry)
 
-    mock_backend.the_edge.set_advanced_options.assert_called_once_with(
-        new_advanced)
+    mock_backend.the_edge.set_advanced_options.assert_called_once_with(new_advanced)
 
 
 async def test_update_config_disables_component_removes_entities(
@@ -309,8 +301,7 @@ async def test_update_config_disables_component_removes_entities(
 
     mock_backend = MagicMock()
     mock_backend.the_edge.components = {"comp1": mock_component}
-    entry.runtime_data = RuntimeData(
-        backend=mock_backend, edge_device=MagicMock())
+    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
 
     # Build a mock device registry that finds a device and a mock entity registry with no entities
     mock_device = MagicMock()
@@ -345,8 +336,7 @@ async def test_update_config_disables_component_removes_entities(
     ):
         await update_config(hass, entry)
 
-    mock_device_registry.async_remove_device.assert_called_once_with(
-        "device-id-1")
+    mock_device_registry.async_remove_device.assert_called_once_with("device-id-1")
     assert mock_component.create_entities is False
 
 
@@ -363,8 +353,7 @@ async def test_update_config_enables_component_calls_callbacks(
     callback = MagicMock()
     mock_backend = MagicMock()
     mock_backend.the_edge.components = {"comp1": mock_component}
-    entry.runtime_data = RuntimeData(
-        backend=mock_backend, edge_device=MagicMock())
+    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
     entry.runtime_data.add_component_callbacks = {"sensor": callback}
 
     hass.config_entries.async_update_entry(
@@ -389,8 +378,7 @@ async def test_update_config_no_options_returns_early(hass: HomeAssistant) -> No
     entry = await _create_real_entry(hass)
 
     mock_backend = MagicMock()
-    entry.runtime_data = RuntimeData(
-        backend=mock_backend, edge_device=MagicMock())
+    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
     hass.config_entries.async_update_entry(entry, options={})
 
     await update_config(hass, entry)

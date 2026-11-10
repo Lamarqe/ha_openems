@@ -7,8 +7,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import select as select_module
-from custom_components.openems.select import (OpenEMSSelectDescription,
-                                              OpenEMSSelectEntity)
+from custom_components.openems.select import (
+    OpenEMSSelectDescription,
+    OpenEMSSelectEntity,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -41,26 +43,30 @@ def _make_entity(channel=None) -> OpenEMSSelectEntity:
 # current_option
 # ---------------------------------------------------------------------------
 
+
 def test_current_option_none_when_channel_has_no_value() -> None:
     """Returns None when the channel has no active option."""
-    assert _make_entity(_make_channel(current_option=None)
-                        ).current_option is None
+    assert _make_entity(_make_channel(current_option=None)).current_option is None
 
 
 def test_current_option_converted_to_snake_case() -> None:
     """The raw option string is lowercased / snake_cased."""
-    assert _make_entity(_make_channel(
-        current_option="EXCESS_POWER")).current_option == "excess_power"
+    assert (
+        _make_entity(_make_channel(current_option="EXCESS_POWER")).current_option
+        == "excess_power"
+    )
 
 
 def test_current_option_already_lowercase_unchanged() -> None:
-    assert _make_entity(_make_channel(
-        current_option="MANUAL")).current_option == "manual"
+    assert (
+        _make_entity(_make_channel(current_option="MANUAL")).current_option == "manual"
+    )
 
 
 # ---------------------------------------------------------------------------
 # async_select_option
 # ---------------------------------------------------------------------------
+
 
 async def test_async_select_option_calls_channel_update_with_original_value() -> None:
     """Selecting a snake_case option translates back to the original option string."""
@@ -89,6 +95,7 @@ async def test_async_select_option_unknown_option_does_nothing() -> None:
 # Callback wiring
 # ---------------------------------------------------------------------------
 
+
 async def test_async_added_registers_callback() -> None:
     channel = _make_channel()
     entity = _make_entity(channel)
@@ -97,7 +104,8 @@ async def test_async_added_registers_callback() -> None:
         await entity.async_added_to_hass()
 
     channel.register_callback.assert_called_once_with(
-        entity.async_schedule_update_ha_state)
+        entity.async_schedule_update_ha_state
+    )
 
 
 async def test_async_will_remove_unregisters_callback() -> None:
@@ -113,6 +121,7 @@ async def test_async_will_remove_unregisters_callback() -> None:
 # ---------------------------------------------------------------------------
 # async_setup_entry
 # ---------------------------------------------------------------------------
+
 
 async def test_async_setup_entry_creates_select_entities(hass: HomeAssistant) -> None:
     mock_channel = MagicMock()
@@ -139,7 +148,9 @@ async def test_async_setup_entry_creates_select_entities(hass: HomeAssistant) ->
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSSelectEntity] = []
-    with patch("custom_components.openems.select.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.select.dr.async_get", return_value=MagicMock()
+    ):
         await select_module.async_setup_entry(hass, mock_entry, created.extend)
 
     assert len(created) == 1
@@ -161,13 +172,17 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list = []
-    with patch("custom_components.openems.select.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.select.dr.async_get", return_value=MagicMock()
+    ):
         await select_module.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
 
 
-async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssistant) -> None:
+async def test_async_setup_entry_registers_add_component_callback(
+    hass: HomeAssistant,
+) -> None:
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
     mock_backend.the_edge.components = {}
@@ -178,7 +193,9 @@ async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssi
     mock_entry.runtime_data.backend = mock_backend
     mock_entry.runtime_data.add_component_callbacks = callbacks
 
-    with patch("custom_components.openems.select.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.select.dr.async_get", return_value=MagicMock()
+    ):
         await select_module.async_setup_entry(hass, mock_entry, MagicMock())
 
     assert "select" in callbacks

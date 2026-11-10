@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.21
+    rev: v0.17.3
     hooks:
       - id: ruff-check
         args:
@@ -16,7 +16,7 @@ repos:
           - --skip="./.*,*.csv,*.json,*.ambr"
           - --quiet-level=2
         exclude_types: [csv, json, html]
-        exclude: ^tests/fixtures/|homeassistant/generated/|tests/components/.*/snapshots/
+        exclude: ^tests/fixtures/|homeassistant/generated/|tests/components/.*/snapshots/|^openems_templates\.yaml$|^battery_diagnosis_dashboard_.*\.yaml$
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.24.1
     hooks:

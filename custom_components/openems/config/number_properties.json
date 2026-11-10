@@ -1,20 +1,19 @@
 [
   {
-    "component_regexp": "ctrlBalancing\\d+",
     "channels": [
       {
         "id": "_PropertyTargetGridSetpoint",
-        "mode": "box",
-        "step": 100,
         "limit": {
           "lower": "0-{{$ess.id/MaxApparentPower}}",
           "upper": "{{$ess.id/MaxApparentPower}}"
-        }
+        },
+        "mode": "box",
+        "step": 100
       }
-    ]
+    ],
+    "component_regexp": "ctrlBalancing\\d+"
   },
   {
-    "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+",
     "channels": [
       {
         "id": "_PropertyManualEnergySessionLimit",
@@ -23,10 +22,10 @@
           "upper": "100000"
         }
       }
-    ]
+    ],
+    "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+"
   },
   {
-    "component_regexp": "ctrlEvcs\\d+",
     "channels": [
       {
         "id": "_PropertyEnergySessionLimit",
@@ -37,11 +36,11 @@
       },
       {
         "id": "_PropertyForceChargeMinPower",
-        "multiplier": "{{$evcs.id/Phases}}",
         "limit": {
           "lower": "{{$evcs.id/MinimumHardwarePower}} / {{$evcs.id/Phases}}",
           "upper": "{{$evcs.id/MaximumHardwarePower}} / {{$evcs.id/Phases}}"
-        }
+        },
+        "multiplier": "{{$evcs.id/Phases}}"
       },
       {
         "id": "_PropertyDefaultChargeMinPower",
@@ -50,10 +49,10 @@
           "upper": "{{$evcs.id/MaximumHardwarePower}}"
         }
       }
-    ]
+    ],
+    "component_regexp": "ctrlEvcs\\d+"
   },
   {
-    "component_regexp": "ctrlEmergencyCapacityReserve\\d+",
     "channels": [
       {
         "id": "_PropertyReserveSoc",
@@ -62,10 +61,10 @@
           "upper": "100"
         }
       }
-    ]
+    ],
+    "component_regexp": "ctrlEmergencyCapacityReserve\\d+"
   },
   {
-    "component_regexp": "ctrlIoHeatingElement\\d+",
     "channels": [
       {
         "id": "_PropertyMinTime",
@@ -74,10 +73,10 @@
           "upper": "10"
         }
       }
-    ]
+    ],
+    "component_regexp": "ctrlIoHeatingElement\\d+"
   },
   {
-    "component_regexp": "ctrlIoHeatPump\\d+",
     "channels": [
       {
         "id": "_PropertyAutomaticForceOnSoc",
@@ -95,40 +94,41 @@
       },
       {
         "id": "_PropertyAutomaticRecommendationSurplusPower",
-        "mode": "box",
-        "step": 1,
         "limit": {
           "lower": "0",
           "upper": "100000"
-        }
+        },
+        "mode": "box",
+        "step": 1
       },
       {
         "id": "_PropertyAutomaticForceOnSurplusPower",
-        "mode": "box",
-        "step": 1,
         "limit": {
           "lower": "0",
           "upper": "100000"
-        }
+        },
+        "mode": "box",
+        "step": 1
       },
       {
         "id": "_PropertyAutomaticLockGridBuyPower",
-        "mode": "box",
-        "step": 1,
         "limit": {
           "lower": "0",
           "upper": "100000"
-        }
+        },
+        "mode": "box",
+        "step": 1
       },
       {
         "id": "_PropertyMinimumSwitchingTime",
-        "mode": "box",
-        "step": 1,
         "limit": {
           "lower": "0",
           "upper": "3600"
-        }
+        },
+        "mode": "box",
+        "step": 1
       }
-    ]
+    ],
+    "component_regexp": "ctrlIoHeatPump\\d+"
   }
 ]

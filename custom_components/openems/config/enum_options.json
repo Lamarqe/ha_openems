@@ -1,6 +1,5 @@
 [
   {
-    "component_regexp": ".*",
     "channels": [
       {
         "id": "_PropertyCurrency",
@@ -18,10 +17,10 @@
         "id": "_PropertyPhaseRotation",
         "options": ["L1_L2_L3", "L2_L3_L1", "L3_L1_L2"]
       }
-    ]
+    ],
+    "component_regexp": ".*"
   },
   {
-    "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+",
     "channels": [
       {
         "id": "_PropertyMode",
@@ -36,10 +35,10 @@
           "AUTOMATIC"
         ]
       }
-    ]
+    ],
+    "component_regexp": "ctrlEvseCluster\\d+|ctrlEvseSingle\\d+"
   },
   {
-    "component_regexp": "ctrlEvcs\\d+",
     "channels": [
       {
         "id": "_PropertyChargeMode",
@@ -49,10 +48,10 @@
         "id": "_PropertyPriority",
         "options": ["CAR", "STORAGE"]
       }
-    ]
+    ],
+    "component_regexp": "ctrlEvcs\\d+"
   },
   {
-    "component_regexp": "_energy",
     "channels": [
       {
         "id": "_PropertyLogVerbosity",
@@ -66,10 +65,10 @@
         "id": "_PropertyVersion",
         "options": ["V1_ESS_ONLY", "V2_ENERGY_SCHEDULABLE"]
       }
-    ]
+    ],
+    "component_regexp": "_energy"
   },
   {
-    "component_regexp": "(datasource\\d+|ess\\d+|meter\\d+)",
     "channels": [
       {
         "id": "_PropertyGridMode",
@@ -89,10 +88,10 @@
           "H0_HOUSEHOLD_SUMMER_WEEKDAY_PV_PRODUCTION2"
         ]
       }
-    ]
+    ],
+    "component_regexp": "(datasource\\d+|ess\\d+|meter\\d+)"
   },
   {
-    "component_regexp": "_power",
     "channels": [
       {
         "id": "_PropertyStrategy",
@@ -106,10 +105,10 @@
           "OPTIMIZE_BY_KEEPING_ALL_NEAR_EQUAL"
         ]
       }
-    ]
+    ],
+    "component_regexp": "_power"
   },
   {
-    "component_regexp": "ctrlGridOptimizedCharge\\d+",
     "channels": [
       {
         "id": "_PropertyMode",
@@ -119,10 +118,10 @@
         "id": "_PropertyDelayChargeRiskLevel",
         "options": ["LOW", "MEDIUM", "HIGH"]
       }
-    ]
+    ],
+    "component_regexp": "ctrlGridOptimizedCharge\\d+"
   },
   {
-    "component_regexp": "ctrlIoHeatingElement\\d+",
     "channels": [
       {
         "id": "_PropertyDefaultLevel",
@@ -136,10 +135,10 @@
         "id": "_PropertyWorkMode",
         "options": ["TIME", "NONE"]
       }
-    ]
+    ],
+    "component_regexp": "ctrlIoHeatingElement\\d+"
   },
   {
-    "component_regexp": "ctrlIoHeatPump\\d+",
     "channels": [
       {
         "id": "_PropertyMode",
@@ -149,6 +148,7 @@
         "id": "_PropertyManualState",
         "options": ["LOCK", "REGULAR", "RECOMMENDATION", "FORCE_ON"]
       }
-    ]
+    ],
+    "component_regexp": "ctrlIoHeatPump\\d+"
   }
 ]

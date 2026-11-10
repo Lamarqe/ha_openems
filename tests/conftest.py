@@ -25,9 +25,7 @@ def mock_setup_entry() -> Generator[AsyncMock]:
         patch(
             "custom_components.openems.async_setup_entry", return_value=True
         ) as mock_setup_entry,
-        patch(
-            "custom_components.openems.async_unload_entry", return_value=True
-        ),
+        patch("custom_components.openems.async_unload_entry", return_value=True),
     ):
         yield mock_setup_entry
 

@@ -2,8 +2,8 @@
 """Update OpenEMS sensor translations from a config entry."""
 
 import json
-import re
 from pathlib import Path
+import re
 
 # CONFIG_ENTRIES_PATH = Path("/workspaces/ha_core/config/.storage/core.config_entries")
 # STRINGS_PATH = Path("/workspaces/ha_core/homeassistant/components/openems/strings.json")

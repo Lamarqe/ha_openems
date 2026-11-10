@@ -8,12 +8,15 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import binary_sensor
 from custom_components.openems.binary_sensor import (
-    OpenEMSBinarySensorDescription, OpenEMSBinarySensorEntity)
+    OpenEMSBinarySensorDescription,
+    OpenEMSBinarySensorEntity,
+)
 from custom_components.openems.openems import OpenEMSChannel
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_entity(channel=None) -> OpenEMSBinarySensorEntity:
     """Build an OpenEMSBinarySensorEntity backed by a mock channel."""
@@ -44,6 +47,7 @@ def _make_real_channel(value=None) -> OpenEMSChannel:
 # ---------------------------------------------------------------------------
 # is_on behaviour
 # ---------------------------------------------------------------------------
+
 
 def test_is_on_none_when_channel_has_no_value() -> None:
     """Entity returns None when the channel carries no value yet."""
@@ -79,6 +83,7 @@ def test_is_on_none_for_string_value() -> None:
 # Callback wiring
 # ---------------------------------------------------------------------------
 
+
 async def test_async_added_registers_callback_on_channel() -> None:
     """async_added_to_hass passes the HA-update callback to the channel."""
     channel = MagicMock()
@@ -101,7 +106,9 @@ async def test_async_will_remove_unregisters_callback() -> None:
     channel.orig_json = {}
     entity = _make_entity(channel)
 
-    with patch.object(BinarySensorEntity, "async_will_remove_from_hass", new=AsyncMock()):
+    with patch.object(
+        BinarySensorEntity, "async_will_remove_from_hass", new=AsyncMock()
+    ):
         await entity.async_will_remove_from_hass()
 
     channel.unregister_callback.assert_called_once()
@@ -111,6 +118,7 @@ async def test_async_will_remove_unregisters_callback() -> None:
 # async_setup_entry
 # ---------------------------------------------------------------------------
 
+
 async def test_async_setup_entry_creates_binary_sensor_entities(
     hass: HomeAssistant,
 ) -> None:
@@ -118,8 +126,7 @@ async def test_async_setup_entry_creates_binary_sensor_entities(
     mock_channel = MagicMock()
     mock_channel.name = "IsChargingEnabled"
     mock_channel.unique_id.return_value = "host/edge-1/ctrlEvcs0/IsChargingEnabled"
-    mock_channel.orig_json = {
-        "id": "IsChargingEnabled", "type": "BOOLEAN", "unit": ""}
+    mock_channel.orig_json = {"id": "IsChargingEnabled", "type": "BOOLEAN", "unit": ""}
 
     mock_component = MagicMock()
     mock_component.name = "ctrlEvcs0"
@@ -139,7 +146,9 @@ async def test_async_setup_entry_creates_binary_sensor_entities(
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSBinarySensorEntity] = []
-    with patch("custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()
+    ):
         await binary_sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert len(created) == 1
@@ -164,7 +173,9 @@ async def test_async_setup_entry_skips_component_with_create_entities_false(
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list = []
-    with patch("custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()
+    ):
         await binary_sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
@@ -184,7 +195,9 @@ async def test_async_setup_entry_registers_add_component_callback(
     mock_entry.runtime_data.backend = mock_backend
     mock_entry.runtime_data.add_component_callbacks = callbacks
 
-    with patch("custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()
+    ):
         await binary_sensor.async_setup_entry(hass, mock_entry, MagicMock())
 
     assert "binary_sensor" in callbacks

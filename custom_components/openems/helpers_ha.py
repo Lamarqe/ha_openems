@@ -193,8 +193,7 @@ def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
             "mode": "box",
         }
         if prop.unit:
-            number_config["unit_of_measurement"] = unit_description(
-                prop.unit).unit
+            number_config["unit_of_measurement"] = unit_description(prop.unit).unit
         return {"number": number_config}
     if isinstance(prop, OpenEMSTimeProperty):
         return {"time": {}}

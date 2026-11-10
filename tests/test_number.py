@@ -7,12 +7,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import number
-from custom_components.openems.number import (OpenEMSNumberDescription,
-                                              OpenEMSNumberEntity)
+from custom_components.openems.number import (
+    OpenEMSNumberDescription,
+    OpenEMSNumberEntity,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_channel(native_value=None, lower=0.0, upper=1000.0, step=1.0):
     ch = MagicMock()
@@ -35,6 +38,7 @@ def _make_entity(channel=None) -> OpenEMSNumberEntity:
 # ---------------------------------------------------------------------------
 # Property proxies
 # ---------------------------------------------------------------------------
+
 
 def test_native_value_proxied_from_channel() -> None:
     """native_value returns whatever the channel reports."""
@@ -61,6 +65,7 @@ def test_native_step_proxied_from_channel() -> None:
 # async_set_native_value
 # ---------------------------------------------------------------------------
 
+
 async def test_async_set_native_value_calls_channel_update() -> None:
     """async_set_native_value must forward the new value to the channel."""
     channel = _make_channel()
@@ -77,6 +82,7 @@ async def test_async_set_native_value_calls_channel_update() -> None:
 # Callback wiring
 # ---------------------------------------------------------------------------
 
+
 async def test_async_added_registers_callback() -> None:
     channel = _make_channel()
     entity = _make_entity(channel)
@@ -85,7 +91,8 @@ async def test_async_added_registers_callback() -> None:
         await entity.async_added_to_hass()
 
     channel.register_callback.assert_called_once_with(
-        entity.async_schedule_update_ha_state)
+        entity.async_schedule_update_ha_state
+    )
 
 
 async def test_async_will_remove_unregisters_callback() -> None:
@@ -101,6 +108,7 @@ async def test_async_will_remove_unregisters_callback() -> None:
 # ---------------------------------------------------------------------------
 # async_setup_entry
 # ---------------------------------------------------------------------------
+
 
 async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) -> None:
     mock_channel = MagicMock()
@@ -127,7 +135,9 @@ async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) ->
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSNumberEntity] = []
-    with patch("custom_components.openems.number.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
+    ):
         await number.async_setup_entry(hass, mock_entry, created.extend)
 
     assert len(created) == 1
@@ -160,7 +170,9 @@ async def test_async_setup_entry_number_mode_from_config(hass: HomeAssistant) ->
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSNumberEntity] = []
-    with patch("custom_components.openems.number.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
+    ):
         await number.async_setup_entry(hass, mock_entry, created.extend)
 
     modes = [entity.entity_description.mode for entity in created]
@@ -182,13 +194,17 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list = []
-    with patch("custom_components.openems.number.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
+    ):
         await number.async_setup_entry(hass, mock_entry, created.extend)
 
     assert not created
 
 
-async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssistant) -> None:
+async def test_async_setup_entry_registers_add_component_callback(
+    hass: HomeAssistant,
+) -> None:
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
     mock_backend.the_edge.components = {}
@@ -199,7 +215,9 @@ async def test_async_setup_entry_registers_add_component_callback(hass: HomeAssi
     mock_entry.runtime_data.backend = mock_backend
     mock_entry.runtime_data.add_component_callbacks = callbacks
 
-    with patch("custom_components.openems.number.dr.async_get", return_value=MagicMock()):
+    with patch(
+        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
+    ):
         await number.async_setup_entry(hass, mock_entry, MagicMock())
 
     assert "number" in callbacks

@@ -4,13 +4,13 @@ from collections import defaultdict
 from typing import Any
 
 import probatio
+
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import ATTR_DEVICE_ID
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import service
+from homeassistant.helpers import config_validation as cv, service
 
 from .const import ATTR_PROPERTIES, ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import component_from_device

@@ -1,0 +1,9 @@
+{
+  "name": "ha-openems-dev",
+  "private": true,
+  "description": "Dev tooling only: prettier for the VS Code editor, kept in sync with .github/pre-commit-config.yaml",
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "prettier-plugin-sort-json": "4.2.0"
+  }
+}
