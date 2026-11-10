@@ -18,7 +18,7 @@ Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 - Pre-configured UI cards for Storage, Charging Station and Optimized Charges apps. These cards are equal in the offered functionality as the regular Fenecon/OpenEMS built-in UI components.
 - Works with Fenecon and OpenEMS single and multi-edge systems.
 - Advanced configuration options to support non-standard connection types.
-- FEMS update discovery and installation option
+- FEMS update discovery and installation option, including a button to check for updates on demand
 - Access to REST write App (if installed)
 
 ## Table of contents

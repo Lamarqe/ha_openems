@@ -48,6 +48,11 @@
     }
   },
   "entity": {
+    "button": {
+      "check_update": {
+        "name": "Nach Update suchen"
+      }
+    },
     "select": {
       "ctrlevcs_s_l_a_s_h_chargemode": {
         "state": {

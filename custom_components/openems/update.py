@@ -33,13 +33,19 @@ async def async_setup_entry(
 ) -> None:
     """Set up OpenEMS update entity."""
     backend: OpenEMSBackend = entry.runtime_data.backend
-    unique_id = backend.the_edge.hostname + "/" + backend.the_edge.id + "/" + "update"
-    entity_description = OpenEMSUpdateDescription(key=unique_id)
+    entity_description = OpenEMSUpdateDescription(
+        key=update_unique_id(backend.the_edge)
+    )
 
     update_entity = OpenEMSUpdateEntity(
         backend.the_edge, entity_description, entry.runtime_data.edge_device.info
     )
     async_add_entities([update_entity], update_before_add=True)
+
+
+def update_unique_id(edge: OpenEMSEdge) -> str:
+    """Return the unique id of the update entity of the given edge."""
+    return edge.hostname + "/" + edge.id + "/" + "update"
 
 
 @dataclass(frozen=True, kw_only=True)

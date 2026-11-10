@@ -53,6 +53,11 @@
     }
   },
   "entity": {
+    "button": {
+      "check_update": {
+        "name": "Check for update"
+      }
+    },
     "select": {
       "ctrlevcs_s_l_a_s_h_chargemode": {
         "state": {
