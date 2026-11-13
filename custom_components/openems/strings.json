@@ -56,6 +56,9 @@
     "button": {
       "check_update": {
         "name": "Check for update"
+      },
+      "restart": {
+        "name": "Restart"
       }
     },
     "select": {
@@ -1933,6 +1936,9 @@
     },
     "no_component_device": {
       "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
+    },
+    "restart_failed": {
+      "message": "Failed to trigger the restart of edge {edge}."
     },
     "unknown_property": {
       "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"

@@ -64,6 +64,27 @@ def test_edge_dispatch_currentData() -> None:
         edge.stop()
 
 
+async def test_edge_execute_system_restart() -> None:
+    """executeSystemRestart is sent as HARD restart via the _host component."""
+    backend = _make_backend()
+    backend.connection.rpc_server.edgeRpc = AsyncMock()
+    edge = openems.OpenEMSEdge(backend, "edge-1", {"_host": {"Hostname": "h1"}})
+    try:
+        await edge.execute_system_restart()
+    finally:
+        edge.stop()
+
+    backend.connection.rpc_server.edgeRpc.assert_awaited_once()
+    kwargs = backend.connection.rpc_server.edgeRpc.await_args.kwargs
+    assert kwargs["edgeId"] == "edge-1"
+    edge_call = kwargs["payload"]
+    assert edge_call["method"] == "componentJsonApi"
+    assert edge_call["params"]["componentId"] == "_host"
+    restart_call = edge_call["params"]["payload"]
+    assert restart_call["method"] == "executeSystemRestart"
+    assert restart_call["params"] == {"type": "HARD"}
+
+
 def test_component_boolean_property() -> None:
     """Test that a BOOLEAN _Property channel is created and handles data."""
     backend = _make_backend()

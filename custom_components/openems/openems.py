@@ -1029,6 +1029,16 @@ class OpenEMSEdge:
             edgeId=self._id, payload=edge_call
         )
 
+    async def execute_system_restart(self) -> None:
+        """Trigger executeSystemRestart request (hard restart of the edge)."""
+        system_restart_call = wrap_jsonrpc("executeSystemRestart", type="HARD")
+        edge_call = wrap_jsonrpc(
+            "componentJsonApi", componentId="_host", payload=system_restart_call
+        )
+        await self.backend.connection.rpc_server.edgeRpc(
+            edgeId=self._id, payload=edge_call
+        )
+
     def set_config_options(self, options: ConfigOptions):
         """Set config options for the edge and its components."""
         for component_name, is_enabled in options.get(CONF_COMPONENTS, {}).items():

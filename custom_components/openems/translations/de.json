@@ -51,6 +51,9 @@
     "button": {
       "check_update": {
         "name": "Nach Update suchen"
+      },
+      "restart": {
+        "name": "Neustart"
       }
     },
     "select": {
@@ -2044,6 +2047,9 @@
   "exceptions": {
     "no_component_device": {
       "message": "Gerät {device_id} ist keine OpenEMS Komponente einer geladenen Edge."
+    },
+    "restart_failed": {
+      "message": "Neustart der Edge {edge} konnte nicht ausgelöst werden."
     },
     "unknown_property": {
       "message": "Komponente {component} hat keine Eigenschaft {property}. Gültige Eigenschaften: {valid_properties}"
