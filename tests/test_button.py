@@ -3,7 +3,10 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from custom_components.openems import button as button_module
-from custom_components.openems.button import BUTTON_DESCRIPTIONS, OpenEMSButtonEntity
+from custom_components.openems.button import (
+    OpenEMSCheckUpdateButtonDescription,
+    OpenEMSCheckUpdateButtonEntity,
+)
 from custom_components.openems.const import DOMAIN
 from homeassistant.components.button import ButtonDeviceClass
 from homeassistant.const import EntityCategory, Platform
@@ -20,9 +23,10 @@ def _make_edge():
     return edge
 
 
-def _make_check_update_button(hass: HomeAssistant) -> OpenEMSButtonEntity:
+def _make_check_update_button(hass: HomeAssistant) -> OpenEMSCheckUpdateButtonEntity:
     device_info = DeviceInfo(name="host", identifiers={(DOMAIN, "host")})
-    entity = OpenEMSButtonEntity(_make_edge(), BUTTON_DESCRIPTIONS[0], device_info)
+    description = OpenEMSCheckUpdateButtonDescription(key="host/edge-1/check_update")
+    entity = OpenEMSCheckUpdateButtonEntity(_make_edge(), description, device_info)
     entity.hass = hass
     return entity
 
@@ -34,7 +38,7 @@ async def test_async_setup_entry_creates_buttons(hass: HomeAssistant) -> None:
     device_info = DeviceInfo(name="host", identifiers={(DOMAIN, "host")})
     mock_entry.runtime_data.edge_device.info = device_info
 
-    added: list[OpenEMSButtonEntity] = []
+    added: list[OpenEMSCheckUpdateButtonEntity] = []
     await button_module.async_setup_entry(hass, mock_entry, added.extend)
 
     assert len(added) == 1
