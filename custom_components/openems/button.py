@@ -101,6 +101,7 @@ class OpenEMSRestartButtonDescription(ButtonEntityDescription):
     translation_key = "restart"
     device_class = ButtonDeviceClass.RESTART
     entity_category = EntityCategory.CONFIG
+    entity_registry_enabled_default = False
 
 
 class OpenEMSRestartButtonEntity(ButtonEntity):

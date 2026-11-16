@@ -59,6 +59,7 @@ async def test_async_setup_entry_creates_buttons(hass: HomeAssistant) -> None:
     assert restart.device_info == device_info
     assert restart.entity_description.device_class == ButtonDeviceClass.RESTART
     assert restart.entity_description.entity_category == EntityCategory.CONFIG
+    assert restart.entity_description.entity_registry_enabled_default is False
 
 
 async def test_press_refreshes_update_entity(hass: HomeAssistant) -> None:
