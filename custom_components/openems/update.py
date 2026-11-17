@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 import jsonrpc_base
+from openems_client.openems import OpenEMSBackend, OpenEMSEdge
 
 from homeassistant.components.update import (
     UpdateEntity,
@@ -19,7 +20,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import homeassistant.util.dt as dt_util
 
 from .helpers_ha import OpenEMSConfigEntry
-from .openems import OpenEMSBackend, OpenEMSEdge
 
 SCAN_INTERVAL = timedelta(hours=12)
 

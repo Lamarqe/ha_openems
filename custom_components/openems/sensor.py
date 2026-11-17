@@ -2,7 +2,18 @@
 
 from dataclasses import dataclass
 import logging
+import re
 from typing import Any
+
+from openems_client.const import CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
+from openems_client.openems import (
+    DerivedChannelDefinition,
+    OpenEMSBackend,
+    OpenEMSChannel,
+    OpenEMSComponent,
+    OpenEMSDataHandler,
+    OpenEMSDerivedChannel,
+)
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -15,13 +26,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import (
-    ATTR_TIMEOUT,
-    ATTR_UPDATE_CYCLE,
-    ATTR_VALUE,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-    DOMAIN,
-)
+from .config import CONFIG
+from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
@@ -30,16 +36,36 @@ from .helpers_ha import (
     translation_key,
     unit_description,
 )
-from .openems import (
-    CONFIG,
-    OpenEMSBackend,
-    OpenEMSChannel,
-    OpenEMSComponent,
-    OpenEMSDataHandler,
-    OpenEMSDerivedChannel,
-)
 
 _LOGGER = logging.getLogger(__name__)
+
+# key: component regexp
+COMBINED_SENSORS: dict[str, tuple[DerivedChannelDefinition, ...]] = {
+    r"battery\d+": (
+        DerivedChannelDefinition(
+            id="VoltageDifference",
+            sources={"max": "MaxCellVoltage", "min": "MinCellVoltage"},
+            value_fn=lambda v: v["max"] - v["min"],
+            unit="mV",
+        ),
+        DerivedChannelDefinition(
+            id="Tower{tId}Module{mId}CellVoltageDifference",
+            sources={"cells": "Tower{tId}Module{mId}Cell{cId}Voltage"},
+            value_fn=lambda v: max(v["cells"]) - min(v["cells"]),
+            unit="mV",
+        ),
+    ),
+}
+
+
+def combined_sensor_definitions(
+    component_name: str,
+) -> tuple[DerivedChannelDefinition, ...]:
+    """Return the combined sensor definitions for the given component."""
+    for component_regexp, definitions in COMBINED_SENSORS.items():
+        if re.fullmatch(component_regexp, component_name):
+            return definitions
+    return ()
 
 
 async def async_setup_entry(
@@ -89,7 +115,11 @@ async def async_setup_entry(
             )
 
         derived_channel: OpenEMSDerivedChannel
-        derived_channel_list: list[OpenEMSDerivedChannel] = component.derived_sensors
+        derived_channel_list: list[OpenEMSDerivedChannel] = (
+            component.create_derived_channels(
+                combined_sensor_definitions(component.name)
+            )
+        )
         for derived_channel in derived_channel_list:
             unit_desc: OpenEMSUnitClass = unit_description(derived_channel.unit)
             device_class = unit_desc.sensor_device_class

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
+from openems_client.openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
+
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
@@ -13,9 +15,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .config import CONFIG
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import OpenEMSConfigEntry, component_device, translation_key
-from .openems import CONFIG, OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
 
 _LOGGER = logging.getLogger(__name__)
 

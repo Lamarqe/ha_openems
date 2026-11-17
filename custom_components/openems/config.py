@@ -1,9 +1,8 @@
-"""Load additional config options from json files."""
+"""Load Home Assistant specific entity options from json files."""
 
 import json
 from pathlib import Path
 import re
-from typing import Any
 
 ENCODING = "utf-8"
 
@@ -16,18 +15,8 @@ class OpenEMSConfig:
         path = Path(__file__).parent / "config"
         with (path / "default_channels.json").open(encoding=ENCODING) as channel_file:
             self.default_channels = json.load(channel_file)
-        with (path / "enum_options.json").open(encoding=ENCODING) as enum_file:
-            self.enum_options = json.load(enum_file)
-        with (path / "time_options.json").open(encoding=ENCODING) as time_file:
-            self.time_options = json.load(time_file)
-        with (path / "number_properties.json").open(encoding=ENCODING) as number_file:
-            self.number_properties = json.load(number_file)
-        with (path / "component_update_groups.json").open(
-            encoding=ENCODING
-        ) as groups_file:
-            self.update_groups = json.load(groups_file)
-        with (path / "combined_sensors.json").open(encoding=ENCODING) as combined_file:
-            self.combined_sensors = json.load(combined_file)
+        with (path / "number_modes.json").open(encoding=ENCODING) as number_file:
+            self.number_modes = json.load(number_file)
 
     def _get_config_property(self, dict, property, component_name, channel_name):
         """Return dict property for a given component/channel."""
@@ -39,40 +28,10 @@ class OpenEMSConfig:
                         return channel.get(property)
         return None
 
-    def get_enum_options(self, component_name, channel_name) -> list[str] | None:
-        """Return option string list for a given component/channel."""
-        return self._get_config_property(
-            self.enum_options, "options", component_name, channel_name
-        )
-
-    def is_time_property(self, component_name, channel_name) -> list[str] | None:
-        """Return True if given component/channel is marked as time."""
-        return self._get_config_property(
-            self.time_options, "is_time", component_name, channel_name
-        )
-
-    def get_number_limit(self, component_name, channel_name) -> dict | None:
-        """Return limit definition for a given component/channel."""
-        return self._get_config_property(
-            self.number_properties, "limit", component_name, channel_name
-        )
-
-    def get_number_multiplier(self, component_name, channel_name) -> dict | None:
-        """Return multiplier for a given component/channel."""
-        return self._get_config_property(
-            self.number_properties, "multiplier", component_name, channel_name
-        )
-
-    def get_number_step(self, component_name, channel_name) -> float | None:
-        """Return the fixed step size for a given component/channel."""
-        return self._get_config_property(
-            self.number_properties, "step", component_name, channel_name
-        )
-
     def get_number_mode(self, component_name, channel_name) -> str | None:
         """Return the display mode ("box" or "slider") for a given component/channel."""
         return self._get_config_property(
-            self.number_properties, "mode", component_name, channel_name
+            self.number_modes, "mode", component_name, channel_name
         )
 
     def is_component_enabled(self, comp_name: str) -> bool:
@@ -92,20 +51,5 @@ class OpenEMSConfig:
 
         return False
 
-    def update_group_members(self, comp_name, chan_name) -> tuple[list[str], Any]:
-        """Return list of all update group members and the condition value."""
-        for entry in self.update_groups:
-            if re.fullmatch(entry["component_regexp"], comp_name):
-                for rule in entry["rules"]:
-                    if rule["channel"] == chan_name:
-                        return rule["requires"], rule.get("when")
 
-        return [], None
-
-    def get_combined_sensors(self, comp_name) -> list[dict]:
-        """Return list of combined sensors for given component."""
-        for entry in self.combined_sensors:
-            if re.fullmatch(entry["component_regexp"], comp_name):
-                return entry["combined_sensors"]
-
-        return []
+CONFIG: OpenEMSConfig = OpenEMSConfig()

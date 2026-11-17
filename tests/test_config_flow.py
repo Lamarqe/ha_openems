@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.openems.const import CONF_MORE_OPTIONS, DOMAIN
-from custom_components.openems.entry_data import OpenEMSConfigReader
+from openems_client.entry_data import OpenEMSConfigReader
 
 from .helpers_flow import make_mock_connection
 

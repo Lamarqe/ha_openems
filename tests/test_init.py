@@ -1,5 +1,11 @@
 """Tests for config entry setup and options update in __init__.py."""
 
+from openems_client.const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_COMPONENTS,
+    CONF_FORWARD_INTERVAL,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+)
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
@@ -11,14 +17,8 @@ from custom_components.openems import (
     async_unload_entry,
     update_config,
 )
-from custom_components.openems.const import (
-    CONF_ADVANCED_OPTIONS,
-    CONF_COMPONENTS,
-    CONF_FORWARD_INTERVAL,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-    DOMAIN,
-)
-from custom_components.openems.entry_data import OpenEMSConfigReader
+from custom_components.openems.const import DOMAIN
+from openems_client.entry_data import OpenEMSConfigReader
 from custom_components.openems.helpers_ha import RuntimeData
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant

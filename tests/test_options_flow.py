@@ -1,19 +1,19 @@
 """Tests for the OpenEMS options flow (component selection and advanced options)."""
 
+from openems_client.const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_COMPONENTS,
+    CONF_FORWARD_INTERVAL,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+)
 from unittest.mock import MagicMock, patch
 
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.openems.const import (
-    CONF_ADVANCED_OPTIONS,
-    CONF_COMPONENTS,
-    CONF_FORWARD_INTERVAL,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-    DOMAIN,
-)
-from custom_components.openems.entry_data import OpenEMSConfigReader
+from custom_components.openems.const import DOMAIN
+from openems_client.entry_data import OpenEMSConfigReader
 
 from .helpers_flow import make_mock_connection
 

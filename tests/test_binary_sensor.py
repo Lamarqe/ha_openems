@@ -11,7 +11,7 @@ from custom_components.openems.binary_sensor import (
     OpenEMSBinarySensorDescription,
     OpenEMSBinarySensorEntity,
 )
-from custom_components.openems.openems import OpenEMSChannel
+from openems_client.openems import OpenEMSChannel
 
 # ---------------------------------------------------------------------------
 # Helpers

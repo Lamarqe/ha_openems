@@ -3,6 +3,7 @@
 from collections import defaultdict
 from typing import Any
 
+from openems_client.openems import OpenEMSComponent, OpenEMSProperty
 import probatio
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
@@ -14,7 +15,6 @@ from homeassistant.helpers import config_validation as cv, service
 
 from .const import ATTR_PROPERTIES, ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import component_from_device
-from .openems import OpenEMSComponent, OpenEMSProperty
 
 SERVICE_UPDATE_COMPONENT_CONFIG = "update_component_config"
 

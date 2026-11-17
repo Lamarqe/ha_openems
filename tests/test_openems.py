@@ -1,22 +1,15 @@
-"""Unit tests for the OpenEMS integration helpers.
-
-These tests exercise the OpenEMS channel/property/component logic without
-network calls by using small dummy objects.
-"""
+"""Tests that OpenEMS channel options match the integration translations."""
 
 import json
-from datetime import time
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
-import pytest
-from custom_components.openems import openems
-from custom_components.openems.const import SLASH_ESC
-from custom_components.openems.helpers import to_snake_case, wrap_jsonrpc
-from custom_components.openems.helpers_ha import translation_key
-from custom_components.openems.helpers_openems import prepare_ref_value
-from homeassistant.core import HomeAssistant
+from openems_client import openems
+from openems_client.helpers import to_snake_case
 from yarl import URL
+
+from custom_components.openems.config import CONFIG
+from custom_components.openems.helpers_ha import translation_key
 
 
 def _make_backend():
@@ -28,412 +21,13 @@ def _make_backend():
     return backend
 
 
-def _make_component(name="ctrlEvcs1"):
-    """Return a minimal mock component for property construction."""
-    comp = MagicMock()
-    comp.name = name
-    comp.properties = {}
-    comp.edge.hostname = "host"
-    comp.edge.id = "edgeid"
-    return comp
-
-
 def make_channel_json(id_, type_, unit="unit", accessMode="RO"):
     """Create a simple channel JSON dict for tests."""
     return {"id": id_, "type": type_, "unit": unit, "accessMode": accessMode}
 
 
-def test_wrap_jsonrpc() -> None:
-    """Test that wrap_jsonrpc produces a valid JSON-RPC envelope."""
-    env = wrap_jsonrpc("testMethod", a=1)
-    assert env["method"] == "testMethod"
-    assert "id" in env
-    assert env["params"]["a"] == 1
-
-
-def test_edge_dispatch_currentData() -> None:
-    """Test that currentData updates current_channel_data on the edge."""
-    backend = _make_backend()
-    component_config = {"_host": {"Hostname": "h1"}}
-    edge = openems.OpenEMSEdge(backend, "edge-1", component_config)
-    try:
-        edge._registered_handlers["a/b"] = set()
-        edge.currentData({"a/b": 1})
-        assert edge.current_channel_data == {"a/b": 1}
-    finally:
-        edge.stop()
-
-
-async def test_edge_execute_system_restart() -> None:
-    """executeSystemRestart is sent as HARD restart via the _host component."""
-    backend = _make_backend()
-    backend.connection.rpc_server.edgeRpc = AsyncMock()
-    edge = openems.OpenEMSEdge(backend, "edge-1", {"_host": {"Hostname": "h1"}})
-    try:
-        await edge.execute_system_restart()
-    finally:
-        edge.stop()
-
-    backend.connection.rpc_server.edgeRpc.assert_awaited_once()
-    kwargs = backend.connection.rpc_server.edgeRpc.await_args.kwargs
-    assert kwargs["edgeId"] == "edge-1"
-    edge_call = kwargs["payload"]
-    assert edge_call["method"] == "componentJsonApi"
-    assert edge_call["params"]["componentId"] == "_host"
-    restart_call = edge_call["params"]["payload"]
-    assert restart_call["method"] == "executeSystemRestart"
-    assert restart_call["params"] == {"type": "HARD"}
-
-
-def test_component_boolean_property() -> None:
-    """Test that a BOOLEAN _Property channel is created and handles data."""
-    backend = _make_backend()
-    comp_json = {
-        "_PropertyAlias": "alias",
-        "properties": {},
-        "channels": [
-            make_channel_json("_PropertyEnabledCharging", "BOOLEAN"),
-            make_channel_json("SomeSensor", "INTEGER"),
-        ],
-    }
-    component_config = {"_host": {"Hostname": "h1"}, "comp1": comp_json}
-    edge = openems.OpenEMSEdge(backend, "edge-1", component_config)
-    try:
-        assert "comp1" in edge.components
-        comp = edge.components["comp1"]
-        assert any(
-            p.name == "_PropertyEnabledCharging" for p in comp.boolean_properties
-        )
-
-        prop = comp.boolean_properties[0]
-        called = False
-
-        def cb():
-            nonlocal called
-            called = True
-
-        prop.register_callback(cb)
-        edge.currentData({"comp1/_PropertyEnabledCharging": 1})
-        assert prop.current_value is True
-        assert called
-        assert "/_PropertyEnabledCharging" in prop.unique_id()
-    finally:
-        edge.stop()
-
-
-def test_enum_property_behavior() -> None:
-    """Test enum property selection and update."""
-    comp = _make_component()
-    enum_json = {"id": "_PropertyChargeMode", "type": "STRING", "unit": "u"}
-    options = ["EXCESS_POWER", "MANUAL", "OFF"]
-    prop = openems.OpenEMSEnumProperty(
-        component=comp, channel_json=enum_json, options=options
-    )
-    prop.handle_data_update("_PropertyChargeMode", "EXCESS_POWER")
-    assert prop.current_option == "EXCESS_POWER"
-    # unknown option is ignored
-    prop.handle_data_update("_PropertyChargeMode", "UNKNOWN")
-    assert prop.current_option is None
-
-
-def test_time_property_behavior() -> None:
-    """Test time property parsing."""
-    comp = _make_component()
-    time_json = {"id": "_PropertyManualTargetTime", "type": "STRING", "unit": "u"}
-    prop = openems.OpenEMSTimeProperty(component=comp, channel_json=time_json)
-    prop.handle_data_update("_PropertyManualTargetTime", "12:34")
-    assert prop.native_value == time(12, 34)
-    # invalid time string
-    prop.handle_data_update("_PropertyManualTargetTime", "nope")
-    assert prop.native_value is None
-
-
-def test_number_property_multiplier_and_limits() -> None:
-    """Test number property applies multiplier on data update."""
-    comp = _make_component()
-    num_json = {"id": "_PropertyEnergySessionLimit", "type": "INTEGER", "unit": "W"}
-    prop = openems.OpenEMSNumberProperty(component=comp, channel_json=num_json)
-    prop.set_multiplier_def("2")
-    prop.set_limit_def({"lower": "1", "upper": "100"})
-
-    assert prop.multiplier == 2.0
-    assert prop.lower_limit >= 0
-    assert prop.upper_limit >= prop.lower_limit
-
-    prop.handle_data_update("comp/_PropertyEnergySessionLimit", 10)
-    assert prop.current_value == 20
-
-
-def _make_component_with_edge(name: str = "ctrlEvcs1"):
-    """Return a mock component with a real DummyEdge supporting register/unregister."""
-    comp = MagicMock()
-    comp.name = name
-    comp.json_properties = {}
-
-    class DummyEdge:
-        def __init__(self) -> None:
-            self.hostname = "h"
-            self.id = "edge"
-            self._registered_handlers: dict = {}
-
-        def register_channel(self, channel_names, handler):
-            for ch_name in channel_names:
-                self._registered_handlers.setdefault(ch_name, set()).add(handler)
-
-        def unregister_channel(self, handler):
-            for ch_name, handlers in list(self._registered_handlers.items()):
-                handlers.discard(handler)
-
-    comp.edge = DummyEdge()
-    return comp
-
-
-def test_channel_register_unregister_and_notify() -> None:
-    """Test register and unregister behavior for channels and notify callback."""
-    comp = _make_component_with_edge()
-    chan_json = {"id": "SomeSensor", "type": "INTEGER", "unit": "u"}
-    chan = openems.OpenEMSChannel(component=comp, channel_json=chan_json)
-
-    called = False
-
-    def cb():
-        nonlocal called
-        called = True
-
-    chan.register_callback(cb)
-    chan.notify_ha()
-    assert called
-    chan.unregister_callback()
-    assert chan.callback is None
-
-
-def test_set_unavailable_clears_values() -> None:
-    """Test that set_unavailable calls handle_data_update(None) for active channels."""
-    backend = _make_backend()
-    component_config = {"_host": {"Hostname": "h1"}}
-    edge = openems.OpenEMSEdge(backend, "e1", component_config)
-    try:
-        comp = _make_component_with_edge()
-        chan_json = {"id": "S", "type": "INTEGER", "unit": "u"}
-        ch = openems.OpenEMSChannel(component=comp, channel_json=chan_json)
-
-        # Register the channel directly in the edge handler map
-        edge._registered_handlers["c1/S"] = {ch}
-        edge.current_channel_data = {"c1/S": 5}
-
-        edge.set_unavailable()
-        assert ch.current_value is None
-    finally:
-        edge.stop()
-
-
-def test_number_property_with_template_references() -> None:
-    """Test OpenEMSNumberProperty with template references to other channels."""
-    comp = _make_component_with_edge("evcs1")
-    # needed for $evcs.id resolution
-    comp.json_properties["evcs.id"] = comp.name
-
-    num_json = {"id": "_PropertyForceChargeMinPower", "type": "INTEGER", "unit": "W"}
-    num_prop = openems.OpenEMSNumberProperty(component=comp, channel_json=num_json)
-
-    mult_def = "{{$evcs.id/Phases}}"
-    _, refs = prepare_ref_value(mult_def, comp)
-    assert refs  # has external references
-
-    num_prop.set_multiplier_def(mult_def)
-    num_prop.set_limit_def({"lower": "1", "upper": "100"})
-
-    ref_key = "evcs1" + SLASH_ESC + "Phases"
-    assert ref_key in num_prop.reference_channels
-
-    num_prop.reference_channels[ref_key] = 3
-    num_prop._update_config()
-    assert num_prop.multiplier == 3.0
-
-
-async def test_entity_lifecycle_and_unique_id(
-    hass: HomeAssistant, dummy_backend
-) -> None:
-    """Test entities are prepared and unique_ids are stable."""
-    comp = {
-        "_PropertyAlias": "a",
-        "properties": {},
-        "channels": [
-            {"id": "ch1", "type": "INTEGER", "unit": "u"},
-            {"id": "ch2", "type": "DOUBLE", "unit": "kWh"},
-        ],
-    }
-    component_config = {"_host": {"Hostname": "edge1"}, "c1": comp}
-    edge = openems.OpenEMSEdge(dummy_backend, "edge1", component_config)
-    try:
-        comp_obj = edge.components["c1"]
-        assert len(comp_obj.sensors) >= 1
-        for s in comp_obj.sensors:
-            assert s.unique_id().startswith("edge1")
-    finally:
-        edge.stop()
-
-
-def test_register_channel_skips_channels_without_read_access(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Only channels with READ access are registered for subscriptions."""
-    component_config = {
-        "_host": {"Hostname": "h1"},
-        "comp1": {
-            "_PropertyAlias": "component",
-            "properties": {},
-            "channels": [
-                {
-                    "id": "ReadOnly",
-                    "type": "INTEGER",
-                    "unit": "u",
-                    "accessMode": "RO",
-                },
-                {
-                    "id": "ReadWrite",
-                    "type": "INTEGER",
-                    "unit": "u",
-                    "accessMode": "RW",
-                },
-                {
-                    "id": "WriteOnly",
-                    "type": "INTEGER",
-                    "unit": "u",
-                    "accessMode": "WO",
-                },
-                {"id": "Unknown", "type": "INTEGER", "unit": "u"},
-            ],
-        },
-    }
-    edge = openems.OpenEMSEdge(_make_backend(), "edge-1", component_config)
-    caplog.set_level("INFO")
-
-    try:
-        for channel in edge.components["comp1"].sensors:
-            edge.register_channel({f"comp1/{channel.name}"}, channel)
-
-        assert set(edge.registered_channels) == {
-            "comp1/ReadOnly",
-            "comp1/ReadWrite",
-        }
-        assert "Skipping subscription for channel comp1/WriteOnly" in caplog.text
-        assert "Skipping subscription for channel comp1/Unknown" in caplog.text
-    finally:
-        edge.stop()
-
-
-def _make_evcs_edge():
-    """Return an edge with a ctrlEvcs0 component and a mocked update_config."""
-    component_config = {
-        "_host": {"Hostname": "h1"},
-        "ctrlEvcs0": {
-            "_PropertyAlias": "EVCS",
-            "properties": {},
-            "channels": [
-                make_channel_json("_PropertyEnabledCharging", "BOOLEAN"),
-                make_channel_json("_PropertyChargeMode", "STRING"),
-            ],
-        },
-    }
-    edge = openems.OpenEMSEdge(_make_backend(), "edge-1", component_config)
-    comp = edge.components["ctrlEvcs0"]
-    comp.update_config = AsyncMock()
-    return edge, comp
-
-
-async def test_update_properties_adds_update_group_members() -> None:
-    """Switching charging on adds the current charge mode to the same request."""
-    edge, comp = _make_evcs_edge()
-    try:
-        comp.get_property("chargeMode").handle_data_update("", "EXCESS_POWER")
-        await comp.get_property("enabledCharging").update_value(True)
-        comp.update_config.assert_awaited_once_with(
-            [("enabledCharging", True), ("chargeMode", "EXCESS_POWER")]
-        )
-    finally:
-        edge.stop()
-
-
-async def test_update_properties_respects_when_condition() -> None:
-    """Switching charging off does not add the charge mode (rule has when: true)."""
-    edge, comp = _make_evcs_edge()
-    try:
-        await comp.get_property("enabledCharging").update_value(False)
-        comp.update_config.assert_awaited_once_with([("enabledCharging", False)])
-    finally:
-        edge.stop()
-
-
-async def test_update_properties_explicit_values_win() -> None:
-    """Explicitly given values are not overwritten by current values of group members."""
-    edge, comp = _make_evcs_edge()
-    try:
-        enabled = comp.get_property("_PropertyEnabledCharging")
-        mode = comp.get_property("_PropertyChargeMode")
-        enabled.handle_data_update("", 0)
-        await comp.update_properties({enabled: True, mode: "FORCE_CHARGE"})
-        comp.update_config.assert_awaited_once_with(
-            [("enabledCharging", True), ("chargeMode", "FORCE_CHARGE")]
-        )
-    finally:
-        edge.stop()
-
-
-def test_get_property_by_channel_or_config_name() -> None:
-    """Properties can be looked up by channel name and config name."""
-    edge, comp = _make_evcs_edge()
-    try:
-        prop = comp.get_property("chargeMode")
-        assert prop is not None
-        assert comp.get_property("_PropertyChargeMode") is prop
-        assert prop.config_name == "chargeMode"
-        assert comp.get_property("unknown") is None
-    finally:
-        edge.stop()
-
-
-def test_to_backend_value_conversions() -> None:
-    """Each property type converts HA values to backend values."""
-    comp = _make_component()
-    enum_prop = openems.OpenEMSEnumProperty(
-        comp, make_channel_json("_PropertyChargeMode", "STRING"), ["FORCE_CHARGE"]
-    )
-    assert enum_prop.to_backend_value("force_charge") == "FORCE_CHARGE"
-    assert enum_prop.to_backend_value("FORCE_CHARGE") == "FORCE_CHARGE"
-    with pytest.raises(ValueError):
-        enum_prop.to_backend_value("off")
-
-    bool_prop = openems.OpenEMSBooleanProperty(
-        comp, make_channel_json("_PropertyEnabledCharging", "BOOLEAN")
-    )
-    assert bool_prop.to_backend_value(True) is True
-    assert bool_prop.to_backend_value("off") is False
-    assert bool_prop.to_backend_value(1) is True
-    with pytest.raises(ValueError):
-        bool_prop.to_backend_value(2)
-
-    num_prop = openems.OpenEMSNumberProperty(
-        comp, make_channel_json("_PropertyForceChargeMinPower", "INTEGER")
-    )
-    num_prop.multiplier = 3
-    assert num_prop.to_backend_value("4200") == 1400
-    for invalid in ("abc", None, True):
-        with pytest.raises(ValueError):
-            num_prop.to_backend_value(invalid)
-
-    time_prop = openems.OpenEMSTimeProperty(
-        comp, make_channel_json("_PropertyManualTargetTime", "STRING")
-    )
-    assert time_prop.to_backend_value(time(7, 5)) == "07:05"
-    assert time_prop.to_backend_value("07:05:00") == "07:05"
-    for invalid in ("nope", 7):
-        with pytest.raises(ValueError):
-            time_prop.to_backend_value(invalid)
-
-
-async def test_heat_pump_sg_ready_properties() -> None:
-    """SG-Ready heat pump properties become selects and numbers (issue #61)."""
+async def test_heat_pump_sg_ready_translations() -> None:
+    """SG-Ready heat pump select and status options have translations (issue #61)."""
     component_config = {
         "_host": {"Hostname": "h1"},
         "ctrlIoHeatPump0": {
@@ -467,39 +61,13 @@ async def test_heat_pump_sg_ready_properties() -> None:
     edge = openems.OpenEMSEdge(_make_backend(), "edge-1", component_config)
     try:
         comp = edge.components["ctrlIoHeatPump0"]
-        comp.update_config = AsyncMock()
         selects = {p.name: p for p in comp.enum_properties}
-        assert selects["_PropertyMode"].property_options == ["MANUAL", "AUTOMATIC"]
-        assert selects["_PropertyManualState"].property_options == [
-            "LOCK",
-            "REGULAR",
-            "RECOMMENDATION",
-            "FORCE_ON",
-        ]
-        numbers = {p.name: p for p in comp.number_properties}
-        for name in ("_PropertyAutomaticForceOnSoc", "_PropertyAutomaticLockSoc"):
-            assert (numbers[name].lower_limit, numbers[name].upper_limit) == (0, 100)
-            assert numbers[name].step == 1
-        # thresholds: fixed step 1 instead of the calculated 1000 / 100
-        threshold_limits = {
-            "_PropertyAutomaticLockGridBuyPower": (0, 100000),
-            "_PropertyMinimumSwitchingTime": (0, 3600),
-        }
-        for name, limits in threshold_limits.items():
-            assert (numbers[name].lower_limit, numbers[name].upper_limit) == limits
-            assert numbers[name].step == 1
-            assert openems.CONFIG.get_number_mode("ctrlIoHeatPump0", name) == "box"
-
         status = next(c for c in comp.sensors if c.name == "Status")
-        for name in (*selects, *numbers, "_PropertyAutomaticLockCtrlEnabled", "Status"):
-            assert openems.CONFIG.is_channel_enabled("ctrlIoHeatPump0", name), name
-
-        # no update group: each property is sent individually
-        await selects["_PropertyManualState"].update_value("RECOMMENDATION")
-        comp.update_config.assert_awaited_once_with([("manualState", "RECOMMENDATION")])
 
         strings = json.loads(
-            (Path(openems.__file__).parent / "strings.json").read_text(encoding="utf-8")
+            (
+                Path(__file__).parents[1] / "custom_components/openems/strings.json"
+            ).read_text(encoding="utf-8")
         )
         for prop in selects.values():
             states = strings["entity"]["select"][translation_key(prop)]["state"]
@@ -508,3 +76,21 @@ async def test_heat_pump_sg_ready_properties() -> None:
         assert set(status_states) == {to_snake_case(o) for o in status.options.values()}
     finally:
         edge.stop()
+
+
+def test_heat_pump_sg_ready_defaults() -> None:
+    """SG-Ready heat pump entities are enabled by default, thresholds use box mode."""
+    for name in (
+        "_PropertyMode",
+        "_PropertyManualState",
+        "_PropertyAutomaticForceOnSoc",
+        "_PropertyAutomaticLockSoc",
+        "_PropertyAutomaticLockCtrlEnabled",
+        "_PropertyAutomaticLockGridBuyPower",
+        "_PropertyMinimumSwitchingTime",
+        "Status",
+    ):
+        assert CONFIG.is_channel_enabled("ctrlIoHeatPump0", name), name
+    for name in ("_PropertyAutomaticLockGridBuyPower", "_PropertyMinimumSwitchingTime"):
+        assert CONFIG.get_number_mode("ctrlIoHeatPump0", name) == "box"
+    assert CONFIG.is_component_enabled("ctrlIoHeatPump0")

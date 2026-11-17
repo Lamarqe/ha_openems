@@ -1,5 +1,6 @@
 """Tests for the OpenEMS sensor platform."""
 
+from openems_client.const import CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.sensor import (
@@ -11,8 +12,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import sensor
-from custom_components.openems.const import CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
-from custom_components.openems.openems import OpenEMSChannel
+from openems_client.openems import OpenEMSChannel, OpenEMSEdge
+from yarl import URL
 from custom_components.openems.sensor import (
     OpenEMSSensorDescription,
     OpenEMSSensorEntity,
@@ -195,7 +196,7 @@ async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) ->
     mock_component.edge.hostname = "test-host"
     mock_component.create_entities = True
     mock_component.sensors = [mock_channel]
-    mock_component.derived_sensors = []
+    mock_component.create_derived_channels.return_value = []
 
     # link channel back to its component so translation_key() can read .component.name
     mock_channel.component = mock_component
@@ -266,3 +267,64 @@ async def test_async_setup_entry_registers_add_component_callback(
 
     assert "sensor" in callbacks
     assert callable(callbacks["sensor"])
+
+
+async def test_combined_sensors_for_battery() -> None:
+    """Battery components get the voltage difference sensors with calculated values."""
+    channels = [
+        {"id": channel_id, "type": "INTEGER", "unit": "mV", "accessMode": "RO"}
+        for channel_id in (
+            "MaxCellVoltage",
+            "MinCellVoltage",
+            "Tower0Module0Cell000Voltage",
+            "Tower0Module0Cell001Voltage",
+            "Tower0Module1Cell000Voltage",
+        )
+    ]
+    backend = MagicMock()
+    backend.multi_edge = False
+    backend.connection.conn_url = URL("ws://localhost:8085/")
+    edge = OpenEMSEdge(
+        backend,
+        "edge0",
+        {
+            "_host": {"Hostname": "testhost"},
+            "battery0": {"properties": {}, "channels": channels},
+        },
+    )
+    try:
+        derived = {
+            channel.name: channel
+            for channel in edge.components["battery0"].create_derived_channels(
+                sensor.combined_sensor_definitions("battery0")
+            )
+        }
+        assert set(derived) == {
+            "VoltageDifference",
+            "Tower0Module0CellVoltageDifference",
+            "Tower0Module1CellVoltageDifference",
+        }
+        assert all(channel.unit == "mV" for channel in derived.values())
+
+        voltage_difference = derived["VoltageDifference"]
+        voltage_difference.handle_data_update("battery0/MaxCellVoltage", 3500)
+        voltage_difference.handle_data_update("battery0/MinCellVoltage", 3300)
+        assert voltage_difference.native_value == 200
+
+        module_difference = derived["Tower0Module0CellVoltageDifference"]
+        module_difference.handle_data_update(
+            "battery0/Tower0Module0Cell000Voltage", 3310
+        )
+        assert module_difference.native_value is None
+        module_difference.handle_data_update(
+            "battery0/Tower0Module0Cell001Voltage", 3350
+        )
+        assert module_difference.native_value == 40
+    finally:
+        edge.stop()
+
+
+def test_combined_sensors_only_for_matching_components() -> None:
+    """Components without combined sensor definitions get none."""
+    assert sensor.combined_sensor_definitions("battery0")
+    assert sensor.combined_sensor_definitions("ess0") == ()

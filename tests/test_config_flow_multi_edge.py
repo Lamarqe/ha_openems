@@ -6,7 +6,7 @@ import jsonrpc_base
 import jsonrpc_base.jsonrpc
 import pytest
 from custom_components.openems.const import CONF_EDGE, CONF_EDGES, DOMAIN
-from custom_components.openems.entry_data import OpenEMSConfigReader
+from openems_client.entry_data import OpenEMSConfigReader
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant

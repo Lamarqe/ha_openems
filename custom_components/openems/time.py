@@ -4,14 +4,16 @@ from dataclasses import dataclass
 from datetime import time
 import logging
 
+from openems_client.openems import OpenEMSBackend, OpenEMSComponent, OpenEMSTimeProperty
+
 from homeassistant.components.time import TimeEntity, TimeEntityDescription
 from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .config import CONFIG
 from .helpers_ha import OpenEMSConfigEntry, component_device, translation_key
-from .openems import CONFIG, OpenEMSBackend, OpenEMSComponent, OpenEMSTimeProperty
 
 _LOGGER = logging.getLogger(__name__)
 
