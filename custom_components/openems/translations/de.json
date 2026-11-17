@@ -57,27 +57,48 @@
       }
     },
     "select": {
-      "ctrlevcs_s_l_a_s_h_chargemode": {
+      "charge_mode": {
         "state": {
           "excess_power": "Überschuss",
           "force_charge": "Zielwert"
         }
       },
-      "ctrlevcs_s_l_a_s_h_priority": {
+      "default_level": {
         "state": {
-          "car": "Auto",
-          "storage": "Speicher"
+          "level_1": "Level 1",
+          "level_2": "Level 2",
+          "level_3": "Level 3"
         }
       },
-      "ctrlevsesingle_s_l_a_s_h_mode": {
+      "delay_charge_risk_level": {
+        "state": {
+          "high": "Hoch",
+          "low": "Gering",
+          "medium": "Mittel"
+        }
+      },
+      "manual_state": {
+        "state": {
+          "lock": "Sperre",
+          "regular": "Normalbetrieb",
+          "recommendation": "Einschaltempfehlung",
+          "force_on": "Einschaltbefehl"
+        }
+      },
+      "mode": {
         "state": {
           "force": "Schnellladen",
           "minimum": "Minimal Beladung mit PV-Überschuss",
           "surplus": "PV-Überschuss",
-          "zero": "Keine Beladung"
+          "zero": "Keine Beladung",
+          "automatic": "Automatisch",
+          "manual": "Manuell",
+          "off": "Aus",
+          "manual_on": "An",
+          "manual_off": "Aus"
         }
       },
-      "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+      "phase_switching": {
         "state": {
           "automatic": "Automatisch",
           "disable": "Deaktiviert",
@@ -85,57 +106,29 @@
           "force_three_phase": "3-phasig"
         }
       },
-      "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
+      "priority": {
         "state": {
-          "high": "Hoch",
-          "low": "Gering",
-          "medium": "Mittel"
+          "car": "Auto",
+          "storage": "Speicher"
         }
       },
-      "ctrlgridoptimizedcharge_s_l_a_s_h_mode": {
-        "state": {
-          "automatic": "Automatisch",
-          "manual": "Manuell",
-          "off": "Aus"
-        }
-      },
-      "ctrlioheatingelement_s_l_a_s_h_defaultlevel": {
-        "state": {
-          "level_1": "Level 1",
-          "level_2": "Level 2",
-          "level_3": "Level 3"
-        }
-      },
-      "ctrlioheatingelement_s_l_a_s_h_mode": {
-        "state": {
-          "automatic": "Automatisch",
-          "manual_on": "An",
-          "manual_off": "Aus"
-        }
-      },
-      "ctrlioheatingelement_s_l_a_s_h_workmode": {
+      "work_mode": {
         "state": {
           "time": "Garantierte Mindestzeit",
           "none": "Überschussleistung, ausschließlich"
         }
-      },
-      "ctrlioheatpump_s_l_a_s_h_mode": {
-        "state": {
-          "manual": "Manuell",
-          "automatic": "Automatisch"
-        }
-      },
-      "ctrlioheatpump_s_l_a_s_h_manualstate": {
-        "state": {
-          "lock": "Sperre",
-          "regular": "Normalbetrieb",
-          "recommendation": "Einschaltempfehlung",
-          "force_on": "Einschaltbefehl"
-        }
       }
     },
     "sensor": {
-      "ctrlevsesingle_s_l_a_s_h_actualmode": {
+      "ac_output_type": {
+        "state": {
+          "single_phase": "Einphasig",
+          "three_phase_four_wire_system": "Dreiphasen-Vierleitersystem",
+          "three_phase_three_wire_system": "Dreiphasen-Dreileitersystem",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "actual_mode": {
         "state": {
           "force": "Schnellladen",
           "minimum": "Minimal Beladung mit PV-Überschuss",
@@ -143,23 +136,353 @@
           "zero": "Keine Beladung"
         }
       },
-      "ctrlevsesingle_s_l_a_s_h_statemachine": {
+      "arc_self_check_status": {
         "state": {
-          "charge_disabled": "Laden deaktiviert",
-          "charge_paused": "Pause (wenig Überschuss)",
-          "charge_resuming": "Warte auf Fahrzeug",
-          "charging": "Lädt",
-          "ev_connected": "Fahrzeug verbunden",
-          "ev_not_connected": "Fahrzeug nicht verbunden",
-          "finished_energy_session_limit": "Energielimit erreicht",
-          "finished_ev_stop": "Vom Fahrzeug beendet",
-          "not_ready": "Nicht bereit",
-          "phase_switch_to_single_phase": "Wechsel auf 1-phasig",
-          "phase_switch_to_three_phase": "Wechsel auf 3-phasig",
-          "undefined": "Unbekannt"
+          "activated": "Aktiviert",
+          "failure": "Fehlgeschlagen",
+          "undefined": "Nicht definiert"
         }
       },
-      "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargestate": {
+      "backup_led": {
+        "state": {
+          "led_flash": "LED blinkt",
+          "led_off": "LED Aus",
+          "led_on": "LED An",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "balancing_error_debug": {
+        "state": {
+          "baseline_min_missing": "MIN_BASISLINIE_FEHLT",
+          "delta_above_threshold": "ABWEICHUNG_ÜBER_SCHWELLENWERT",
+          "delta_negative": "ABWEICHUNG_NEGATIV",
+          "internal_error": "INTERNER_FEHLER",
+          "max_voltage_undefined": "MAX_SPANNUNG_NICHT_DEFINIERT",
+          "min_voltage_undefined": "MIN_SPANNUNG_NICHT_DEFINIERT",
+          "none": "KEINER",
+          "timeout": "ZEITÜBERSCHREITUNG"
+        }
+      },
+      "battery2_mode": {
+        "state": {
+          "charging": "Laden",
+          "discharging": "Entladen",
+          "no_battery_inverter_disconnects_to_battery": "KEINE Batterie, Wechselrichter trennt Verbindung zur Batterie",
+          "standby_no_discharging_and_no_charging": "Standby, kein Entladen und kein Laden",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "battery2_protocol": {
+        "state": {
+          "byd_box_h": "Byd Box H",
+          "byd_box_premium_hvs": "Byd Box Premium HVS",
+          "ems_battery": "EMS Batterie",
+          "resu_hv_type-r": "Resu HV Typ-R",
+          "undefined": "Nicht definiert",
+          "byd_box_premium_hvm_hvl": "Byd Box Premium HVM / HVL",
+          "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "Für Oloid ist es LBS, für DYNESS ist es Tower, für SOLUNA ist es HV-Batterie",
+          "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
+          "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H"
+        }
+      },
+      "battery_hardware_type": {
+        "state": {
+          "fenecon_home_battery_52ah": "Fenecon Home Batterie 52Ah",
+          "fenecon_home_battery_64_4ah": "Fenecon Home Batterie 64,4Ah"
+        }
+      },
+      "battery_led": {
+        "state": {
+          "led_flash": "LED blinkt",
+          "led_off": "LED Aus",
+          "led_on": "LED An",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "battery_mode": {
+        "state": {
+          "charging": "Laden",
+          "discharging": "Entladen",
+          "no_battery_inverter_disconnects_to_battery": "KEINE Batterie, Wechselrichter trennt Verbindung zur Batterie",
+          "standby_no_discharging_and_no_charging": "Standby, kein Entladen und kein Laden",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "battery_protocol": {
+        "state": {
+          "byd_box_h": "Byd Box H",
+          "byd_box_premium_hvs": "Byd Box Premium HVS",
+          "ems_battery": "EMS Batterie",
+          "resu_hv_type-r": "Resu HV Typ-R",
+          "undefined": "Nicht definiert",
+          "byd_box_premium_hvm_hvl": "Byd Box Premium HVM / HVL",
+          "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "Für Oloid ist es LBS, für DYNESS ist es Tower, für SOLUNA ist es HV-Batterie",
+          "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
+          "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H"
+        }
+      },
+      "battery_protocol_arm": {
+        "state": {
+          "byd_box_h": "Byd Box H",
+          "byd_box_premium_hvs": "Byd Box Premium HVS",
+          "ems_battery": "EMS Batterie",
+          "resu_hv_type-r": "Resu HV Typ-R",
+          "undefined": "Nicht definiert",
+          "byd_box_premium_hvm_hvl": "Byd Box Premium HVM / HVL",
+          "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "Für Oloid ist es LBS, für DYNESS ist es Tower, für SOLUNA ist es HV-Batterie",
+          "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
+          "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H"
+        }
+      },
+      "bp_force_charge": {
+        "state": {
+          "block_mode": "BLOCK_MODUS",
+          "force_mode": "ZWANGLADUNG_MODUS",
+          "undefined": "NICHT_DEFINIERT",
+          "wait_for_force_mode": "WARTE_AUF_ZWANGLADUNG_MODUS"
+        }
+      },
+      "bp_force_discharge": {
+        "state": {
+          "block_mode": "BLOCK_MODUS",
+          "force_mode": "ZWANGSENTLADUNG_MODUS",
+          "undefined": "NICHT_DEFINIERT",
+          "wait_for_force_mode": "WARTE_AUF_ZWANGSENTLADUNG_MODUS"
+        }
+      },
+      "charge_mode": {
+        "state": {
+          "force-charge": "Zwangsladung",
+          "use_surplus_power": "Überschussleistung nutzen"
+        }
+      },
+      "charge_state": {
+        "state": {
+          "charging": "Lädt",
+          "decreasing": "Verringert sich (fallend)",
+          "increasing": "Erhöht sich (steigend)",
+          "not_charging": "Lädt nicht",
+          "undefined": "Nicht definiert",
+          "waiting_for_available_power": "Warte auf verfügbare Leistung"
+        }
+      },
+      "charging_type": {
+        "state": {
+          "ac": "AC (Wechselstrom)",
+          "ccs": "CCS (Gleichstrom-Schnellladen)",
+          "chademo": "CHAdeMO",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "com_led_state": {
+        "state": {
+          "led_flash": "LED blinkt",
+          "led_off": "LED Aus",
+          "led_on": "LED An",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "com_mode": {
+        "state": {
+          "gprs": "GPRS",
+          "lan_e20": "LAN E20",
+          "lan_mode_of_wifi_lan_module": "LAN-Modus des WiFi+LAN-Moduls",
+          "undefined": "Nicht definiert",
+          "wifi": "WiFi",
+          "wifi_mode_of_wifi_lan_module": "WiFi-Modus des WiFi+LAN-Moduls"
+        }
+      },
+      "cpld_warning_code": {
+        "state": {
+          "battery_over_current_hw": "Hardware-Überstrom Batterie",
+          "battery_relay_fail": "Fehler Batterierelais",
+          "bus_over_voltage_hw": "Hardware-Überspannung Bus",
+          "pv_1_over_current_hw": "Hardware-Überstrom PV 1",
+          "pv_2_over_current_hw": "Hardware-Überstrom PV 2",
+          "r_inverter_over_current_hw": "Hardware-Überstrom Wechselrichter Phase R",
+          "s_inverter_over_current_hw": "Hardware-Überstrom Wechselrichter Phase S",
+          "t_inverter_over_current_hw": "Hardware-Überstrom Wechselrichter Phase T",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "currency": {
+        "state": {
+          "chf": "CHF",
+          "eur": "EUR",
+          "sek": "SEK",
+          "undefined": "NICHT_DEFINIERT"
+        }
+      },
+      "debug_ems_power_mode": {
+        "state": {
+          "auto": "Automatisch",
+          "battery_standby": "Batterie Standby",
+          "buy_power": "Strom einkaufen (Netzbezug)",
+          "charge_bat": "Batterie laden",
+          "charge_pv": "PV laden",
+          "conserve": "Erhaltung",
+          "discharge_bat": "Batterie entladen",
+          "discharge_pv": "PV entladen",
+          "export_ac": "AC exportieren (Einspeisung)",
+          "import_ac": "AC importieren",
+          "off-grid": "Inselbetrieb (Off-Grid)",
+          "sell_power": "Strom verkaufen",
+          "stopped": "Gestoppt",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_apm_enable_pf_overfrequenzy_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_apm_enable_pf_underfrequenzy_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_apm_enable_pu_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_apm_pu_output_response_mode": {
+        "state": {
+          "disable": "Deaktivieren",
+          "gradient_control": "Gradientenregelung",
+          "pt-1_behaviour": "PT-1-Verhalten",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_cp_reconnection_gradient_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_hvrt_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_hvrt_zero_current_mode_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_lvrt_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_lvrt_zero_current_mode_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_cos_phi_p_curve_mode": {
+        "state": {
+          "basic": "Basis",
+          "slope_model": "Steigungs-Modell",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_cosphip_extended_functions": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_enable_curve_cos_phi_p": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_enable_fixed_q": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_enable_qp_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_qp_curve_mode": {
+        "state": {
+          "basic": "Basis",
+          "slope_model": "Steigungs-Modell",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_qu_curve_mode": {
+        "state": {
+          "basic": "Basis",
+          "slope_model": "Steigungs-Modell",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_qu_enable_qu_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_v2_rpm_qu_extended_functions": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_vrt_active_power_recovery_mode": {
+        "state": {
+          "disable": "Deaktivieren",
+          "gradient_control": "Gradientenregelung",
+          "pt-1_behaviour": "PT-1-Verhalten",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_vrt_current_distribution_mode": {
+        "state": {
+          "active_power_priority_mode": "Wirkleistungs-Prioritätsmodus",
+          "constant_current_mode": "Konstantstrom-Modus",
+          "reactive_power_priority_mode": "Blindleistungs-Prioritätsmodus",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "debug_vrt_reactive_power_recovery_mode_end": {
+        "state": {
+          "disable": "Deaktivieren",
+          "gradient_control": "Gradientenregelung",
+          "pt-1_behaviour": "PT-1-Verhalten",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "delay_charge_state": {
         "state": {
           "active_limit": "Begrenzung aktiv",
           "avoid_charging_with_low_power_for_more_efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
@@ -174,361 +497,14 @@
           "not_active_the_controller_has_no_flexibility_left_to_delay_charge_because_the_limitation_is_nearly_zero": "Nicht aktiv. Der Regler hat keine Flexibilität mehr für verzögertes Laden, da die Begrenzung nahezu Null ist."
         }
       },
-      "evcs_s_l_a_s_h_status": {
+      "device_role": {
         "state": {
-          "charging": "Ladevorgang aktiv",
-          "charging_rejected": "Laden verweigert",
-          "error": "Fehler",
-          "not_ready_for_charging": "Nicht bereit zum Laden",
-          "ready_for_charging": "Bereit zum Laden",
-          "starting": "Starte...",
-          "the_charging_limit_reached": "Ladelimit erreicht",
-          "undefined": "Nicht definiert",
-          "charging_with_ventilation_required_d": "Laden mit Belüftung erforderlich (D)",
-          "error_communication_problem_e": "Fehler – Kommunikationsproblem (E)",
-          "error_serious_fault_f": "Fehler – schwere Störung (F)",
-          "no_vehicle_connected_a": "Kein Fahrzeug verbunden (A)",
-          "vehicle_connected_and_charging_c": "Fahrzeug verbunden und lädt (C)",
-          "vehicle_connected_not_charging_b": "Fahrzeug verbunden, lädt nicht (B)"
+          "master": "Master",
+          "slave": "Slave",
+          "unknown": "Unbekannt"
         }
       },
-      "battery_s_l_a_s_h_batteryhardwaretype": {
-        "state": {
-          "fenecon_home_battery_52ah": "Fenecon Home Batterie 52Ah",
-          "fenecon_home_battery_64_4ah": "Fenecon Home Batterie 64,4Ah"
-        }
-      },
-      "battery_s_l_a_s_h_bpforcecharge": {
-        "state": {
-          "block_mode": "BLOCK_MODUS",
-          "force_mode": "ZWANGLADUNG_MODUS",
-          "undefined": "NICHT_DEFINIERT",
-          "wait_for_force_mode": "WARTE_AUF_ZWANGLADUNG_MODUS"
-        }
-      },
-      "battery_s_l_a_s_h_bpforcedischarge": {
-        "state": {
-          "block_mode": "BLOCK_MODUS",
-          "force_mode": "ZWANGSENTLADUNG_MODUS",
-          "undefined": "NICHT_DEFINIERT",
-          "wait_for_force_mode": "WARTE_AUF_ZWANGSENTLADUNG_MODUS"
-        }
-      },
-      "battery_s_l_a_s_h_startstop": {
-        "state": {
-          "start": "Start",
-          "stop": "Stopp",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "battery_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung",
-          "warning": "Warnung"
-        }
-      },
-      "battery_s_l_a_s_h_statemachine": {
-        "state": {
-          "error": "FEHLER",
-          "firmware_update": "FIRMWARE_UPDATE",
-          "go_running": "STARTEN",
-          "go_stopped": "STOPPEN",
-          "running": "LÄUFT",
-          "stopped": "GESTOPPT",
-          "undefined": "NICHT_DEFINIERT"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_acoutputtype": {
-        "state": {
-          "single_phase": "Einphasig",
-          "three_phase_four_wire_system": "Dreiphasen-Vierleitersystem",
-          "three_phase_three_wire_system": "Dreiphasen-Dreileitersystem",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_arcselfcheckstatus": {
-        "state": {
-          "activated": "Aktiviert",
-          "failure": "Fehlgeschlagen",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_backupled": {
-        "state": {
-          "led_flash": "LED blinkt",
-          "led_off": "LED Aus",
-          "led_on": "LED An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_battery2mode": {
-        "state": {
-          "charging": "Laden",
-          "discharging": "Entladen",
-          "no_battery_inverter_disconnects_to_battery": "KEINE Batterie, Wechselrichter trennt Verbindung zur Batterie",
-          "standby_no_discharging_and_no_charging": "Standby, kein Entladen und kein Laden",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_battery2protocol": {
-        "state": {
-          "byd_box_h": "Byd Box H",
-          "byd_box_premium_hvs": "Byd Box Premium HVS",
-          "ems_battery": "EMS Batterie",
-          "resu_hv_type-r": "Resu HV Typ-R",
-          "undefined": "Nicht definiert",
-          "byd_box_premium_hvm_hvl": "Byd Box Premium HVM / HVL",
-          "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "Für Oloid ist es LBS, für DYNESS ist es Tower, für SOLUNA ist es HV-Batterie",
-          "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
-          "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_batteryled": {
-        "state": {
-          "led_flash": "LED blinkt",
-          "led_off": "LED Aus",
-          "led_on": "LED An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_batterymode": {
-        "state": {
-          "charging": "Laden",
-          "discharging": "Entladen",
-          "no_battery_inverter_disconnects_to_battery": "KEINE Batterie, Wechselrichter trennt Verbindung zur Batterie",
-          "standby_no_discharging_and_no_charging": "Standby, kein Entladen und kein Laden",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_batteryprotocol": {
-        "state": {
-          "byd_box_h": "Byd Box H",
-          "byd_box_premium_hvs": "Byd Box Premium HVS",
-          "ems_battery": "EMS Batterie",
-          "resu_hv_type-r": "Resu HV Typ-R",
-          "undefined": "Nicht definiert",
-          "byd_box_premium_hvm_hvl": "Byd Box Premium HVM / HVL",
-          "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "Für Oloid ist es LBS, für DYNESS ist es Tower, für SOLUNA ist es HV-Batterie",
-          "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
-          "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_batteryprotocolarm": {
-        "state": {
-          "byd_box_h": "Byd Box H",
-          "byd_box_premium_hvs": "Byd Box Premium HVS",
-          "ems_battery": "EMS Batterie",
-          "resu_hv_type-r": "Resu HV Typ-R",
-          "undefined": "Nicht definiert",
-          "byd_box_premium_hvm_hvl": "Byd Box Premium HVM / HVL",
-          "for_oloid_is_lbs_for_dyness_is_tower_for_soluna_is_hv_battery": "Für Oloid ist es LBS, für DYNESS ist es Tower, für SOLUNA ist es HV-Batterie",
-          "powercube_h1_force_h1_force_h2": "Powercube H1 / Force H1 / Force H2",
-          "secu-s_lx_s-h_lx_f-h": "SECU-S / LX S-H / LX F-H"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_comledstate": {
-        "state": {
-          "led_flash": "LED blinkt",
-          "led_off": "LED Aus",
-          "led_on": "LED An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_commode": {
-        "state": {
-          "gprs": "GPRS",
-          "lan_e20": "LAN E20",
-          "lan_mode_of_wifi_lan_module": "LAN-Modus des WiFi+LAN-Moduls",
-          "undefined": "Nicht definiert",
-          "wifi": "WiFi",
-          "wifi_mode_of_wifi_lan_module": "WiFi-Modus des WiFi+LAN-Moduls"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_cpldwarningcode": {
-        "state": {
-          "battery_over_current_hw": "Hardware-Überstrom Batterie",
-          "battery_relay_fail": "Fehler Batterierelais",
-          "bus_over_voltage_hw": "Hardware-Überspannung Bus",
-          "pv_1_over_current_hw": "Hardware-Überstrom PV 1",
-          "pv_2_over_current_hw": "Hardware-Überstrom PV 2",
-          "r_inverter_over_current_hw": "Hardware-Überstrom Wechselrichter Phase R",
-          "s_inverter_over_current_hw": "Hardware-Überstrom Wechselrichter Phase S",
-          "t_inverter_over_current_hw": "Hardware-Überstrom Wechselrichter Phase T",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugemspowermode": {
-        "state": {
-          "auto": "Automatisch",
-          "battery_standby": "Batterie Standby",
-          "buy_power": "Strom einkaufen (Netzbezug)",
-          "charge_bat": "Batterie laden",
-          "charge_pv": "PV laden",
-          "conserve": "Erhaltung",
-          "discharge_bat": "Batterie entladen",
-          "discharge_pv": "PV entladen",
-          "export_ac": "AC exportieren (Einspeisung)",
-          "import_ac": "AC importieren",
-          "off-grid": "Inselbetrieb (Off-Grid)",
-          "sell_power": "Strom verkaufen",
-          "stopped": "Gestoppt",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2apmenablepfoverfrequenzycurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2apmenablepfunderfrequenzycurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2apmenablepucurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2apmpuoutputresponsemode": {
-        "state": {
-          "disable": "Deaktivieren",
-          "gradient_control": "Gradientenregelung",
-          "pt-1_behaviour": "PT-1-Verhalten",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2cpreconnectiongradientenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2hvrtenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2hvrtzerocurrentmodeenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2lvrtenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2lvrtzerocurrentmodeenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmcosphipcurvemode": {
-        "state": {
-          "basic": "Basis",
-          "slope_model": "Steigungs-Modell",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmcosphipextendedfunctions": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmenablecurvecosphip": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmenablefixedq": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmenableqpcurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmqpcurvemode": {
-        "state": {
-          "basic": "Basis",
-          "slope_model": "Steigungs-Modell",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmqucurvemode": {
-        "state": {
-          "basic": "Basis",
-          "slope_model": "Steigungs-Modell",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmquenablequcurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugv2rpmquextendedfunctions": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugvrtactivepowerrecoverymode": {
-        "state": {
-          "disable": "Deaktivieren",
-          "gradient_control": "Gradientenregelung",
-          "pt-1_behaviour": "PT-1-Verhalten",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugvrtcurrentdistributionmode": {
-        "state": {
-          "active_power_priority_mode": "Wirkleistungs-Prioritätsmodus",
-          "constant_current_mode": "Konstantstrom-Modus",
-          "reactive_power_priority_mode": "Blindleistungs-Prioritätsmodus",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_debugvrtreactivepowerrecoverymodeend": {
-        "state": {
-          "disable": "Deaktivieren",
-          "gradient_control": "Gradientenregelung",
-          "pt-1_behaviour": "PT-1-Verhalten",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_dredcmd": {
+      "dred_cmd": {
         "state": {
           "dred_0": "DRED 0",
           "dred_5": "DRED 5",
@@ -542,14 +518,14 @@
           "dred_4_or_100_pv": "DRED 4 oder 100% PV-Leistung"
         }
       },
-      "batteryinverter_s_l_a_s_h_dredoffgridcheck": {
+      "dred_offgrid_check": {
         "state": {
           "dred_off_grid_is_off": "DRED Inselbetrieb ist aus",
           "dred_off_grid_is_on": "DRED Inselbetrieb ist an",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_ehbatteryfunctionactive": {
+      "eh_battery_function_active": {
         "state": {
           "activated": "Aktiviert",
           "deactivated": "Deaktiviert",
@@ -558,7 +534,7 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_emscheckinverteroperationstatus": {
+      "ems_check_inverter_operation_status": {
         "state": {
           "checking": "Prüfung läuft",
           "fault": "Fehler",
@@ -566,7 +542,7 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_emspowermode": {
+      "ems_power_mode": {
         "state": {
           "auto": "Automatisch",
           "battery_standby": "Batterie Standby",
@@ -584,49 +560,49 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_enablecurvecosphip": {
+      "enable_curve_cos_phi_p": {
         "state": {
           "disable_curve": "Kennlinie deaktivieren",
           "enable_curve": "Kennlinie aktivieren",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_enablefixedpowerfactorv2": {
+      "enable_fixed_power_factor_v2": {
         "state": {
           "disable_curve": "Kennlinie deaktivieren",
           "enable_curve": "Kennlinie aktivieren",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_enablepfcurve": {
+      "enable_pf_curve": {
         "state": {
           "disable_curve": "Kennlinie deaktivieren",
           "enable_curve": "Kennlinie aktivieren",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_enablepowerslopecosphip": {
+      "enable_power_slope_cos_phi_p": {
         "state": {
           "disable_curve": "Kennlinie deaktivieren",
           "enable_curve": "Kennlinie aktivieren",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_enablepucurve": {
+      "enable_pu_curve": {
         "state": {
           "disable_curve": "Kennlinie deaktivieren",
           "enable_curve": "Kennlinie aktivieren",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_enablequcurve": {
+      "enable_qu_curve": {
         "state": {
           "disable_curve": "Kennlinie deaktivieren",
           "enable_curve": "Kennlinie aktivieren",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_energyled": {
+      "energy_led": {
         "state": {
           "led_flash": "Energie-LED blinkt",
           "led_off": "Energie-LED Aus",
@@ -634,21 +610,21 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_externalemsflag": {
+      "external_ems_flag": {
         "state": {
           "alpha": "Alpha",
           "normal": "Normal",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_ezloggerprocommstatus": {
+      "ezlogger_pro_comm_status": {
         "state": {
           "undefined": "Nicht definiert",
           "success": "Erfolgreich",
           "not_good": "Nicht gut"
         }
       },
-      "batteryinverter_s_l_a_s_h_faultled": {
+      "fault_led": {
         "state": {
           "led_flash": "Fehler-LED blinkt",
           "led_off": "Fehler-LED Aus",
@@ -656,7 +632,7 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_fixedpowerfactor": {
+      "fixed_power_factor": {
         "state": {
           "0_80_lagging": "0,80 nacheilend (induktiv)",
           "0_80_leading": "0,80 voreilend (kapazitiv)",
@@ -701,7 +677,7 @@
           "1_leading_or_none": "1 voreilend oder keine"
         }
       },
-      "batteryinverter_s_l_a_s_h_fixedpowerfactorv2": {
+      "fixed_power_factor_v2": {
         "state": {
           "0_80_lagging": "0,80 nacheilend (induktiv)",
           "0_80_leading": "0,80 voreilend (kapazitiv)",
@@ -746,7 +722,7 @@
           "1_leading_or_none": "1 voreilend oder keine"
         }
       },
-      "batteryinverter_s_l_a_s_h_goodwetype": {
+      "goodwe_type": {
         "state": {
           "fenecon_100k": "FENECON 100K",
           "fenecon_50k": "FENECON 50K",
@@ -765,7 +741,14 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_gridled": {
+      "grid_feed_in_limitation_type": {
+        "state": {
+          "dynamic_limitation": "Dynamische Begrenzung",
+          "no_limitation": "Keine Begrenzung",
+          "undefined": "NICHT_DEFINIERT"
+        }
+      },
+      "grid_led": {
         "state": {
           "led_flash": "Netz-LED blinkt",
           "led_off": "Netz-LED Aus",
@@ -773,7 +756,7 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_gridmode": {
+      "grid_mode": {
         "state": {
           "off-grid": "Inselbetrieb (Off-Grid)",
           "off-grid_genset": "Inselbetrieb mit Generator (Genset)",
@@ -781,35 +764,43 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_gridprotect": {
+      "grid_protect": {
         "state": {
           "disable_grid_protect": "Netzschutz deaktivieren",
           "enable_grid_protect": "Netzschutz aktivieren",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_loadmoder": {
+      "is_battery_balanced": {
+        "state": {
+          "balanced": "AUSGEGLICHEN (BALANCED)",
+          "error": "FEHLER",
+          "not_balanced": "NICHT_AUSGEGLICHEN",
+          "not_measured": "NICHT_GEMESSEN"
+        }
+      },
+      "load_mode_r": {
         "state": {
           "on_inverter_connects_to_load": "AN, Wechselrichter mit Last verbunden",
           "undefined": "Nicht definiert",
           "off_inverter_disconnects_to_load": "AUS, Wechselrichter von Last getrennt"
         }
       },
-      "batteryinverter_s_l_a_s_h_loadmodes": {
+      "load_mode_s": {
         "state": {
           "on_inverter_connects_to_load": "AN, Wechselrichter mit Last verbunden",
           "undefined": "Nicht definiert",
           "off_inverter_disconnects_to_load": "AUS, Wechselrichter von Last getrennt"
         }
       },
-      "batteryinverter_s_l_a_s_h_loadmodet": {
+      "load_mode_t": {
         "state": {
           "on_inverter_connects_to_load": "AN, Wechselrichter mit Last verbunden",
           "undefined": "Nicht definiert",
           "off_inverter_disconnects_to_load": "AUS, Wechselrichter von Last getrennt"
         }
       },
-      "batteryinverter_s_l_a_s_h_loadregulationindex": {
+      "load_regulation_index": {
         "state": {
           "switching_mode": "Umschaltmodus",
           "time_manage": "Zeitsteuerung",
@@ -817,14 +808,14 @@
           "disable": "Deaktivieren"
         }
       },
-      "batteryinverter_s_l_a_s_h_metercommunicatestatus": {
+      "meter_communicate_status": {
         "state": {
           "ng": "Nicht gut (Fehler)",
           "ok": "In Ordnung (OK)",
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_metertype": {
+      "meter_type": {
         "state": {
           "home_kit": "Home Kit",
           "single_phase_grid_meter": "Einphasiger Netzzähler",
@@ -833,7 +824,7 @@
           "undefined": "Nicht definiert"
         }
       },
-      "batteryinverter_s_l_a_s_h_operationmode": {
+      "operation_mode": {
         "state": {
           "cut_off_all_the_connection_to_inverter": "Alle Verbindungen zum Wechselrichter trennen",
           "fault_fault_mode_something_is_in_fault_mode": "Fehler, Fehlermodus aktiv",
@@ -842,826 +833,14 @@
           "pv_inputs_to_inverter_first_battery_inputs_to_inverter_second_inverter_work_as_ac_source": "PV speist WR (Priorität 1), Batterie speist WR (Priorität 2), WR arbeitet als AC-Quelle"
         }
       },
-      "batteryinverter_s_l_a_s_h_pvmode": {
-        "state": {
-          "inverter_disconnects_to_pv": "Wechselrichter trennt Verbindung zur PV",
-          "pv_does_not_output_power": "PV erzeugt keine Leistung",
-          "pv_output_power": "PV erzeugt Leistung",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_safetycountry": {
-        "state": {
-          "50hz_grid_default": "50Hz Netz-Standard",
-          "50hz_lv_default": "50Hz Niederspannungs-Standard",
-          "60hz_grid_default": "60Hz Netz-Standard",
-          "60hz_lv_default": "60Hz Niederspannungs-Standard",
-          "australia": "Australien",
-          "australia_ausgrid": "Australien Ausgrid",
-          "australia_energex": "Australien Energex",
-          "australia_ergon": "Australien Ergon",
-          "australia_essential": "Australien Essential",
-          "australia_horizon": "Australien Horizon",
-          "australia_microgrid": "Australien MicroGrid",
-          "australia_pwcore_citipw": "Australien Pwcore_CitiPW",
-          "australia_sapn": "Australien SAPN",
-          "australia_western": "Australien Western",
-          "australial": "Australien L",
-          "austria": "Österreich",
-          "barbados": "Barbados",
-          "belgium": "Belgien",
-          "brazil": "Brasilien",
-          "brazil_lv": "Brasilien Niederspannung",
-          "bulgaria": "Bulgarien",
-          "cei_016": "CEI_016",
-          "chile": "Chile",
-          "china": "China",
-          "china_station": "China Station",
-          "chinese_standard_higher_performance": "Chinesischer Standard (höhere Leistung)",
-          "cyprus": "Zypern",
-          "czech": "Tschechien",
-          "denmark": "Dänemark",
-          "dewa_lv": "DEWA Niederspannung",
-          "dewa_mv": "DEWA Mittelspannung",
-          "en50549": "EN50549",
-          "energe30k": "Energe30K",
-          "ergon30k": "Ergon30K",
-          "france": "Frankreich",
-          "french_50hz": "Frankreich 50Hz",
-          "french_60hz": "Frankreich 60Hz",
-          "g59_3": "G59/3",
-          "germany": "Deutschland",
-          "germany_vde_4110": "Deutschland VDE 4110",
-          "greece_mainland": "Griechenland Festland",
-          "greengrid": "GreenGrid",
-          "holland": "Holland / Niederlande",
-          "holland_16_20a": "Holland 16/20A",
-          "hungary": "Ungarn",
-          "iec61727_60hz": "IEC61727_60Hz",
-          "ieee1547_208vac": "IEEE1547 208Vac",
-          "ieee1547_220vac": "IEEE1547 220Vac",
-          "ieee1547_230vac": "IEEE1547_230VAC",
-          "ieee1547_240vac": "IEEE1547 240Vac",
-          "india": "Indien",
-          "india_higher": "Indien (höher)",
-          "ireland": "Irland",
-          "italy": "Italien",
-          "jp_50hz": "Japan 50Hz",
-          "jp_60hz": "Japan 60Hz",
-          "korea": "Korea",
-          "mauritius": "Mauritius",
-          "newzealand": "Neuseeland",
-          "northern_ireland": "Nordirland",
-          "philippines": "Philippinen",
-          "poland": "Polen",
-          "romania": "Rumänien",
-          "slovakia": "Slowakei",
-          "south_africa": "Südafrika",
-          "spain": "Spanien",
-          "spainislands": "Spanische Inseln",
-          "srilanka": "Sri Lanka",
-          "sweden": "Schweden",
-          "switzerland": "Schweiz",
-          "taiwan": "Taiwan",
-          "thailand_mea": "Thailand MEA",
-          "thailand_pea": "Thailand PEA",
-          "undefined": "Nicht definiert",
-          "warehouse": "Lagerhaus / Werkseinstellung",
-          "g83_or_g59_according_to_model": "G83 oder G59, je nach Modell"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_safetycountrycode": {
-        "state": {
-          "50hz_grid_default": "50Hz Netz-Standard",
-          "50hz_lv_default": "50Hz Niederspannungs-Standard",
-          "60hz_grid_default": "60Hz Netz-Standard",
-          "60hz_lv_default": "60Hz Niederspannungs-Standard",
-          "australia": "Australien",
-          "australia_ausgrid": "Australien Ausgrid",
-          "australia_energex": "Australien Energex",
-          "australia_ergon": "Australien Ergon",
-          "australia_essential": "Australien Essential",
-          "australia_horizon": "Australien Horizon",
-          "australia_microgrid": "Australien MicroGrid",
-          "australia_pwcore_citipw": "Australien Pwcore_CitiPW",
-          "australia_sapn": "Australien SAPN",
-          "australia_western": "Australien Western",
-          "australial": "Australien L",
-          "austria": "Österreich",
-          "barbados": "Barbados",
-          "belgium": "Belgien",
-          "brazil": "Brasilien",
-          "brazil_lv": "Brasilien Niederspannung",
-          "bulgaria": "Bulgarien",
-          "cei_016": "CEI_016",
-          "chile": "Chile",
-          "china": "China",
-          "china_station": "China Station",
-          "chinese_standard_higher_performance": "Chinesischer Standard (höhere Leistung)",
-          "cyprus": "Zypern",
-          "czech": "Tschechien",
-          "denmark": "Dänemark",
-          "dewa_lv": "DEWA Niederspannung",
-          "dewa_mv": "DEWA Mittelspannung",
-          "en50549": "EN50549",
-          "energe30k": "Energe30K",
-          "ergon30k": "Ergon30K",
-          "france": "Frankreich",
-          "french_50hz": "Frankreich 50Hz",
-          "french_60hz": "Frankreich 60Hz",
-          "g59_3": "G59/3",
-          "germany": "Deutschland",
-          "germany_vde_4110": "Deutschland VDE 4110",
-          "greece_mainland": "Griechenland Festland",
-          "greengrid": "GreenGrid",
-          "holland": "Holland / Niederlande",
-          "holland_16_20a": "Holland 16/20A",
-          "hungary": "Ungarn",
-          "iec61727_60hz": "IEC61727_60Hz",
-          "ieee1547_208vac": "IEEE1547 208Vac",
-          "ieee1547_220vac": "IEEE1547 220Vac",
-          "ieee1547_230vac": "IEEE1547_230VAC",
-          "ieee1547_240vac": "IEEE1547 240Vac",
-          "india": "Indien",
-          "india_higher": "Indien (höher)",
-          "ireland": "Irland",
-          "italy": "Italien",
-          "jp_50hz": "Japan 50Hz",
-          "jp_60hz": "Japan 60Hz",
-          "korea": "Korea",
-          "mauritius": "Mauritius",
-          "newzealand": "Neuseeland",
-          "northern_ireland": "Nordirland",
-          "philippines": "Philippinen",
-          "poland": "Polen",
-          "romania": "Rumänien",
-          "slovakia": "Slowakei",
-          "south_africa": "Südafrika",
-          "spain": "Spanien",
-          "spainislands": "Spanische Inseln",
-          "srilanka": "Sri Lanka",
-          "sweden": "Schweden",
-          "switzerland": "Schweiz",
-          "taiwan": "Taiwan",
-          "thailand_mea": "Thailand MEA",
-          "thailand_pea": "Thailand PEA",
-          "undefined": "Nicht definiert",
-          "warehouse": "Lagerhaus / Werkseinstellung",
-          "g83_or_g59_according_to_model": "G83 oder G59, je nach Modell"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_selectworkmode": {
-        "state": {
-          "backup_mode": "Backup-Modus (Ersatzstrom)",
-          "economic_mode": "Wirtschaftlicher Modus (Öko)",
-          "off_grid_mode": "Inselbetrieb (Off-Grid)",
-          "self_use_mode": "Eigenverbrauchsmodus",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_socled1": {
-        "state": {
-          "led_flash": "SOC-LED 1 blinkt",
-          "led_off": "SOC-LED 1 Aus",
-          "led_on": "SOC-LED 1 An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_socled2": {
-        "state": {
-          "led_flash": "SOC-LED 2 blinkt",
-          "led_off": "SOC-LED 2 Aus",
-          "led_on": "SOC-LED 2 An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_socled3": {
-        "state": {
-          "led_flash": "SOC-LED 3 blinkt",
-          "led_off": "SOC-LED 3 Aus",
-          "led_on": "SOC-LED 3 An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_socled4": {
-        "state": {
-          "led_flash": "SOC-LED 4 blinkt",
-          "led_off": "SOC-LED 4 Aus",
-          "led_on": "SOC-LED 4 An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_startstop": {
-        "state": {
-          "start": "Start",
-          "stop": "Stopp",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_statemachine": {
-        "state": {
-          "error": "FEHLER",
-          "go_running": "STARTEN",
-          "go_stopped": "STOPPEN",
-          "running": "LÄUFT",
-          "stopped": "GESTOPPT",
-          "undefined": "NICHT_DEFINIERT"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_stopsocprotect": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_systemled": {
-        "state": {
-          "led_flash": "System-LED blinkt",
-          "led_off": "System-LED Aus",
-          "led_on": "System-LED An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_upsstdvolttype": {
-        "state": {
-          "208_v": "208 V",
-          "230_v": "230 V",
-          "240_v": "240 V",
-          "undefined": "Nicht definiert",
-          "220_v": "220 V"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2apmenablepfoverfrequenzycurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2apmenablepfunderfrequenzycurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2apmenablepucurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2apmpuoutputresponsemode": {
-        "state": {
-          "disable": "Deaktivieren",
-          "gradient_control": "Gradientenregelung",
-          "pt-1_behaviour": "PT-1-Verhalten",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2cpreconnectiongradientenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2frtenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2hvrtenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2hvrtzerocurrentmodeenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2lvrtenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2lvrtzerocurrentmodeenable": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmcosphipcurvemode": {
-        "state": {
-          "basic": "Basis",
-          "slope_model": "Steigungs-Modell",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmcosphipextendedfunctions": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmenablecurvecosphip": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmenablefixedq": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmenableqpcurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmqpcurvemode": {
-        "state": {
-          "basic": "Basis",
-          "slope_model": "Steigungs-Modell",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmqucurvemode": {
-        "state": {
-          "basic": "Basis",
-          "slope_model": "Steigungs-Modell",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmquenablequcurve": {
-        "state": {
-          "disable_curve": "Kennlinie deaktivieren",
-          "enable_curve": "Kennlinie aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2rpmquextendedfunctions": {
-        "state": {
-          "disable": "Deaktivieren",
-          "enable": "Aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2vrtactivepowerrecoverymode": {
-        "state": {
-          "disable": "Deaktivieren",
-          "gradient_control": "Gradientenregelung",
-          "pt-1_behaviour": "PT-1-Verhalten",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2vrtcurrentdistributionmode": {
-        "state": {
-          "active_power_priority_mode": "Wirkleistungs-Prioritätsmodus",
-          "constant_current_mode": "Konstantstrom-Modus",
-          "reactive_power_priority_mode": "Blindleistungs-Prioritätsmodus",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_v2vrtreactivepowerrecoverymodeend": {
-        "state": {
-          "disable": "Deaktivieren",
-          "gradient_control": "Gradientenregelung",
-          "pt-1_behaviour": "PT-1-Verhalten",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_waveformdetection": {
-        "state": {
-          "off-grid_operation_is_prioritized_with_high_precision": "Inselbetrieb wird mit hoher Präzision priorisiert",
-          "off-grid_operation_is_prioritized_with_low_precision": "Inselbetrieb wird mit geringer Präzision priorisiert",
-          "undefined": "Nicht definiert",
-          "vde_4110_ride_through_operation_is_prioritized": "VDE 4110 Ride-Through-Betrieb wird priorisiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_wifiledstate": {
-        "state": {
-          "led_flash": "WLAN-LED blinkt",
-          "led_off": "WLAN-LED Aus",
-          "led_on": "WLAN-LED An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_wifiorlanswitch": {
-        "state": {
-          "led_flash": "LED blinkt",
-          "led_on": "LED An",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_wmeterconnectcheckflag": {
-        "state": {
-          "checking": "Prüfung läuft",
-          "stop_checking": "Prüfung gestoppt",
-          "undefined": "Nicht definiert",
-          "wait_for_check": "Warte auf Prüfung"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_workmode": {
-        "state": {
-          "cut_off_all_the_connection_to_inverter": "Alle Verbindungen zum Wechselrichter trennen",
-          "fault_fault_mode_something_is_in_fault_mode": "Fehler, Fehlermodus aktiv",
-          "inverter_upgrade": "Wechselrichter-Aktualisierung (Upgrade)",
-          "power_on_self-check_of_inverter": "Selbsttest des Wechselrichters nach dem Einschalten",
-          "pv_inputs_to_inverter_inverter_outputs_to_grid": "PV speist Wechselrichter, Wechselrichter speist Netz",
-          "undefined": "Nicht definiert",
-          "pv_inputs_to_inverter_first_battery_inputs_to_inverter_second_inverter_work_as_ac_source": "PV speist WR (Priorität 1), Batterie speist WR (Priorität 2), WR arbeitet als AC-Quelle"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_workweek1": {
-        "state": {
-          "backup_mode_disable": "Backup-Modus deaktivieren",
-          "backup_mode_enable": "Backup-Modus aktivieren",
-          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
-          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "eco_mode_disable": "Eco-Modus deaktivieren",
-          "eco_mode_enable": "Eco-Modus aktivieren",
-          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
-          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
-          "undefined": "Nicht definiert",
-          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_workweek2": {
-        "state": {
-          "backup_mode_disable": "Backup-Modus deaktivieren",
-          "backup_mode_enable": "Backup-Modus aktivieren",
-          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
-          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "eco_mode_disable": "Eco-Modus deaktivieren",
-          "eco_mode_enable": "Eco-Modus aktivieren",
-          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
-          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
-          "undefined": "Nicht definiert",
-          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_workweek3": {
-        "state": {
-          "backup_mode_disable": "Backup-Modus deaktivieren",
-          "backup_mode_enable": "Backup-Modus aktivieren",
-          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
-          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "eco_mode_disable": "Eco-Modus deaktivieren",
-          "eco_mode_enable": "Eco-Modus aktivieren",
-          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
-          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
-          "undefined": "Nicht definiert",
-          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_workweek4": {
-        "state": {
-          "backup_mode_disable": "Backup-Modus deaktivieren",
-          "backup_mode_enable": "Backup-Modus aktivieren",
-          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
-          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
-          "eco_mode_disable": "Eco-Modus deaktivieren",
-          "eco_mode_enable": "Eco-Modus aktivieren",
-          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
-          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
-          "undefined": "Nicht definiert",
-          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
-        }
-      },
-      "batteryinverter_s_l_a_s_h_zvrtconfig": {
-        "state": {
-          "both_enable": "Beide aktivieren",
-          "disable": "Deaktivieren",
-          "only_hvrt_enable": "Nur HVRT (Überspannungs-Durchfahren) aktivieren",
-          "only_lvrt_enable": "Nur LVRT (Unterspannungs-Durchfahren) aktivieren",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "charger_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlapimodbustcp_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlapirest_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlapiwebsocket_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlbackend_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlbalancing_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrldebuglog_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlemergencycapacityreserve_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlemergencycapacityreserve_s_l_a_s_h_statemachine": {
-        "state": {
-          "abovereservesoc": "Über Reserve-SOC",
-          "atreservesoc": "Bei Reserve-SOC",
-          "belowreservesoc": "Unter Reserve-SOC",
-          "forcechargegrid": "Zwangsladung aus dem Netz",
-          "forcechargepv": "Zwangsladung über PV",
-          "nolimit": "Keine Begrenzung",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "ctrlesslimiter14a_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlesssohcycle_s_l_a_s_h_balancingerrordebug": {
-        "state": {
-          "baseline_min_missing": "MIN_BASISLINIE_FEHLT",
-          "delta_above_threshold": "ABWEICHUNG_ÜBER_SCHWELLENWERT",
-          "delta_negative": "ABWEICHUNG_NEGATIV",
-          "internal_error": "INTERNER_FEHLER",
-          "max_voltage_undefined": "MAX_SPANNUNG_NICHT_DEFINIERT",
-          "min_voltage_undefined": "MIN_SPANNUNG_NICHT_DEFINIERT",
-          "none": "KEINER",
-          "timeout": "ZEITÜBERSCHREITUNG"
-        }
-      },
-      "ctrlesssohcycle_s_l_a_s_h_isbatterybalanced": {
-        "state": {
-          "balanced": "AUSGEGLICHEN (BALANCED)",
-          "error": "FEHLER",
-          "not_balanced": "NICHT_AUSGEGLICHEN",
-          "not_measured": "NICHT_GEMESSEN"
-        }
-      },
-      "ctrlesssohcycle_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlesssohcycle_s_l_a_s_h_statemachine": {
-        "state": {
-          "check_balancing": "PRÜFE_ZELLAUSGLEICH",
-          "done": "FERTIG",
-          "error_abort": "FEHLER_ABBRUCH",
-          "evaluate_result": "ERGEBNIS_AUSWERTEN",
-          "idle": "LEERLAUF (IDLE)",
-          "measurement_cycle_charging": "MESSZYKLUS_LADEN",
-          "measurement_cycle_charging_wait": "MESSZYKLUS_LADEN_WARTEN",
-          "measurement_cycle_discharging": "MESSZYKLUS_ENTLADEN",
-          "measurement_cycle_discharging_wait": "MESSZYKLUS_ENTLADEN_WARTEN",
-          "prepare": "VORBEREITEN",
-          "reference_cycle_charging": "REFERENZZYKLUS_LADEN",
-          "reference_cycle_charging_wait": "REFERENZZYKLUS_LADEN_WARTEN",
-          "reference_cycle_discharging": "REFERENZZYKLUS_ENTLADEN",
-          "reference_cycle_discharging_wait": "REFERENZZYKLUS_ENTLADEN_WARTEN",
-          "prepare_precharge": "Pre-charging"
-        }
-      },
-      "ctrlesssurplusfeedtogrid_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlevcs_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlgridoptimizedcharge_s_l_a_s_h_selltogridlimitstate": {
-        "state": {
-          "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Begrenzung wegen anderer Beschränkungen mit höherer Priorität nicht angepasst",
-          "no_active_limitation": "Keine Begrenzung aktiv",
-          "selltogridlimit_part_is_disabled": "Einspeisebegrenzung deaktiviert",
-          "selltogridlimit_part_was_not_started_because_there_is_no_production_or_to_less_production": "Einspeisebegrenzung wegen zu geringer oder fehlender Erzeugung nicht gestartet",
-          "undefined": "Nicht definiert",
-          "active_limitation_fix_limit": "Aktive Begrenzung - Feste Grenze",
-          "active_limitation_minimum_charge_power": "Aktive Begrenzung - Minimale Ladeleistung",
-          "not_active_the_controller_has_no_flexibility_left_to_delay_charge_because_the_limitation_is_nearly_zero": "Nicht aktiv. Der Regler hat keine Flexibilität mehr für verzögertes Laden, da die Begrenzung nahezu Null ist."
-        }
-      },
-      "ctrlgridoptimizedcharge_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlpreparebatteryextension_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ctrlpreparebatteryextension_s_l_a_s_h_statemachine": {
-        "state": {
-          "abovetargetsoc": "Über Ziel-SOC",
-          "attargetsoc": "Bei Ziel-SOC",
-          "belowtargetsoc": "Unter Ziel-SOC",
-          "idle": "Leerlauf",
-          "notstarted": "Nicht gestartet",
-          "referencecycle": "Referenzzyklus",
-          "withinlowertargetsocboundaries": "Innerhalb der unteren Ziel-SOC-Grenzen",
-          "withinuppertargetsocboundaries": "Innerhalb der oberen Ziel-SOC-Grenzen"
-        }
-      },
-      "ess_s_l_a_s_h_gridmode": {
-        "state": {
-          "off-grid": "Inselbetrieb (Off-Grid)",
-          "off-grid_genset": "Inselbetrieb mit Generator (Genset)",
-          "on-grid": "Netzparallelbetrieb (On-Grid)",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "ess_s_l_a_s_h_startstop": {
-        "state": {
-          "start": "Start",
-          "stop": "Stopp",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "ess_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "ess_s_l_a_s_h_statemachine": {
-        "state": {
-          "error": "Fehler",
-          "maintenance": "Wartung",
-          "startbattery": "Batterie starten",
-          "startbatteryinverter": "Batteriewechselrichter starten",
-          "started": "Gestartet",
-          "stopbattery": "Batterie stoppen",
-          "stopbatteryinverter": "Batteriewechselrichter stoppen",
-          "stopped": "Gestoppt",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "evcs_s_l_a_s_h_chargemode": {
-        "state": {
-          "force-charge": "Zwangsladung",
-          "use_surplus_power": "Überschussleistung nutzen"
-        }
-      },
-      "evcs_s_l_a_s_h_chargestate": {
-        "state": {
-          "charging": "Lädt",
-          "decreasing": "Verringert sich (fallend)",
-          "increasing": "Erhöht sich (steigend)",
-          "not_charging": "Lädt nicht",
-          "undefined": "Nicht definiert",
-          "waiting_for_available_power": "Warte auf verfügbare Leistung"
-        }
-      },
-      "evcs_s_l_a_s_h_chargingtype": {
-        "state": {
-          "ac": "AC (Wechselstrom)",
-          "ccs": "CCS (Gleichstrom-Schnellladen)",
-          "chademo": "CHAdeMO",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "evcs_s_l_a_s_h_phases": {
+      "phases": {
         "state": {
           "one_phase": "Einphasig",
           "three_phase": "Dreiphasig",
           "two_phase": "Zweiphasig"
         }
       },
-      "evcs_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "io_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "meter_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "modbus_s_l_a_s_h_startstop": {
-        "state": {
-          "start": "Start",
-          "stop": "Stopp",
-          "undefined": "Nicht definiert"
-        }
-      },
-      "modbus_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "predictor_s_l_a_s_h_predictorlinearmodelpredictionstate": {
+      "predictor_linear_model_prediction_state": {
         "state": {
           "insufficient_prediction_data": "Unzureichende Prognosedaten",
           "model_outdated": "Modell veraltet",
@@ -1673,7 +852,7 @@
           "unknown_error": "Unbekannter Fehler"
         }
       },
-      "predictor_s_l_a_s_h_predictorlinearmodeltrainingstate": {
+      "predictor_linear_model_training_state": {
         "state": {
           "insufficient_training_data": "Unzureichende Trainingsdaten",
           "no_training_data": "Keine Trainingsdaten vorhanden",
@@ -1683,13 +862,13 @@
           "unknown_error": "Unbekannter Fehler"
         }
       },
-      "predictor_s_l_a_s_h_predictorproductionlinearmodelsnowstate": {
+      "predictor_production_linear_model_snow_state": {
         "state": {
           "normal": "Normalbetrieb",
           "snow": "Schneebedeckt (Ertragsprognose angepasst)"
         }
       },
-      "predictor_s_l_a_s_h_predictorprofileclusteringmodelpredictionstate": {
+      "predictor_profile_clustering_model_prediction_state": {
         "state": {
           "insufficient_prediction_data": "Unzureichende Prognosedaten (Profil-Clustering)",
           "model_outdated": "Modell veraltet",
@@ -1701,7 +880,7 @@
           "unknown_error": "Unbekannter Fehler"
         }
       },
-      "predictor_s_l_a_s_h_predictorprofileclusteringmodeltrainingstate": {
+      "predictor_profile_clustering_model_training_state": {
         "state": {
           "insufficient_training_data": "Unzureichende Trainingsdaten (Profil-Clustering)",
           "no_training_data": "Keine Trainingsdaten vorhanden",
@@ -1711,15 +890,15 @@
           "unknown_error": "Unbekannter Fehler"
         }
       },
-      "predictor_s_l_a_s_h_state": {
+      "pv_mode": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "inverter_disconnects_to_pv": "Wechselrichter trennt Verbindung zur PV",
+          "pv_does_not_output_power": "PV erzeugt keine Leistung",
+          "pv_output_power": "PV erzeugt Leistung",
+          "undefined": "Nicht definiert"
         }
       },
-      "pvinverter_s_l_a_s_h_s113st": {
+      "s113_st": {
         "state": {
           "fault": "FEHLER",
           "mppt": "MPPT-Regelung aktiv",
@@ -1732,110 +911,220 @@
           "undefined": "Nicht definiert"
         }
       },
-      "pvinverter_s_l_a_s_h_state": {
+      "safety_country": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "50hz_grid_default": "50Hz Netz-Standard",
+          "50hz_lv_default": "50Hz Niederspannungs-Standard",
+          "60hz_grid_default": "60Hz Netz-Standard",
+          "60hz_lv_default": "60Hz Niederspannungs-Standard",
+          "australia": "Australien",
+          "australia_ausgrid": "Australien Ausgrid",
+          "australia_energex": "Australien Energex",
+          "australia_ergon": "Australien Ergon",
+          "australia_essential": "Australien Essential",
+          "australia_horizon": "Australien Horizon",
+          "australia_microgrid": "Australien MicroGrid",
+          "australia_pwcore_citipw": "Australien Pwcore_CitiPW",
+          "australia_sapn": "Australien SAPN",
+          "australia_western": "Australien Western",
+          "australial": "Australien L",
+          "austria": "Österreich",
+          "barbados": "Barbados",
+          "belgium": "Belgien",
+          "brazil": "Brasilien",
+          "brazil_lv": "Brasilien Niederspannung",
+          "bulgaria": "Bulgarien",
+          "cei_016": "CEI_016",
+          "chile": "Chile",
+          "china": "China",
+          "china_station": "China Station",
+          "chinese_standard_higher_performance": "Chinesischer Standard (höhere Leistung)",
+          "cyprus": "Zypern",
+          "czech": "Tschechien",
+          "denmark": "Dänemark",
+          "dewa_lv": "DEWA Niederspannung",
+          "dewa_mv": "DEWA Mittelspannung",
+          "en50549": "EN50549",
+          "energe30k": "Energe30K",
+          "ergon30k": "Ergon30K",
+          "france": "Frankreich",
+          "french_50hz": "Frankreich 50Hz",
+          "french_60hz": "Frankreich 60Hz",
+          "g59_3": "G59/3",
+          "germany": "Deutschland",
+          "germany_vde_4110": "Deutschland VDE 4110",
+          "greece_mainland": "Griechenland Festland",
+          "greengrid": "GreenGrid",
+          "holland": "Holland / Niederlande",
+          "holland_16_20a": "Holland 16/20A",
+          "hungary": "Ungarn",
+          "iec61727_60hz": "IEC61727_60Hz",
+          "ieee1547_208vac": "IEEE1547 208Vac",
+          "ieee1547_220vac": "IEEE1547 220Vac",
+          "ieee1547_230vac": "IEEE1547_230VAC",
+          "ieee1547_240vac": "IEEE1547 240Vac",
+          "india": "Indien",
+          "india_higher": "Indien (höher)",
+          "ireland": "Irland",
+          "italy": "Italien",
+          "jp_50hz": "Japan 50Hz",
+          "jp_60hz": "Japan 60Hz",
+          "korea": "Korea",
+          "mauritius": "Mauritius",
+          "newzealand": "Neuseeland",
+          "northern_ireland": "Nordirland",
+          "philippines": "Philippinen",
+          "poland": "Polen",
+          "romania": "Rumänien",
+          "slovakia": "Slowakei",
+          "south_africa": "Südafrika",
+          "spain": "Spanien",
+          "spainislands": "Spanische Inseln",
+          "srilanka": "Sri Lanka",
+          "sweden": "Schweden",
+          "switzerland": "Schweiz",
+          "taiwan": "Taiwan",
+          "thailand_mea": "Thailand MEA",
+          "thailand_pea": "Thailand PEA",
+          "undefined": "Nicht definiert",
+          "warehouse": "Lagerhaus / Werkseinstellung",
+          "g83_or_g59_according_to_model": "G83 oder G59, je nach Modell"
         }
       },
-      "rrd4j_s_l_a_s_h_state": {
+      "safety_country_code": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "50hz_grid_default": "50Hz Netz-Standard",
+          "50hz_lv_default": "50Hz Niederspannungs-Standard",
+          "60hz_grid_default": "60Hz Netz-Standard",
+          "60hz_lv_default": "60Hz Niederspannungs-Standard",
+          "australia": "Australien",
+          "australia_ausgrid": "Australien Ausgrid",
+          "australia_energex": "Australien Energex",
+          "australia_ergon": "Australien Ergon",
+          "australia_essential": "Australien Essential",
+          "australia_horizon": "Australien Horizon",
+          "australia_microgrid": "Australien MicroGrid",
+          "australia_pwcore_citipw": "Australien Pwcore_CitiPW",
+          "australia_sapn": "Australien SAPN",
+          "australia_western": "Australien Western",
+          "australial": "Australien L",
+          "austria": "Österreich",
+          "barbados": "Barbados",
+          "belgium": "Belgien",
+          "brazil": "Brasilien",
+          "brazil_lv": "Brasilien Niederspannung",
+          "bulgaria": "Bulgarien",
+          "cei_016": "CEI_016",
+          "chile": "Chile",
+          "china": "China",
+          "china_station": "China Station",
+          "chinese_standard_higher_performance": "Chinesischer Standard (höhere Leistung)",
+          "cyprus": "Zypern",
+          "czech": "Tschechien",
+          "denmark": "Dänemark",
+          "dewa_lv": "DEWA Niederspannung",
+          "dewa_mv": "DEWA Mittelspannung",
+          "en50549": "EN50549",
+          "energe30k": "Energe30K",
+          "ergon30k": "Ergon30K",
+          "france": "Frankreich",
+          "french_50hz": "Frankreich 50Hz",
+          "french_60hz": "Frankreich 60Hz",
+          "g59_3": "G59/3",
+          "germany": "Deutschland",
+          "germany_vde_4110": "Deutschland VDE 4110",
+          "greece_mainland": "Griechenland Festland",
+          "greengrid": "GreenGrid",
+          "holland": "Holland / Niederlande",
+          "holland_16_20a": "Holland 16/20A",
+          "hungary": "Ungarn",
+          "iec61727_60hz": "IEC61727_60Hz",
+          "ieee1547_208vac": "IEEE1547 208Vac",
+          "ieee1547_220vac": "IEEE1547 220Vac",
+          "ieee1547_230vac": "IEEE1547_230VAC",
+          "ieee1547_240vac": "IEEE1547 240Vac",
+          "india": "Indien",
+          "india_higher": "Indien (höher)",
+          "ireland": "Irland",
+          "italy": "Italien",
+          "jp_50hz": "Japan 50Hz",
+          "jp_60hz": "Japan 60Hz",
+          "korea": "Korea",
+          "mauritius": "Mauritius",
+          "newzealand": "Neuseeland",
+          "northern_ireland": "Nordirland",
+          "philippines": "Philippinen",
+          "poland": "Polen",
+          "romania": "Rumänien",
+          "slovakia": "Slowakei",
+          "south_africa": "Südafrika",
+          "spain": "Spanien",
+          "spainislands": "Spanische Inseln",
+          "srilanka": "Sri Lanka",
+          "sweden": "Schweden",
+          "switzerland": "Schweiz",
+          "taiwan": "Taiwan",
+          "thailand_mea": "Thailand MEA",
+          "thailand_pea": "Thailand PEA",
+          "undefined": "Nicht definiert",
+          "warehouse": "Lagerhaus / Werkseinstellung",
+          "g83_or_g59_according_to_model": "G83 oder G59, je nach Modell"
         }
       },
-      "scheduler_s_l_a_s_h_state": {
+      "select_work_mode": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "backup_mode": "Backup-Modus (Ersatzstrom)",
+          "economic_mode": "Wirtschaftlicher Modus (Öko)",
+          "off_grid_mode": "Inselbetrieb (Off-Grid)",
+          "self_use_mode": "Eigenverbrauchsmodus",
+          "undefined": "Nicht definiert"
         }
       },
-      "weather_s_l_a_s_h_state": {
+      "sell_to_grid_limit_state": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Begrenzung wegen anderer Beschränkungen mit höherer Priorität nicht angepasst",
+          "no_active_limitation": "Keine Begrenzung aktiv",
+          "selltogridlimit_part_is_disabled": "Einspeisebegrenzung deaktiviert",
+          "selltogridlimit_part_was_not_started_because_there_is_no_production_or_to_less_production": "Einspeisebegrenzung wegen zu geringer oder fehlender Erzeugung nicht gestartet",
+          "undefined": "Nicht definiert",
+          "active_limitation_fix_limit": "Aktive Begrenzung - Feste Grenze",
+          "active_limitation_minimum_charge_power": "Aktive Begrenzung - Minimale Ladeleistung",
+          "not_active_the_controller_has_no_flexibility_left_to_delay_charge_because_the_limitation_is_nearly_zero": "Nicht aktiv. Der Regler hat keine Flexibilität mehr für verzögertes Laden, da die Begrenzung nahezu Null ist."
         }
       },
-      "appmanager_s_l_a_s_h_state": {
+      "soc_led1": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "led_flash": "SOC-LED 1 blinkt",
+          "led_off": "SOC-LED 1 Aus",
+          "led_on": "SOC-LED 1 An",
+          "undefined": "Nicht definiert"
         }
       },
-      "componentmanager_s_l_a_s_h_state": {
+      "soc_led2": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "led_flash": "SOC-LED 2 blinkt",
+          "led_off": "SOC-LED 2 Aus",
+          "led_on": "SOC-LED 2 An",
+          "undefined": "Nicht definiert"
         }
       },
-      "cycle_s_l_a_s_h_state": {
+      "soc_led3": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "led_flash": "SOC-LED 3 blinkt",
+          "led_off": "SOC-LED 3 Aus",
+          "led_on": "SOC-LED 3 An",
+          "undefined": "Nicht definiert"
         }
       },
-      "energy_s_l_a_s_h_state": {
+      "soc_led4": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "led_flash": "SOC-LED 4 blinkt",
+          "led_off": "SOC-LED 4 Aus",
+          "led_on": "SOC-LED 4 An",
+          "undefined": "Nicht definiert"
         }
       },
-      "evcsslowpowerincreasefilter_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "host_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "meta_s_l_a_s_h_currency": {
-        "state": {
-          "chf": "CHF",
-          "eur": "EUR",
-          "sek": "SEK",
-          "undefined": "NICHT_DEFINIERT"
-        }
-      },
-      "meta_s_l_a_s_h_gridfeedinlimitationtype": {
-        "state": {
-          "dynamic_limitation": "Dynamische Begrenzung",
-          "no_limitation": "Keine Begrenzung",
-          "undefined": "NICHT_DEFINIERT"
-        }
-      },
-      "meta_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "power_s_l_a_s_h_solvestrategy": {
+      "solve_strategy": {
         "state": {
           "all_constraints": "Alle Beschränkungen",
           "none": "Keine",
@@ -1847,39 +1136,14 @@
           "undefined": "Nicht definiert"
         }
       },
-      "power_s_l_a_s_h_state": {
+      "start_stop": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "predictormanager_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "serialnumber_s_l_a_s_h_state": {
-        "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
-        }
-      },
-      "sum_s_l_a_s_h_gridmode": {
-        "state": {
-          "off-grid": "Inselbetrieb (Off-Grid)",
-          "off-grid_genset": "Inselbetrieb mit Generator (Genset)",
-          "on-grid": "Netzparallelbetrieb (On-Grid)",
+          "start": "Start",
+          "stop": "Stopp",
           "undefined": "Nicht definiert"
         }
       },
-      "sum_s_l_a_s_h_state": {
+      "state": {
         "state": {
           "fault": "Fehler",
           "info": "Info",
@@ -1887,44 +1151,375 @@
           "warning": "Warnung"
         }
       },
-      "ctrlioheatpump_s_l_a_s_h_status": {
+      "state_machine": {
         "state": {
-          "undefined": "Unbekannt",
+          "charge_disabled": "Laden deaktiviert",
+          "charge_paused": "Pause (wenig Überschuss)",
+          "charge_resuming": "Warte auf Fahrzeug",
+          "charging": "Lädt",
+          "ev_connected": "Fahrzeug verbunden",
+          "ev_not_connected": "Fahrzeug nicht verbunden",
+          "finished_energy_session_limit": "Energielimit erreicht",
+          "finished_ev_stop": "Vom Fahrzeug beendet",
+          "not_ready": "Nicht bereit",
+          "phase_switch_to_single_phase": "Wechsel auf 1-phasig",
+          "phase_switch_to_three_phase": "Wechsel auf 3-phasig",
+          "undefined": "Nicht definiert",
+          "error": "Fehler",
+          "firmware_update": "FIRMWARE_UPDATE",
+          "go_running": "STARTEN",
+          "go_stopped": "STOPPEN",
+          "running": "LÄUFT",
+          "stopped": "Gestoppt",
+          "abovereservesoc": "Über Reserve-SOC",
+          "atreservesoc": "Bei Reserve-SOC",
+          "belowreservesoc": "Unter Reserve-SOC",
+          "forcechargegrid": "Zwangsladung aus dem Netz",
+          "forcechargepv": "Zwangsladung über PV",
+          "nolimit": "Keine Begrenzung",
+          "check_balancing": "PRÜFE_ZELLAUSGLEICH",
+          "done": "FERTIG",
+          "error_abort": "FEHLER_ABBRUCH",
+          "evaluate_result": "ERGEBNIS_AUSWERTEN",
+          "idle": "Leerlauf",
+          "measurement_cycle_charging": "MESSZYKLUS_LADEN",
+          "measurement_cycle_charging_wait": "MESSZYKLUS_LADEN_WARTEN",
+          "measurement_cycle_discharging": "MESSZYKLUS_ENTLADEN",
+          "measurement_cycle_discharging_wait": "MESSZYKLUS_ENTLADEN_WARTEN",
+          "prepare": "VORBEREITEN",
+          "reference_cycle_charging": "REFERENZZYKLUS_LADEN",
+          "reference_cycle_charging_wait": "REFERENZZYKLUS_LADEN_WARTEN",
+          "reference_cycle_discharging": "REFERENZZYKLUS_ENTLADEN",
+          "reference_cycle_discharging_wait": "REFERENZZYKLUS_ENTLADEN_WARTEN",
+          "prepare_precharge": "Pre-charging",
+          "abovetargetsoc": "Über Ziel-SOC",
+          "attargetsoc": "Bei Ziel-SOC",
+          "belowtargetsoc": "Unter Ziel-SOC",
+          "notstarted": "Nicht gestartet",
+          "referencecycle": "Referenzzyklus",
+          "withinlowertargetsocboundaries": "Innerhalb der unteren Ziel-SOC-Grenzen",
+          "withinuppertargetsocboundaries": "Innerhalb der oberen Ziel-SOC-Grenzen",
+          "maintenance": "Wartung",
+          "startbattery": "Batterie starten",
+          "startbatteryinverter": "Batteriewechselrichter starten",
+          "started": "Gestartet",
+          "stopbattery": "Batterie stoppen",
+          "stopbatteryinverter": "Batteriewechselrichter stoppen"
+        }
+      },
+      "status": {
+        "state": {
+          "charging": "Ladevorgang aktiv",
+          "charging_rejected": "Laden verweigert",
+          "error": "Fehler",
+          "not_ready_for_charging": "Nicht bereit zum Laden",
+          "ready_for_charging": "Bereit zum Laden",
+          "starting": "Starte...",
+          "the_charging_limit_reached": "Ladelimit erreicht",
+          "undefined": "Nicht definiert",
+          "charging_with_ventilation_required_d": "Laden mit Belüftung erforderlich (D)",
+          "error_communication_problem_e": "Fehler – Kommunikationsproblem (E)",
+          "error_serious_fault_f": "Fehler – schwere Störung (F)",
+          "no_vehicle_connected_a": "Kein Fahrzeug verbunden (A)",
+          "vehicle_connected_and_charging_c": "Fahrzeug verbunden und lädt (C)",
+          "vehicle_connected_not_charging_b": "Fahrzeug verbunden, lädt nicht (B)",
           "blocks_everything_till_an_internal_maximum_time_of_default_two_hours": "Sperre",
           "default_energy-efficient_operation": "Normal",
           "recommendation_to_use_more_available_power": "Einschaltempfehlung",
           "force_all_possible_consumption_of_the_heat_pump": "Einschaltbefehl"
         }
       },
-      "ctrlevsecluster_s_l_a_s_h_state": {
+      "stop_soc_protect": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
         }
       },
-      "ctrlevsesingle_s_l_a_s_h_state": {
+      "system_led": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "led_flash": "System-LED blinkt",
+          "led_off": "System-LED Aus",
+          "led_on": "System-LED An",
+          "undefined": "Nicht definiert"
         }
       },
-      "evcs_s_l_a_s_h_devicerole": {
+      "ups_std_volt_type": {
         "state": {
-          "master": "Master",
-          "slave": "Slave",
-          "unknown": "Unbekannt"
+          "208_v": "208 V",
+          "230_v": "230 V",
+          "240_v": "240 V",
+          "undefined": "Nicht definiert",
+          "220_v": "220 V"
         }
       },
-      "evseelectricvehicle_s_l_a_s_h_state": {
+      "v2_apm_enable_pf_overfrequenzy_curve": {
         "state": {
-          "fault": "Fehler",
-          "info": "Info",
-          "ok": "In Ordnung (OK)",
-          "warning": "Warnung"
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_apm_enable_pf_underfrequenzy_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_apm_enable_pu_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_apm_pu_output_response_mode": {
+        "state": {
+          "disable": "Deaktivieren",
+          "gradient_control": "Gradientenregelung",
+          "pt-1_behaviour": "PT-1-Verhalten",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_cp_reconnection_gradient_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_frt_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_hvrt_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_hvrt_zero_current_mode_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_lvrt_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_lvrt_zero_current_mode_enable": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_cos_phi_p_curve_mode": {
+        "state": {
+          "basic": "Basis",
+          "slope_model": "Steigungs-Modell",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_cosphip_extended_functions": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_enable_curve_cos_phi_p": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_enable_fixed_q": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_enable_qp_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_qp_curve_mode": {
+        "state": {
+          "basic": "Basis",
+          "slope_model": "Steigungs-Modell",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_qu_curve_mode": {
+        "state": {
+          "basic": "Basis",
+          "slope_model": "Steigungs-Modell",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_qu_enable_qu_curve": {
+        "state": {
+          "disable_curve": "Kennlinie deaktivieren",
+          "enable_curve": "Kennlinie aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_rpm_qu_extended_functions": {
+        "state": {
+          "disable": "Deaktivieren",
+          "enable": "Aktivieren",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_vrt_active_power_recovery_mode": {
+        "state": {
+          "disable": "Deaktivieren",
+          "gradient_control": "Gradientenregelung",
+          "pt-1_behaviour": "PT-1-Verhalten",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_vrt_current_distribution_mode": {
+        "state": {
+          "active_power_priority_mode": "Wirkleistungs-Prioritätsmodus",
+          "constant_current_mode": "Konstantstrom-Modus",
+          "reactive_power_priority_mode": "Blindleistungs-Prioritätsmodus",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "v2_vrt_reactive_power_recovery_mode_end": {
+        "state": {
+          "disable": "Deaktivieren",
+          "gradient_control": "Gradientenregelung",
+          "pt-1_behaviour": "PT-1-Verhalten",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "wave_form_detection": {
+        "state": {
+          "off-grid_operation_is_prioritized_with_high_precision": "Inselbetrieb wird mit hoher Präzision priorisiert",
+          "off-grid_operation_is_prioritized_with_low_precision": "Inselbetrieb wird mit geringer Präzision priorisiert",
+          "undefined": "Nicht definiert",
+          "vde_4110_ride_through_operation_is_prioritized": "VDE 4110 Ride-Through-Betrieb wird priorisiert"
+        }
+      },
+      "wifi_led_state": {
+        "state": {
+          "led_flash": "WLAN-LED blinkt",
+          "led_off": "WLAN-LED Aus",
+          "led_on": "WLAN-LED An",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "wifi_or_lan_switch": {
+        "state": {
+          "led_flash": "LED blinkt",
+          "led_on": "LED An",
+          "undefined": "Nicht definiert"
+        }
+      },
+      "wmeter_connect_check_flag": {
+        "state": {
+          "checking": "Prüfung läuft",
+          "stop_checking": "Prüfung gestoppt",
+          "undefined": "Nicht definiert",
+          "wait_for_check": "Warte auf Prüfung"
+        }
+      },
+      "work_mode": {
+        "state": {
+          "cut_off_all_the_connection_to_inverter": "Alle Verbindungen zum Wechselrichter trennen",
+          "fault_fault_mode_something_is_in_fault_mode": "Fehler, Fehlermodus aktiv",
+          "inverter_upgrade": "Wechselrichter-Aktualisierung (Upgrade)",
+          "power_on_self-check_of_inverter": "Selbsttest des Wechselrichters nach dem Einschalten",
+          "pv_inputs_to_inverter_inverter_outputs_to_grid": "PV speist Wechselrichter, Wechselrichter speist Netz",
+          "undefined": "Nicht definiert",
+          "pv_inputs_to_inverter_first_battery_inputs_to_inverter_second_inverter_work_as_ac_source": "PV speist WR (Priorität 1), Batterie speist WR (Priorität 2), WR arbeitet als AC-Quelle"
+        }
+      },
+      "work_week1": {
+        "state": {
+          "backup_mode_disable": "Backup-Modus deaktivieren",
+          "backup_mode_enable": "Backup-Modus aktivieren",
+          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
+          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "eco_mode_disable": "Eco-Modus deaktivieren",
+          "eco_mode_enable": "Eco-Modus aktivieren",
+          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
+          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
+          "undefined": "Nicht definiert",
+          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
+        }
+      },
+      "work_week2": {
+        "state": {
+          "backup_mode_disable": "Backup-Modus deaktivieren",
+          "backup_mode_enable": "Backup-Modus aktivieren",
+          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
+          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "eco_mode_disable": "Eco-Modus deaktivieren",
+          "eco_mode_enable": "Eco-Modus aktivieren",
+          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
+          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
+          "undefined": "Nicht definiert",
+          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
+        }
+      },
+      "work_week3": {
+        "state": {
+          "backup_mode_disable": "Backup-Modus deaktivieren",
+          "backup_mode_enable": "Backup-Modus aktivieren",
+          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
+          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "eco_mode_disable": "Eco-Modus deaktivieren",
+          "eco_mode_enable": "Eco-Modus aktivieren",
+          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
+          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
+          "undefined": "Nicht definiert",
+          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
+        }
+      },
+      "work_week4": {
+        "state": {
+          "backup_mode_disable": "Backup-Modus deaktivieren",
+          "backup_mode_enable": "Backup-Modus aktivieren",
+          "dry_contact_load_mode_enable": "Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "dry_contact_smart_load_mode_disable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt deaktivieren",
+          "dry_contact_smart_load_mode_enable": "Intelligenten Verbrauchermodus über potenzialfreien Kontakt aktivieren",
+          "eco_mode_disable": "Eco-Modus deaktivieren",
+          "eco_mode_enable": "Eco-Modus aktivieren",
+          "peak_shaving_function_disable": "Spitzenkappungsfunktion (Peak Shaving) deaktivieren",
+          "peak_shaving_function_enable": "Spitzenkappungsfunktion (Peak Shaving) aktivieren",
+          "undefined": "Nicht definiert",
+          "dry_contact_load_mode_disable": "Verbrauchermodus über potenzialfreien Kontakt deaktivieren"
+        }
+      },
+      "zvrt_config": {
+        "state": {
+          "both_enable": "Beide aktivieren",
+          "disable": "Deaktivieren",
+          "only_hvrt_enable": "Nur HVRT (Überspannungs-Durchfahren) aktivieren",
+          "only_lvrt_enable": "Nur LVRT (Unterspannungs-Durchfahren) aktivieren",
+          "undefined": "Nicht definiert"
         }
       }
     }
@@ -1944,6 +1539,12 @@
     }
   },
   "selector": {
+    "charge_mode": {
+      "options": {
+        "excess_power": "Überschuss",
+        "force_charge": "Zielwert"
+      }
+    },
     "connection_type": {
       "options": {
         "custom_url": "Individuelle Websocket URL (angegebener Hostname wird nicht verwendet)",
@@ -1953,27 +1554,42 @@
         "web_fenecon": "Fenecon Online Monitoring auf portal.fenecon.de (angegebener Hostname wird nicht verwendet)"
       }
     },
-    "ctrlevcs_s_l_a_s_h_chargemode": {
+    "default_level": {
       "options": {
-        "excess_power": "Überschuss",
-        "force_charge": "Zielwert"
+        "level_1": "Level 1",
+        "level_2": "Level 2",
+        "level_3": "Level 3"
       }
     },
-    "ctrlevcs_s_l_a_s_h_priority": {
+    "delay_charge_risk_level": {
       "options": {
-        "car": "Auto",
-        "storage": "Speicher"
+        "high": "Hoch",
+        "low": "Gering",
+        "medium": "Mittel"
       }
     },
-    "ctrlevsesingle_s_l_a_s_h_mode": {
+    "manual_state": {
+      "options": {
+        "lock": "Sperre",
+        "regular": "Normalbetrieb",
+        "recommendation": "Einschaltempfehlung",
+        "force_on": "Einschaltbefehl"
+      }
+    },
+    "mode": {
       "options": {
         "force": "Schnellladen",
         "minimum": "Minimal Beladung mit PV-Überschuss",
         "surplus": "PV-Überschuss",
-        "zero": "Keine Beladung"
+        "zero": "Keine Beladung",
+        "automatic": "Automatisch",
+        "manual": "Manuell",
+        "off": "Aus",
+        "manual_on": "An",
+        "manual_off": "Aus"
       }
     },
-    "ctrlevsesingle_s_l_a_s_h_phaseswitching": {
+    "phase_switching": {
       "options": {
         "automatic": "Automatisch",
         "disable": "Deaktiviert",
@@ -1981,52 +1597,16 @@
         "force_three_phase": "3-phasig"
       }
     },
-    "ctrlgridoptimizedcharge_s_l_a_s_h_delaychargerisklevel": {
+    "priority": {
       "options": {
-        "high": "Hoch",
-        "low": "Gering",
-        "medium": "Mittel"
+        "car": "Auto",
+        "storage": "Speicher"
       }
     },
-    "ctrlgridoptimizedcharge_s_l_a_s_h_mode": {
-      "options": {
-        "automatic": "Automatisch",
-        "manual": "Manuell",
-        "off": "Aus"
-      }
-    },
-    "ctrlioheatingelement_s_l_a_s_h_defaultlevel": {
-      "options": {
-        "level_1": "Level 1",
-        "level_2": "Level 2",
-        "level_3": "Level 3"
-      }
-    },
-    "ctrlioheatingelement_s_l_a_s_h_mode": {
-      "options": {
-        "automatic": "Automatisch",
-        "manual_on": "An",
-        "manual_off": "Aus"
-      }
-    },
-    "ctrlioheatingelement_s_l_a_s_h_workmode": {
+    "work_mode": {
       "options": {
         "time": "Garantierte Mindestzeit",
         "none": "Überschussleistung, ausschließlich"
-      }
-    },
-    "ctrlioheatpump_s_l_a_s_h_mode": {
-      "options": {
-        "manual": "Manuell",
-        "automatic": "Automatisch"
-      }
-    },
-    "ctrlioheatpump_s_l_a_s_h_manualstate": {
-      "options": {
-        "lock": "Sperre",
-        "regular": "Normalbetrieb",
-        "recommendation": "Einschaltempfehlung",
-        "force_on": "Einschaltbefehl"
       }
     }
   },

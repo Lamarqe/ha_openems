@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import re
 from typing import Any
 
-from openems_client.const import SLASH_ESC
 from openems_client.entry_data import ConnectionProperties
 from openems_client.helpers import to_snake_case
 from openems_client.openems import (
@@ -32,6 +31,8 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 
 from .const import DEFAULT_CHANNELS, DOMAIN
+
+CAMEL_CASE_PATTERN = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 
 
 @dataclass
@@ -215,13 +216,12 @@ def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
 
 
 def translation_key(channel: OpenEMSDataHandler) -> str:
-    """Generate translation key for given channel."""
+    """Generate translation key for given channel, shared by all components."""
     if isinstance(channel, OpenEMSProperty):
         channel_name = channel.name[9:]
     else:
         channel_name = channel.name
-    component_name = re.sub(r"\d+$", "", channel.component.name).lstrip("_")
-    return to_snake_case(component_name) + SLASH_ESC + to_snake_case(channel_name)
+    return to_snake_case(CAMEL_CASE_PATTERN.sub("_", channel_name))
 
 
 def map_user_input(user_input: dict[str, str]) -> ConnectionProperties:

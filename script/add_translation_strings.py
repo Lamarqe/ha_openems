@@ -9,8 +9,8 @@ import re
 # STRINGS_PATH = Path("/workspaces/ha_core/homeassistant/components/openems/strings.json")
 CONFIG_ENTRIES_PATH = Path("./core.config_entries")
 STRINGS_PATH = Path("custom_components/openems/strings.json")
-SLASH_ESC = "_s_l_a_s_h_"
 SNAKE_REPLACE_PATTERN = re.compile(r"[^-a-zA-Z0-9]")
+CAMEL_CASE_PATTERN = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 
 
 def to_snake_case(name: str) -> str:
@@ -19,11 +19,10 @@ def to_snake_case(name: str) -> str:
     return re.sub(r"[_-]{2,}", "_", name).strip("-_")
 
 
-def translation_key(component_name: str, channel_name: str) -> str:
+def translation_key(channel_name: str) -> str:
     """Generate the translation key used by the OpenEMS integration."""
-    component_name = re.sub(r"\d+$", "", component_name).lstrip("_")
     channel_name = channel_name.removeprefix("_Property")
-    return to_snake_case(component_name) + SLASH_ESC + to_snake_case(channel_name)
+    return to_snake_case(CAMEL_CASE_PATTERN.sub("_", channel_name))
 
 
 def main() -> None:
@@ -37,7 +36,7 @@ def main() -> None:
     strings = json.loads(STRINGS_PATH.read_text(encoding="utf-8"))
     sensors = strings.setdefault("entity", {}).setdefault("sensor", {})
 
-    for component_name, component in openems_entry["data"]["components"].items():
+    for component in openems_entry["data"]["components"].values():
         for channel in component["channels"]:
             if not isinstance(channel.get("options"), dict):
                 continue
@@ -46,8 +45,11 @@ def main() -> None:
                 to_snake_case(option_name): option_name.strip()
                 for option_name in channel["options"]
             }
-            key = translation_key(component_name, channel["id"])
-            sensors.setdefault(key, {})["state"] = state
+            key = translation_key(channel["id"])
+            # keys are shared by all components, keep existing spellings
+            states = sensors.setdefault(key, {}).setdefault("state", {})
+            for option_key, option_name in state.items():
+                states.setdefault(option_key, option_name)
 
     STRINGS_PATH.write_text(
         json.dumps(strings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
