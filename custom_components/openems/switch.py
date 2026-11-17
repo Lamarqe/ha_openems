@@ -4,14 +4,20 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
+from openems_client.openems import (
+    OpenEMSBackend,
+    OpenEMSBooleanProperty,
+    OpenEMSComponent,
+)
+
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .config import CONFIG
 from .helpers_ha import OpenEMSConfigEntry, component_device, translation_key
-from .openems import CONFIG, OpenEMSBackend, OpenEMSBooleanProperty, OpenEMSComponent
 
 _LOGGER = logging.getLogger(__name__)
 

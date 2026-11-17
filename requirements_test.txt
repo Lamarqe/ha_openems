@@ -1,4 +1,4 @@
-jsonrpc-websocket==4.1.0
+openems-client==0.2.0
 pytest
 pytest-asyncio
 pytest-cov

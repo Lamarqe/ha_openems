@@ -1,5 +1,6 @@
 """Tests for small helpers used by the OpenEMS integration."""
 
+from openems_client.const import SLASH_ESC
 from unittest.mock import MagicMock
 
 from homeassistant.config_entries import ConfigEntryState
@@ -9,8 +10,8 @@ from homeassistant.helpers import device_registry as dr
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.openems import openems
-from custom_components.openems.const import DOMAIN, SLASH_ESC
+from openems_client import openems
+from custom_components.openems.const import DOMAIN
 from custom_components.openems.helpers_ha import (
     component_from_device,
     to_snake_case,

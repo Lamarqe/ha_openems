@@ -5,6 +5,19 @@ from dataclasses import dataclass
 import re
 from typing import Any, ClassVar
 
+from openems_client.const import SLASH_ESC
+from openems_client.entry_data import ConnectionProperties
+from openems_client.helpers import to_snake_case
+from openems_client.openems import (
+    OpenEMSBackend,
+    OpenEMSComponent,
+    OpenEMSDataHandler,
+    OpenEMSEnumProperty,
+    OpenEMSNumberProperty,
+    OpenEMSProperty,
+    OpenEMSTimeProperty,
+)
+
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
@@ -19,18 +32,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN, SLASH_ESC
-from .entry_data import ConnectionProperties
-from .helpers import to_snake_case
-from .openems import (
-    OpenEMSBackend,
-    OpenEMSComponent,
-    OpenEMSDataHandler,
-    OpenEMSEnumProperty,
-    OpenEMSNumberProperty,
-    OpenEMSProperty,
-    OpenEMSTimeProperty,
-)
+from .const import DOMAIN
 
 
 @dataclass

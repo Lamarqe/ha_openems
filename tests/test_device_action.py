@@ -5,7 +5,7 @@ from collections.abc import Generator
 import pytest
 from custom_components.openems import device_action
 from custom_components.openems.const import DOMAIN
-from custom_components.openems.openems import OpenEMSBooleanProperty
+from openems_client.openems import OpenEMSBooleanProperty
 from custom_components.openems.services import async_setup_services
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError

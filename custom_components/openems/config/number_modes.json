@@ -1,0 +1,32 @@
+[
+  {
+    "channels": [
+      {
+        "id": "_PropertyTargetGridSetpoint",
+        "mode": "box"
+      }
+    ],
+    "component_regexp": "ctrlBalancing\\d+"
+  },
+  {
+    "channels": [
+      {
+        "id": "_PropertyAutomaticRecommendationSurplusPower",
+        "mode": "box"
+      },
+      {
+        "id": "_PropertyAutomaticForceOnSurplusPower",
+        "mode": "box"
+      },
+      {
+        "id": "_PropertyAutomaticLockGridBuyPower",
+        "mode": "box"
+      },
+      {
+        "id": "_PropertyMinimumSwitchingTime",
+        "mode": "box"
+      }
+    ],
+    "component_regexp": "ctrlIoHeatPump\\d+"
+  }
+]

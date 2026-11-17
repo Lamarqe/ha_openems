@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from openems_client.openems import OpenEMSProperty
 import probatio
 
 from homeassistant.const import ATTR_DEVICE_ID, CONF_DEVICE_ID, CONF_DOMAIN, CONF_TYPE
@@ -12,7 +13,6 @@ from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
 from .const import ATTR_PROPERTIES, DOMAIN
 from .helpers_ha import component_from_device, property_selector
-from .openems import OpenEMSProperty
 from .services import SERVICE_UPDATE_COMPONENT_CONFIG
 
 ACTION_TYPE_UPDATE_COMPONENT_CONFIG = "update_component_config"

@@ -5,6 +5,20 @@ import logging
 from typing import Any
 
 import jsonrpc_base
+from openems_client.const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_COMPONENTS,
+    CONF_FORWARD_INTERVAL,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+    CONN_TYPE_CUSTOM_URL,
+    CONN_TYPE_DIRECT_EDGE,
+    CONN_TYPE_LOCAL_FEMS,
+    CONN_TYPE_LOCAL_OPENEMS,
+    CONN_TYPE_WEB_FENECON,
+    ConfigOptions,
+)
+from openems_client.entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from openems_client.openems import OpenEMSBackend
 import probatio
 from yarl import URL
 
@@ -36,9 +50,8 @@ from homeassistant.helpers.selector import (
 )
 
 from . import const as c
-from .entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from .config import CONFIG
 from .helpers_ha import OpenEMSConfigEntry, map_user_input
-from .openems import CONFIG, OpenEMSBackend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,7 +70,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         """Define the config flow input options."""
         if not user_input:
             user_input = {}
-        collapased = user_input.get(CONF_TYPE) == c.CONN_TYPE_DIRECT_EDGE
+        collapased = user_input.get(CONF_TYPE) == CONN_TYPE_DIRECT_EDGE
         schema: probatio.Schema = probatio.Schema(
             {
                 probatio.Optional(
@@ -75,16 +88,16 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                             probatio.Required(
                                 CONF_TYPE,
                                 default=user_input.get(
-                                    CONF_TYPE, c.CONN_TYPE_DIRECT_EDGE
+                                    CONF_TYPE, CONN_TYPE_DIRECT_EDGE
                                 ),
                             ): SelectSelector(
                                 SelectSelectorConfig(
                                     options=[
-                                        c.CONN_TYPE_DIRECT_EDGE,
-                                        c.CONN_TYPE_LOCAL_FEMS,
-                                        c.CONN_TYPE_LOCAL_OPENEMS,
-                                        c.CONN_TYPE_WEB_FENECON,
-                                        c.CONN_TYPE_CUSTOM_URL,
+                                        CONN_TYPE_DIRECT_EDGE,
+                                        CONN_TYPE_LOCAL_FEMS,
+                                        CONN_TYPE_LOCAL_OPENEMS,
+                                        CONN_TYPE_WEB_FENECON,
+                                        CONN_TYPE_CUSTOM_URL,
                                     ],
                                     translation_key="connection_type",
                                     multiple=False,
@@ -137,16 +150,16 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         if (
             user_input[CONF_TYPE]
             in (
-                c.CONN_TYPE_DIRECT_EDGE,
-                c.CONN_TYPE_LOCAL_FEMS,
-                c.CONN_TYPE_LOCAL_OPENEMS,
+                CONN_TYPE_DIRECT_EDGE,
+                CONN_TYPE_LOCAL_FEMS,
+                CONN_TYPE_LOCAL_OPENEMS,
             )
             and not user_input.get(CONF_HOST, "").strip()
         ):
             errors[CONF_HOST] = "host_missing"
             return self._show_form(user_input, errors)
 
-        if user_input[CONF_TYPE] == c.CONN_TYPE_CUSTOM_URL:
+        if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
             if not user_input.get(CONF_URL).strip():
                 errors[c.CONF_MORE_OPTIONS] = "custom_url_missing"
                 return self._show_form(user_input, errors)
@@ -163,11 +176,11 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                 return self._show_form(user_input, errors)
 
         # avoid storing inactive config options in the config entry
-        if user_input[CONF_TYPE] != c.CONN_TYPE_CUSTOM_URL and user_input.get(CONF_URL):
+        if user_input[CONF_TYPE] != CONN_TYPE_CUSTOM_URL and user_input.get(CONF_URL):
             del user_input[CONF_URL]
         if user_input.get(CONF_TYPE) in (
-            c.CONN_TYPE_WEB_FENECON,
-            c.CONN_TYPE_CUSTOM_URL,
+            CONN_TYPE_WEB_FENECON,
+            CONN_TYPE_CUSTOM_URL,
         ) and user_input.get(CONF_HOST):
             del user_input[CONF_HOST]
 
@@ -255,23 +268,23 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         components_options: dict[str, bool] = {}
         for component in components:
             components_options[component] = CONFIG.is_component_enabled(component)
-        options: c.ConfigOptions = {
-            c.CONF_COMPONENTS: components_options,
-            c.CONF_ADVANCED_OPTIONS: {
-                c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
-                c.CONF_FORWARD_INTERVAL: 0,
+        options: ConfigOptions = {
+            CONF_COMPONENTS: components_options,
+            CONF_ADVANCED_OPTIONS: {
+                CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+                CONF_FORWARD_INTERVAL: 0,
             },
         }
 
         # Create meaningful entry title, alter strategy based on selected options
         title: str = ""
         if self._config_data[CONF_TYPE] in (
-            c.CONN_TYPE_DIRECT_EDGE,
-            c.CONN_TYPE_LOCAL_FEMS,
-            c.CONN_TYPE_LOCAL_OPENEMS,
+            CONN_TYPE_DIRECT_EDGE,
+            CONN_TYPE_LOCAL_FEMS,
+            CONN_TYPE_LOCAL_OPENEMS,
         ):
             title = self._config_data[CONF_HOST]
-        elif self._config_data[CONF_TYPE] == c.CONN_TYPE_WEB_FENECON:
+        elif self._config_data[CONF_TYPE] == CONN_TYPE_WEB_FENECON:
             title = "FEMS Web: " + self._config_data[CONF_USERNAME]
         elif config_reader.connection.conn_url.host is not None:
             title = config_reader.connection.conn_url.host
@@ -354,7 +367,7 @@ class OpenEMSOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Manage component selection."""
         if user_input is not None:
-            options = {**self.config_entry.options, c.CONF_COMPONENTS: user_input}
+            options = {**self.config_entry.options, CONF_COMPONENTS: user_input}
             return self.async_create_entry(data=options)
 
         backend: OpenEMSBackend = self.config_entry.runtime_data.backend
@@ -374,19 +387,19 @@ class OpenEMSOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Manage advanced options."""
         if user_input is not None:
-            options = {**self.config_entry.options, c.CONF_ADVANCED_OPTIONS: user_input}
+            options = {**self.config_entry.options, CONF_ADVANCED_OPTIONS: user_input}
             return self.async_create_entry(data=options)
 
-        advanced = self.config_entry.options[c.CONF_ADVANCED_OPTIONS]
+        advanced = self.config_entry.options[CONF_ADVANCED_OPTIONS]
         schema = probatio.Schema(
             {
                 probatio.Required(
-                    c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-                    default=advanced[c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING],
+                    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+                    default=advanced[CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING],
                 ): BooleanSelector(BooleanSelectorConfig()),
                 probatio.Required(
-                    c.CONF_FORWARD_INTERVAL,
-                    default=advanced[c.CONF_FORWARD_INTERVAL],
+                    CONF_FORWARD_INTERVAL,
+                    default=advanced[CONF_FORWARD_INTERVAL],
                 ): NumberSelector(
                     NumberSelectorConfig(
                         min=0, max=3600, step=1, mode=NumberSelectorMode.BOX

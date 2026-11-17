@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock
 
-from custom_components.openems import openems
+from openems_client import openems
 from custom_components.openems.const import DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant

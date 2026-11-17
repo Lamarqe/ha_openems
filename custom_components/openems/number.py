@@ -3,6 +3,12 @@
 from dataclasses import dataclass
 import logging
 
+from openems_client.openems import (
+    OpenEMSBackend,
+    OpenEMSComponent,
+    OpenEMSNumberProperty,
+)
+
 from homeassistant.components.number import (
     NumberEntity,
     NumberEntityDescription,
@@ -13,6 +19,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .config import CONFIG
 from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
@@ -20,7 +27,6 @@ from .helpers_ha import (
     translation_key,
     unit_description,
 )
-from .openems import CONFIG, OpenEMSBackend, OpenEMSComponent, OpenEMSNumberProperty
 
 _LOGGER = logging.getLogger(__name__)
 

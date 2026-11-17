@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import logging
 
 import jsonrpc_base
+from openems_client.openems import OpenEMSBackend, OpenEMSEdge
 
 from homeassistant.components.button import (
     ButtonDeviceClass,
@@ -20,7 +21,6 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import DOMAIN
 from .helpers_ha import OpenEMSConfigEntry
-from .openems import OpenEMSBackend, OpenEMSEdge
 from .update import update_unique_id
 
 _LOGGER = logging.getLogger(__name__)

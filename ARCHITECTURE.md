@@ -7,18 +7,27 @@ This document describes how the OpenEMS integration (`custom_components/openems`
 | Module | Responsibility |
 | --- | --- |
 | `__init__.py` | Config entry setup/unload/migration, options update listener (`update_config`), device removal. Holds the `_PLATFORMS` list. |
-| `entry_data.py` | Websocket connection (`OpenEMSWebSocketConnection`, reconnect logic) and reading the edge configuration (`OpenEMSConfigReader`). No HA imports. |
-| `openems.py` | Backend object model: `OpenEMSBackend` → `OpenEMSEdge` → `OpenEMSComponent` → channels/properties (`OpenEMSDataHandler` subclasses). No HA entity code. |
-| `helpers_openems.py`, `helpers.py` | Pure helpers without HA dependencies. |
 | `helpers_ha.py` | Helpers that use HA classes: `RuntimeData`, `OpenEMSConfigEntry`, `component_device`, `unit_description`, `translation_key`, ... |
-| `config.py`, `config/*.json` | Static channel configuration (`CONFIG` singleton): default enabled channels, enum options, number limits, combined sensors, ... |
+| `const.py` | HA-only constants (`DOMAIN`, `ATTR_*`, config flow keys). |
+| `config.py`, `config/*.json` | Entity presentation options (`CONFIG` singleton): default enabled channels and components (`default_channels.json`), number display mode (`number_modes.json`). |
 | `<platform>.py` | One module per HA platform (`sensor`, `binary_sensor`, `number`, `select`, `switch`, `time`, `update`, `button`). |
 | `config_flow.py`, `services.py`, `device_action.py`, `diagnostics.py` | Remaining HA integration surfaces. |
+
+The protocol implementation lives in the [`openems-client`](https://github.com/Lamarqe/openems-client) library (`openems_client`), which has no HA dependencies:
+
+| Module | Responsibility |
+| --- | --- |
+| `openems_client.entry_data` | Websocket connection (`OpenEMSWebSocketConnection`, reconnect logic) and reading the edge configuration (`OpenEMSConfigReader`). |
+| `openems_client.openems` | Backend object model: `OpenEMSBackend` → `OpenEMSEdge` → `OpenEMSComponent` → channels/properties (`OpenEMSDataHandler` subclasses). |
+| `openems_client.helpers_openems`, `openems_client.helpers` | Pure helpers. |
+| `openems_client.config`, `config/*.json` | Channel type and constraint knowledge missing in the OpenEMS metadata: enum options, time properties, number limits/multiplier/step, update groups. |
+| `openems_client.const` | Connection types, options keys/types and `SLASH_ESC`. |
 
 ### Object model and data flow
 
 - `async_setup_entry` creates one `OpenEMSBackend` per config entry; it owns exactly one edge: `backend.the_edge`.
-- The edge parses the stored component JSON into `OpenEMSComponent`s. Each component sorts its channels into typed lists: `sensors`, `boolean_sensors`, `derived_sensors`, `number_properties`, `enum_properties`, `boolean_properties`, `time_properties`.
+- The edge parses the stored component JSON into `OpenEMSComponent`s. Each component sorts its channels into typed lists: `sensors`, `boolean_sensors`, `number_properties`, `enum_properties`, `boolean_properties`, `time_properties`.
+- Combined sensors are defined in `sensor.COMBINED_SENSORS` as `DerivedChannelDefinition`s (source channel patterns and a Python `value_fn`). `sensor.py` creates their channels with `component.create_derived_channels(...)`.
 - Runtime data lives in `entry.runtime_data` (`RuntimeData`): `backend`, `edge_device` (`info`: `DeviceInfo`, `entry`: `DeviceEntry`) and `add_component_callbacks`.
 - Value updates are push-based: the websocket calls `OpenEMSBackend.edgeRpc` → `OpenEMSEdge.currentData` → registered `OpenEMSDataHandler`s → `notify_ha()` → the entity's registered callback (`async_schedule_update_ha_state`). Channel entities therefore never poll.
 
