@@ -20,7 +20,6 @@ from custom_components.openems.switch import (
 def _make_channel(is_on=None):
     ch = MagicMock()
     ch.is_on = is_on
-    ch.orig_json = {}
     return ch
 
 
@@ -112,7 +111,6 @@ async def test_async_setup_entry_creates_switch_entities(hass: HomeAssistant) ->
     mock_channel = MagicMock()
     mock_channel.name = "_PropertyEnabledCharging"
     mock_channel.unique_id.return_value = "host/edge-1/comp/_PropertyEnabledCharging"
-    mock_channel.orig_json = {}
 
     mock_component = MagicMock()
     mock_component.name = "ctrlEvcs0"

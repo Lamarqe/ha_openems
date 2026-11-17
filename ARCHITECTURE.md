@@ -96,7 +96,7 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
 ```
 
 - Properties (writable `_Property*` channels) use `entity_category=EntityCategory.CONFIG`.
-- The entity sets `self._attr_should_poll = False` and `self._attr_extra_state_attributes = channel.orig_json`.
+- The entity sets `self._attr_should_poll = False`. It has no extra state attributes; the channel metadata is part of the diagnostics.
 - State is read from the channel in properties (`native_value`, `is_on`, ...). Writes go through the channel (`await self._channel.update_value(...)`) followed by `self.async_write_ha_state()`.
 - `async_added_to_hass` calls `self._channel.register_callback(self.async_schedule_update_ha_state)` and `async_will_remove_from_hass` calls `self._channel.unregister_callback()`, each followed by the `super()` call.
 

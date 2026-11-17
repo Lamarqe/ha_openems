@@ -95,7 +95,6 @@ class OpenEMSSwitchEntity(SwitchEntity):
         self._attr_unique_id = channel.unique_id()
         self._attr_device_info = device_info
         self._attr_should_poll = False
-        self._attr_extra_state_attributes = channel.orig_json
 
     @property
     def is_on(self) -> bool | None:

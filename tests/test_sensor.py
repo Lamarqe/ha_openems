@@ -188,7 +188,6 @@ async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) ->
     mock_channel.unit = "W"
     mock_channel.name = "ActivePower"
     mock_channel.unique_id.return_value = "test-host/edge-1/comp1/ActivePower"
-    mock_channel.orig_json = {"id": "ActivePower", "type": "INTEGER", "unit": "W"}
 
     mock_component = MagicMock()
     mock_component.name = "comp1"
@@ -242,7 +241,6 @@ async def test_async_setup_entry_skips_component_with_create_entities_false(
         await sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
-
 
 
 async def test_combined_sensors_for_battery() -> None:
