@@ -8,8 +8,7 @@ This document describes how the OpenEMS integration (`custom_components/openems`
 | --- | --- |
 | `__init__.py` | Config entry setup/unload/migration, options update listener (`update_config`), device removal. Holds the `_PLATFORMS` list. |
 | `helpers_ha.py` | Helpers that use HA classes: `RuntimeData`, `OpenEMSConfigEntry`, `component_device`, `unit_description`, `translation_key`, ... |
-| `const.py` | HA-only constants (`DOMAIN`, `ATTR_*`, config flow keys). |
-| `config.py`, `config/*.json` | Entity presentation options (`CONFIG` singleton): default enabled channels and components (`default_channels.json`), number display mode (`number_modes.json`). |
+| `const.py` | HA-only constants (`DOMAIN`, `ATTR_*`, config flow keys) and `DEFAULT_CHANNELS`, the channels and components enabled by default (lookups `is_channel_enabled` / `is_component_enabled` in `helpers_ha.py`). |
 | `<platform>.py` | One module per HA platform (`sensor`, `binary_sensor`, `number`, `select`, `switch`, `time`, `update`, `button`). |
 | `config_flow.py`, `services.py`, `device_action.py`, `diagnostics.py` | Remaining HA integration surfaces. |
 
@@ -28,13 +27,15 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 - `async_setup_entry` creates one `OpenEMSBackend` per config entry; it owns exactly one edge: `backend.the_edge`.
 - The edge parses the stored component JSON into `OpenEMSComponent`s. Each component sorts its channels into typed lists: `sensors`, `boolean_sensors`, `number_properties`, `enum_properties`, `boolean_properties`, `time_properties`.
 - Combined sensors are defined in `sensor.COMBINED_SENSORS` as `DerivedChannelDefinition`s (source channel patterns and a Python `value_fn`). `sensor.py` creates their channels with `component.create_derived_channels(...)`.
-- Runtime data lives in `entry.runtime_data` (`RuntimeData`): `backend`, `edge_device` (`info`: `DeviceInfo`, `entry`: `DeviceEntry`) and `add_component_callbacks`.
+- Runtime data lives in `entry.runtime_data` (`RuntimeData`): `backend` and `edge_device` (`info`: `DeviceInfo`, `entry`: `DeviceEntry`).
 - Value updates are push-based: the websocket calls `OpenEMSBackend.edgeRpc` → `OpenEMSEdge.currentData` → registered `OpenEMSDataHandler`s → `notify_ha()` → the entity's registered callback (`async_schedule_update_ha_state`). Channel entities therefore never poll.
 
 ### Devices
 
 - One **edge device**, identifier `(DOMAIN, edge.hostname)`, created in `__init__.async_setup_entry`. Its `DeviceInfo` is available as `entry.runtime_data.edge_device.info`.
-- One **component device** per enabled component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`.
+- One **component device** per component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`. `__init__.async_setup_entry` creates them for all components. New devices of components without default channels (`is_component_enabled`) are created with `disabled_by=DeviceEntryDisabler.INTEGRATION`; existing devices keep their state.
+- `component.create_entities` is True only for components with an enabled device. Platforms create entities only for those, so disabled components have no entities at all.
+- Enabling or disabling a component device reloads the config entry (`async_track_device_registry_updated_event` in `async_setup_entry`), which creates or removes the entities of the component.
 - In multi-edge setups the hostname is `"<hostname> <edge id>"`, so identifiers must never be split at the first space.
 
 ### Unique IDs
@@ -78,7 +79,7 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
         for channel in component.<typed channel list>:
             entity_description = OpenEMS<Platform>Description(
                 key=channel.unique_id(),
-                entity_registry_enabled_default=CONFIG.is_channel_enabled(component.name, channel.name),
+                entity_registry_enabled_default=is_channel_enabled(component.name, channel.name),
                 name=channel.name[9:],  # properties: strip "_Property" prefix
                 translation_key=translation_key(channel),
                 ...
@@ -92,16 +93,12 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_<platform>_entities(component)
-
-    # prepare callback for creating new entities during options config flow
-    entry.runtime_data.add_component_callbacks[Platform.<PLATFORM>.value] = _create_<platform>_entities
 ```
 
 - Properties (writable `_Property*` channels) use `entity_category=EntityCategory.CONFIG`.
 - The entity sets `self._attr_should_poll = False` and `self._attr_extra_state_attributes = channel.orig_json`.
 - State is read from the channel in properties (`native_value`, `is_on`, ...). Writes go through the channel (`await self._channel.update_value(...)`) followed by `self.async_write_ha_state()`.
 - `async_added_to_hass` calls `self._channel.register_callback(self.async_schedule_update_ha_state)` and `async_will_remove_from_hass` calls `self._channel.unregister_callback()`, each followed by the `super()` call.
-- The `add_component_callbacks` registration is required: `__init__.update_config` calls it when a component is enabled in the options flow.
 
 ### Variant B: edge level platforms
 

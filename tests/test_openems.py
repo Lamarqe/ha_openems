@@ -8,8 +8,11 @@ from openems_client import openems
 from openems_client.helpers import to_snake_case
 from yarl import URL
 
-from custom_components.openems.config import CONFIG
-from custom_components.openems.helpers_ha import translation_key
+from custom_components.openems.helpers_ha import (
+    is_channel_enabled,
+    is_component_enabled,
+    translation_key,
+)
 
 
 def _make_backend():
@@ -79,7 +82,7 @@ async def test_heat_pump_sg_ready_translations() -> None:
 
 
 def test_heat_pump_sg_ready_defaults() -> None:
-    """SG-Ready heat pump entities are enabled by default, thresholds use box mode."""
+    """SG-Ready heat pump component and entities are enabled by default."""
     for name in (
         "_PropertyMode",
         "_PropertyManualState",
@@ -90,7 +93,6 @@ def test_heat_pump_sg_ready_defaults() -> None:
         "_PropertyMinimumSwitchingTime",
         "Status",
     ):
-        assert CONFIG.is_channel_enabled("ctrlIoHeatPump0", name), name
-    for name in ("_PropertyAutomaticLockGridBuyPower", "_PropertyMinimumSwitchingTime"):
-        assert CONFIG.get_number_mode("ctrlIoHeatPump0", name) == "box"
-    assert CONFIG.is_component_enabled("ctrlIoHeatPump0")
+        assert is_channel_enabled("ctrlIoHeatPump0", name), name
+    assert is_component_enabled("ctrlIoHeatPump0")
+    assert not is_component_enabled("ctrlDebugLog0")

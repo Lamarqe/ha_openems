@@ -288,7 +288,7 @@ Custom URL\* | Custom Websocket URL, eg: `ws://192.168.1.100:8888/websocket`
 In order to change advanced options, start the options flow by selecting the Configure option right next to the config entry name:
 
 <img src="screenshots/options_flow.jpg" width="400"/>
-Afterwards, a menu will show up. Here, select "advanced options. A dialog will appear which allows to change advanced options. The following options are available currently:
+Afterwards, a dialog will appear which allows to change advanced options. The following options are available currently:
 
 | Parameter                             | Description                                                                                                                                                                                                                                                    |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -297,14 +297,9 @@ Afterwards, a menu will show up. Here, select "advanced options. A dialog will a
 
 #### Selection of components and channels to be integrated
 
-After setting up the config entry, there is a [default list](https://github.com/Lamarqe/ha_openems/blob/main/custom_components/openems/config/default_channels.json) of entities which is enabled. Entities for channels outside of these components are initially not created. Other entities within the created components are disabled by default.
+Each component of the configured system is represented by a device. After setting up the config entry, a [default list](https://github.com/Lamarqe/ha_openems/blob/main/custom_components/openems/const.py) (`DEFAULT_CHANNELS`) defines which components and entities are enabled. Devices of components outside of this list are disabled, and no entities are created for them. Entities of enabled components which are not in the list are disabled by default.
 
-In order to add or remove entities of additional or unwanted components, start the options flow by selecting the Configure option right next to the config entry name:
-
-<img src="screenshots/options_flow.jpg" width="400"/>
-Afterwards, a menu will show up. Choose the component selection option. A dialog will appear which allows to enable or disable each component in the configured system (screenshot shortened. Depending on your system configuration, there can be 20 to 50 components available in the list):
-
-<img src="screenshots/options_dialog.jpg" width="200"/>
+In order to add or remove the entities of a component, enable or disable its device: open the devices of the config entry (depending on your system configuration, there can be 20 to 50 of them), select a device and enable or disable it in the device settings. Home Assistant then reloads the integration, which creates or removes the entities of the component.
 
 #### Select entities that will be active in Home Assistant
 

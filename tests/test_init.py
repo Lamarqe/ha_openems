@@ -1,4 +1,4 @@
-"""Tests for config entry setup and options update in __init__.py."""
+"""Tests for config entry setup, migration and options update in __init__.py."""
 
 from openems_client.const import (
     CONF_ADVANCED_OPTIONS,
@@ -12,6 +12,7 @@ from jsonrpc_base.jsonrpc import ProtocolError, TransportError
 import pytest
 
 from custom_components.openems import (
+    async_migrate_entry,
     async_remove_config_entry_device,
     async_setup_entry,
     async_unload_entry,
@@ -24,6 +25,8 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import device_registry as dr
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .helpers_flow import make_mock_connection
 
@@ -44,13 +47,12 @@ _ENTRY_DATA = {
     "components": {"comp1": {}},
 }
 
-_DEFAULT_OPTIONS = {
-    CONF_COMPONENTS: {"comp1": True},
-    CONF_ADVANCED_OPTIONS: {
-        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
-        CONF_FORWARD_INTERVAL: 0,
-    },
+_ADVANCED_OPTIONS = {
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+    CONF_FORWARD_INTERVAL: 0,
 }
+
+_DEFAULT_OPTIONS = {CONF_ADVANCED_OPTIONS: _ADVANCED_OPTIONS}
 
 _FLOW_USER_INPUT = {
     "host": "192.0.2.1",
@@ -279,98 +281,12 @@ async def test_update_config_applies_advanced_options(hass: HomeAssistant) -> No
     }
     hass.config_entries.async_update_entry(
         entry,
-        options={CONF_COMPONENTS: {}, CONF_ADVANCED_OPTIONS: new_advanced},
+        options={CONF_ADVANCED_OPTIONS: new_advanced},
     )
 
     await update_config(hass, entry)
 
     mock_backend.the_edge.set_advanced_options.assert_called_once_with(new_advanced)
-
-
-async def test_update_config_disables_component_removes_entities(
-    hass: HomeAssistant,
-) -> None:
-    """When a component is disabled in options its device and entities are removed."""
-    entry = await _create_real_entry(hass)
-
-    mock_component = MagicMock()
-    mock_component.name = "comp1"
-    mock_component.create_entities = True
-    mock_component.edge.hostname = "host"
-    mock_component.alias = "Component 1"
-
-    mock_backend = MagicMock()
-    mock_backend.the_edge.components = {"comp1": mock_component}
-    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
-
-    # Build a mock device registry that finds a device and a mock entity registry with no entities
-    mock_device = MagicMock()
-    mock_device.id = "device-id-1"
-    mock_device_registry = MagicMock()
-    mock_device_registry.async_get_device_by_identifier.return_value = mock_device
-    mock_entity_registry = MagicMock()
-    mock_entity_registry.async_entries_for_device = MagicMock(return_value=[])
-
-    hass.config_entries.async_update_entry(
-        entry,
-        options={
-            CONF_COMPONENTS: {"comp1": False},
-            CONF_ADVANCED_OPTIONS: {
-                CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
-                CONF_FORWARD_INTERVAL: 0,
-            },
-        },
-    )
-
-    with (
-        patch(
-            "custom_components.openems.dr.async_get", return_value=mock_device_registry
-        ),
-        patch(
-            "custom_components.openems.er.async_get", return_value=mock_entity_registry
-        ),
-        patch(
-            "custom_components.openems.er.async_entries_for_device",
-            return_value=[],
-        ),
-    ):
-        await update_config(hass, entry)
-
-    mock_device_registry.async_remove_device.assert_called_once_with("device-id-1")
-    assert mock_component.create_entities is False
-
-
-async def test_update_config_enables_component_calls_callbacks(
-    hass: HomeAssistant,
-) -> None:
-    """When a component is newly enabled, the add_component_callbacks are invoked."""
-    entry = await _create_real_entry(hass)
-
-    mock_component = MagicMock()
-    mock_component.name = "comp1"
-    mock_component.create_entities = False  # currently disabled
-
-    callback = MagicMock()
-    mock_backend = MagicMock()
-    mock_backend.the_edge.components = {"comp1": mock_component}
-    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
-    entry.runtime_data.add_component_callbacks = {"sensor": callback}
-
-    hass.config_entries.async_update_entry(
-        entry,
-        options={
-            CONF_COMPONENTS: {"comp1": True},
-            CONF_ADVANCED_OPTIONS: {
-                CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
-                CONF_FORWARD_INTERVAL: 0,
-            },
-        },
-    )
-
-    await update_config(hass, entry)
-
-    callback.assert_called_once_with(mock_component)
-    assert mock_component.create_entities is True
 
 
 async def test_update_config_no_options_returns_early(hass: HomeAssistant) -> None:
@@ -384,6 +300,213 @@ async def test_update_config_no_options_returns_early(hass: HomeAssistant) -> No
     await update_config(hass, entry)
 
     mock_backend.the_edge.set_advanced_options.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# async_setup_entry - component devices
+# ---------------------------------------------------------------------------
+
+
+def _make_component(name: str) -> MagicMock:
+    """Return a mock component of the edge with hostname "host"."""
+    component = MagicMock()
+    component.name = name
+    component.alias = name
+    component.edge.hostname = "host"
+    component.create_entities = False
+    return component
+
+
+async def _setup_with_components(
+    hass: HomeAssistant,
+    entry: config_entries.ConfigEntry,
+    components: dict[str, MagicMock],
+) -> None:
+    """Run async_setup_entry with a mock backend containing the given components."""
+    mock_backend = MagicMock()
+    mock_backend.the_edge.hostname = "host"
+    mock_backend.the_edge.components = components
+
+    conn_patch, _ = _make_conn_patches()
+    with (
+        conn_patch,
+        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
+        patch("custom_components.openems.OpenEMSBackend", return_value=mock_backend),
+        patch.object(
+            hass.config_entries,
+            "async_forward_entry_setups",
+            new=AsyncMock(return_value=True),
+        ),
+    ):
+        await async_setup_entry(hass, entry)
+
+
+async def test_setup_entry_creates_component_devices(hass: HomeAssistant) -> None:
+    """Components without default channels get a device disabled by the integration."""
+    entry = await _create_real_entry(hass)
+    components = {
+        "ess0": _make_component("ess0"),
+        "ctrlDebugLog0": _make_component("ctrlDebugLog0"),
+    }
+
+    await _setup_with_components(hass, entry, components)
+
+    device_registry = dr.async_get(hass)
+    ess_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "host ess0"), entry.entry_id
+    )
+    debug_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "host ctrlDebugLog0"), entry.entry_id
+    )
+    assert ess_device.disabled_by is None
+    assert debug_device.disabled_by is dr.DeviceEntryDisabler.INTEGRATION
+    assert components["ess0"].create_entities is True
+    assert components["ctrlDebugLog0"].create_entities is False
+
+
+async def test_setup_entry_keeps_component_device_enabled_by_user(
+    hass: HomeAssistant,
+) -> None:
+    """An existing enabled device keeps its state, so its component gets entities."""
+    entry = await _create_real_entry(hass)
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "host ctrlDebugLog0")}
+    )
+    components = {"ctrlDebugLog0": _make_component("ctrlDebugLog0")}
+
+    await _setup_with_components(hass, entry, components)
+
+    assert components["ctrlDebugLog0"].create_entities is True
+
+
+async def test_setup_entry_keeps_component_device_disabled_by_user(
+    hass: HomeAssistant,
+) -> None:
+    """A device disabled by the user stays disabled, so its component gets no entities."""
+    entry = await _create_real_entry(hass)
+    device_registry = dr.async_get(hass)
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "host ess0")}
+    )
+    device_registry.async_update_device(
+        device.id, disabled_by=dr.DeviceEntryDisabler.USER
+    )
+    components = {"ess0": _make_component("ess0")}
+
+    await _setup_with_components(hass, entry, components)
+
+    assert components["ess0"].create_entities is False
+    assert (
+        device_registry.async_get(device.id).disabled_by is dr.DeviceEntryDisabler.USER
+    )
+
+
+async def test_component_device_enable_schedules_reload(hass: HomeAssistant) -> None:
+    """Enabling or disabling a component device reloads the entry, other changes don't."""
+    entry = await _create_real_entry(hass)
+    await _setup_with_components(
+        hass, entry, {"ctrlDebugLog0": _make_component("ctrlDebugLog0")}
+    )
+    device_registry = dr.async_get(hass)
+    device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "host ctrlDebugLog0"), entry.entry_id
+    )
+
+    with patch.object(hass.config_entries, "async_schedule_reload") as mock_reload:
+        device_registry.async_update_device(device.id, name_by_user="Debug log")
+        await hass.async_block_till_done()
+        mock_reload.assert_not_called()
+
+        device_registry.async_update_device(device.id, disabled_by=None)
+        await hass.async_block_till_done()
+        mock_reload.assert_called_once_with(entry.entry_id)
+
+
+# ---------------------------------------------------------------------------
+# async_migrate_entry
+# ---------------------------------------------------------------------------
+
+
+async def test_migrate_v4_moves_component_selection_to_devices(
+    hass: HomeAssistant,
+) -> None:
+    """Deselected components get devices disabled by the user, options are cleaned."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=4,
+        minor_version=1,
+        data=_ENTRY_DATA,
+        options={
+            CONF_COMPONENTS: {"ess0": True, "meter0": False, "ctrlDebugLog0": False},
+            CONF_ADVANCED_OPTIONS: _ADVANCED_OPTIONS,
+        },
+    )
+    entry.add_to_hass(hass)
+    device_registry = dr.async_get(hass)
+    edge_device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "host")}
+    )
+    for name in ("ess0", "meter0"):
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, f"host {name}")},
+            via_device_id=edge_device.id,
+        )
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert (entry.version, entry.minor_version) == (5, 1)
+    assert entry.options == _DEFAULT_OPTIONS
+    disabled_by = {
+        name: device_registry.async_get_device_by_identifier(
+            (DOMAIN, f"host {name}"), entry.entry_id
+        ).disabled_by
+        for name in ("ess0", "meter0", "ctrlDebugLog0")
+    }
+    assert disabled_by == {
+        "ess0": None,
+        "meter0": dr.DeviceEntryDisabler.USER,
+        "ctrlDebugLog0": dr.DeviceEntryDisabler.USER,
+    }
+
+
+async def test_migrate_v4_without_edge_device(hass: HomeAssistant) -> None:
+    """Without an edge device no component devices are created, options are cleaned."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=4,
+        minor_version=1,
+        data=_ENTRY_DATA,
+        options={
+            CONF_COMPONENTS: {"ctrlDebugLog0": False},
+            CONF_ADVANCED_OPTIONS: _ADVANCED_OPTIONS,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert entry.version == 5
+    assert entry.options == _DEFAULT_OPTIONS
+    device_registry = dr.async_get(hass)
+    assert not dr.async_entries_for_config_entry(device_registry, entry.entry_id)
+
+
+async def test_migrate_v3_continues_to_v5(hass: HomeAssistant) -> None:
+    """A version 3 entry is migrated in one go to version 5."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=3,
+        minor_version=1,
+        data=_ENTRY_DATA,
+        options={"ctrlDebugLog0": False},
+    )
+    entry.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert entry.version == 5
+    assert entry.options == _DEFAULT_OPTIONS
 
 
 # ---------------------------------------------------------------------------

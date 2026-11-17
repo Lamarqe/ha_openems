@@ -10,14 +10,17 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .config import CONFIG
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
-from .helpers_ha import OpenEMSConfigEntry, component_device, translation_key
+from .helpers_ha import (
+    OpenEMSConfigEntry,
+    component_device,
+    is_channel_enabled,
+    translation_key,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +46,7 @@ async def async_setup_entry(
 
         for channel in channel_list:
             # device_class = BinarySensorDeviceClass.WE_DONT_KNOW
-            enable_by_default = CONFIG.is_channel_enabled(component.name, channel.name)
+            enable_by_default = is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMSBinarySensorDescription(
                 key=channel.unique_id(),
                 entity_registry_enabled_default=enable_by_default,
@@ -73,11 +76,6 @@ async def async_setup_entry(
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_sensor_entities(component)
-
-    # prepare callback for creating in new entities during options config flow
-    entry.runtime_data.add_component_callbacks[Platform.BINARY_SENSOR.value] = (
-        _create_sensor_entities
-    )
 
 
 @dataclass(frozen=True, kw_only=True)

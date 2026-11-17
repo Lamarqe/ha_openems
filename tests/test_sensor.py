@@ -208,7 +208,6 @@ async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) ->
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSSensorEntity] = []
     with patch(
@@ -235,7 +234,6 @@ async def test_async_setup_entry_skips_component_with_create_entities_false(
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list = []
     with patch(
@@ -245,28 +243,6 @@ async def test_async_setup_entry_skips_component_with_create_entities_false(
 
     assert created == []
 
-
-async def test_async_setup_entry_registers_add_component_callback(
-    hass: HomeAssistant,
-) -> None:
-    """async_setup_entry stores a callback for dynamic component entity creation."""
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "test-host"
-    mock_backend.the_edge.components = {}
-
-    callbacks: dict = {}
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.add_component_callbacks = callbacks
-
-    with patch(
-        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
-    ):
-        await sensor.async_setup_entry(hass, mock_entry, MagicMock())
-
-    assert "sensor" in callbacks
-    assert callable(callbacks["sensor"])
 
 
 async def test_combined_sensors_for_battery() -> None:

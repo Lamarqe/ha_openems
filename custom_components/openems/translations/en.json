@@ -1949,15 +1949,6 @@
                     "forward_interval": "Interval in seconds to publish channel data. Set to 0 to disable rate limits."
                 },
                 "title": "Advanced options"
-            },
-            "init": {
-                "menu_options": {
-                    "advanced_options": "Advanced options",
-                    "select_components": "Select components"
-                }
-            },
-            "select_components": {
-                "title": "Select components"
             }
         }
     },
