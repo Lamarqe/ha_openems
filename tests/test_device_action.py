@@ -71,10 +71,7 @@ async def test_capabilities_contain_one_field_per_property(
     assert isinstance(fields["enabledCharging"], selector.BooleanSelector)
     assert isinstance(fields["chargeMode"], selector.SelectSelector)
     assert fields["chargeMode"].config["options"] == ["force_charge", "excess_power"]
-    assert (
-        fields["chargeMode"].config["translation_key"]
-        == "ctrlevcs_s_l_a_s_h_chargemode"
-    )
+    assert fields["chargeMode"].config["translation_key"] == "charge_mode"
     assert isinstance(fields["energySessionLimit"], selector.NumberSelector)
     assert fields["energySessionLimit"].config["unit_of_measurement"] == "Wh"
 

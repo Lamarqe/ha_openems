@@ -74,9 +74,10 @@ async def test_heat_pump_sg_ready_translations() -> None:
         )
         for prop in selects.values():
             states = strings["entity"]["select"][translation_key(prop)]["state"]
-            assert set(states) == {o.lower() for o in prop.property_options}
+            # keys are shared by all components, so they may contain further states
+            assert {o.lower() for o in prop.property_options} <= set(states)
         status_states = strings["entity"]["sensor"][translation_key(status)]["state"]
-        assert set(status_states) == {to_snake_case(o) for o in status.options.values()}
+        assert {to_snake_case(o) for o in status.options.values()} <= set(status_states)
     finally:
         edge.stop()
 

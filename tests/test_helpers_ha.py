@@ -1,6 +1,5 @@
 """Tests for small helpers used by the OpenEMS integration."""
 
-from openems_client.const import SLASH_ESC
 from unittest.mock import MagicMock
 
 from homeassistant.config_entries import ConfigEntryState
@@ -38,14 +37,13 @@ def test_translation_key(dummy_backend) -> None:
     component_json = {
         "_PropertyAlias": "a",
         "properties": {},
-        "channels": [{"id": "Some", "type": "INTEGER", "unit": "u"}],
+        "channels": [{"id": "StateMachine", "type": "INTEGER", "unit": "u"}],
     }
     component_config = {"_host": {"Hostname": "h1"}, "comp1": component_json}
     edge = openems.OpenEMSEdge(dummy_backend, "e1", component_config)
     try:
         channel = next(iter(edge.components["comp1"].sensors))
-        tk = translation_key(channel)
-        assert SLASH_ESC in tk
+        assert translation_key(channel) == "state_machine"
     finally:
         edge.stop()
 
