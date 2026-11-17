@@ -6,15 +6,15 @@ import logging
 from openems_client.openems import OpenEMSBackend, OpenEMSComponent, OpenEMSEnumProperty
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.const import EntityCategory, Platform
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .config import CONFIG
 from .helpers_ha import (
     OpenEMSConfigEntry,
     component_device,
+    is_channel_enabled,
     to_snake_case,
     translation_key,
 )
@@ -40,7 +40,7 @@ async def async_setup_entry(
         channel: OpenEMSEnumProperty
         channel_list: list[OpenEMSEnumProperty] = component.enum_properties
         for channel in channel_list:
-            entity_enabled = CONFIG.is_channel_enabled(component.name, channel.name)
+            entity_enabled = is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMSSelectDescription(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
@@ -67,11 +67,6 @@ async def async_setup_entry(
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_select_entities(component)
-
-    # prepare callback for creating in new entities during options config flow
-    entry.runtime_data.add_component_callbacks[Platform.SELECT.value] = (
-        _create_select_entities
-    )
 
 
 @dataclass(frozen=True, kw_only=True)

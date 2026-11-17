@@ -14,16 +14,16 @@ from homeassistant.components.number import (
     NumberEntityDescription,
     NumberMode,
 )
-from homeassistant.const import EntityCategory, Platform
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .config import CONFIG
 from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
     component_device,
+    is_channel_enabled,
     translation_key,
     unit_description,
 )
@@ -49,14 +49,17 @@ async def async_setup_entry(
         channel: OpenEMSNumberProperty
         channel_list: list[OpenEMSNumberProperty] = component.number_properties
         for channel in channel_list:
-            entity_enabled = CONFIG.is_channel_enabled(component.name, channel.name)
+            entity_enabled = is_channel_enabled(component.name, channel.name)
             unit_desc: OpenEMSUnitClass = unit_description(channel.unit)
-            number_mode = CONFIG.get_number_mode(component.name, channel.name)
+            # a fixed step is configured for precise values, which a slider cannot handle
+            number_mode = (
+                NumberMode.BOX if channel.fixed_step is not None else NumberMode.AUTO
+            )
             entity_description = OpenEMSNumberDescription(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                mode=NumberMode.BOX if number_mode == "box" else NumberMode.SLIDER,
+                mode=number_mode,
                 # remove "_Property" prefix
                 name=channel.name[9:],
                 device_class=unit_desc.number_device_class,
@@ -79,11 +82,6 @@ async def async_setup_entry(
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_number_entities(component)
-
-    # prepare callback for creating in new entities during options config flow
-    entry.runtime_data.add_component_callbacks[Platform.NUMBER.value] = (
-        _create_number_entities
-    )
 
 
 @dataclass(frozen=True, kw_only=True)

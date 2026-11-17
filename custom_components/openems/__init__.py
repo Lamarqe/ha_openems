@@ -17,21 +17,23 @@ from openems_client.openems import OpenEMSBackend
 import probatio
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
-from homeassistant.core import CoreState, HomeAssistant
+from homeassistant.core import CoreState, Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_registry import async_migrate_entries
+from homeassistant.helpers.event import async_track_device_registry_updated_event
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 from . import const as c
-from .config import CONFIG
 from .helpers_ha import (
     DeviceRuntimeData,
     OpenEMSConfigEntry,
     RuntimeData,
+    component_device,
     component_identifier,
+    is_component_enabled,
     map_user_input,
 )
 from .services import async_setup_services
@@ -150,17 +152,54 @@ async def async_setup_entry(
         **edge_device_info,
     )
 
-    # 7. Prepare runtime data for later access
+    # 7. Create component devices. Components without default channels start disabled.
+    # Entities are only created for components with an enabled device.
+    component_device_ids: list[str] = []
+    for component in backend.the_edge.components.values():
+        is_new_device = (
+            device_registry.async_get_device_by_identifier(
+                component_identifier(component), config_entry.entry_id
+            )
+            is None
+        )
+        component_device_entry: dr.DeviceEntry = device_registry.async_get_or_create(
+            config_entry_id=config_entry.entry_id,
+            **component_device(edge_device_entry, component),
+        )
+        # disabled_by must not be passed for existing devices, it would overwrite the user's choice
+        if is_new_device and not is_component_enabled(component.name):
+            component_device_entry = device_registry.async_update_device(
+                component_device_entry.id,
+                disabled_by=dr.DeviceEntryDisabler.INTEGRATION,
+            )
+        component.create_entities = not component_device_entry.disabled
+        component_device_ids.append(component_device_entry.id)
+
+    # 8. Prepare runtime data for later access
     config_entry.runtime_data = RuntimeData(
         backend=backend,
         edge_device=DeviceRuntimeData(info=edge_device_info, entry=edge_device_entry),
     )
 
-    # 8. Forward setup to platforms
+    # 9. Forward setup to platforms
     config_entry.async_on_unload(config_entry.add_update_listener(update_config))
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
 
-    # 9. Start backend
+    # 10. Reload to create or remove entities when a component device gets enabled or disabled
+    @callback
+    def _handle_component_device_update(
+        event: Event[dr.EventDeviceRegistryUpdatedData],
+    ) -> None:
+        if event.data["action"] == "update" and "disabled_by" in event.data["changes"]:
+            hass.config_entries.async_schedule_reload(config_entry.entry_id)
+
+    config_entry.async_on_unload(
+        async_track_device_registry_updated_event(
+            hass, component_device_ids, _handle_component_device_update
+        )
+    )
+
+    # 11. Start backend
     backend.start()
 
 
@@ -203,7 +242,7 @@ async def async_migrate_entry(
                 # initialize options with default settings
                 options = {}
                 for component in components:
-                    options[component] = CONFIG.is_component_enabled(component)
+                    options[component] = is_component_enabled(component)
 
             hass.config_entries.async_update_entry(
                 config_entry, data=new_data, options=options, version=2, minor_version=1
@@ -269,6 +308,42 @@ async def async_migrate_entry(
             config_entry.version,
             config_entry.minor_version,
         )
+
+    if config_entry.version == 4:
+        # component selection moved from the options to the device registry
+        options = dict(config_entry.options)
+        components_options: dict[str, bool] = options.pop(CONF_COMPONENTS, {})
+        device_registry = dr.async_get(hass)
+        edge_device = next(
+            (
+                device
+                for device in dr.async_entries_for_config_entry(
+                    device_registry, config_entry.entry_id
+                )
+                if device.via_device_id is None
+            ),
+            None,
+        )
+        if edge_device is not None:
+            hostname = next(iter(edge_device.identifiers))[1]
+            for component_name, enabled in components_options.items():
+                device = device_registry.async_get_or_create(
+                    config_entry_id=config_entry.entry_id,
+                    identifiers={(c.DOMAIN, hostname + " " + component_name)},
+                    via_device_id=edge_device.id,
+                )
+                if not enabled and not device.disabled:
+                    device_registry.async_update_device(
+                        device.id, disabled_by=dr.DeviceEntryDisabler.USER
+                    )
+        hass.config_entries.async_update_entry(
+            config_entry, options=options, version=5, minor_version=1
+        )
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
         return True
 
     return False
@@ -281,32 +356,7 @@ async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
         return
 
     backend: OpenEMSBackend = entry.runtime_data.backend
-    entity_registry = er.async_get(hass)
-    device_registry = dr.async_get(hass)
-
     backend.the_edge.set_advanced_options(entry.options[CONF_ADVANCED_OPTIONS])
-    components_options = entry.options[CONF_COMPONENTS]
-    for comp_name, component in backend.the_edge.components.items():
-        if not components_options.get(comp_name) and component.create_entities:
-            # remove entities
-            device = device_registry.async_get_device_by_identifier(
-                component_identifier(component), entry.entry_id
-            )
-            if not device:
-                continue
-
-            entities = er.async_entries_for_device(entity_registry, device.id, True)
-            for entity in entities:
-                entity_registry.async_remove(entity.entity_id)
-            # remove device
-            device_registry.async_remove_device(device.id)
-
-        # process newly enabled components
-        if components_options.get(comp_name) and not component.create_entities:
-            for callback in entry.runtime_data.add_component_callbacks.values():
-                callback(component)
-
-        component.create_entities = bool(components_options.get(comp_name))
 
 
 async def async_remove_config_entry_device(

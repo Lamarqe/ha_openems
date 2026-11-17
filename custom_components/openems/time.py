@@ -7,13 +7,17 @@ import logging
 from openems_client.openems import OpenEMSBackend, OpenEMSComponent, OpenEMSTimeProperty
 
 from homeassistant.components.time import TimeEntity, TimeEntityDescription
-from homeassistant.const import EntityCategory, Platform
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .config import CONFIG
-from .helpers_ha import OpenEMSConfigEntry, component_device, translation_key
+from .helpers_ha import (
+    OpenEMSConfigEntry,
+    component_device,
+    is_channel_enabled,
+    translation_key,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +40,7 @@ async def async_setup_entry(
         channel: OpenEMSTimeProperty
         channel_list: list[OpenEMSTimeProperty] = component.time_properties
         for channel in channel_list:
-            entity_enabled = CONFIG.is_channel_enabled(component.name, channel.name)
+            entity_enabled = is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMSTimeDescription(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
@@ -61,11 +65,6 @@ async def async_setup_entry(
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_time_entities(component)
-
-    # prepare callback for creating in new entities during options config flow
-    entry.runtime_data.add_component_callbacks[Platform.TIME.value] = (
-        _create_time_entities
-    )
 
 
 @dataclass(frozen=True, kw_only=True)

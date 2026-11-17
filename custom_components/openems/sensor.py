@@ -21,17 +21,16 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .config import CONFIG
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
     component_device,
+    is_channel_enabled,
     to_snake_case,
     translation_key,
     unit_description,
@@ -96,7 +95,7 @@ async def async_setup_entry(
                 state_class = unit_desc.state_class
                 uom = unit_desc.unit
 
-            enable_by_default = CONFIG.is_channel_enabled(component.name, channel.name)
+            enable_by_default = is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMSSensorDescription(
                 key=channel.unique_id(),
                 entity_registry_enabled_default=enable_by_default,
@@ -126,9 +125,7 @@ async def async_setup_entry(
             state_class = unit_desc.state_class
             uom = unit_desc.unit
 
-            enable_by_default = CONFIG.is_channel_enabled(
-                component.name, derived_channel.name
-            )
+            enable_by_default = is_channel_enabled(component.name, derived_channel.name)
             entity_description = OpenEMSSensorDescription(
                 key=derived_channel.unique_id(),
                 entity_registry_enabled_default=enable_by_default,
@@ -161,11 +158,6 @@ async def async_setup_entry(
     for component in backend.the_edge.components.values():
         if component.create_entities:
             _create_sensor_entities(component)
-
-    # prepare callback for creating in new entities during options config flow
-    entry.runtime_data.add_component_callbacks[Platform.SENSOR.value] = (
-        _create_sensor_entities
-    )
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -1931,15 +1931,6 @@
   },
   "options": {
     "step": {
-      "init": {
-        "menu_options": {
-          "select_components": "Komponenten auswählen",
-          "advanced_options": "Erweiterte Optionen"
-        }
-      },
-      "select_components": {
-        "title": "Komponenten auswählen"
-      },
       "advanced_options": {
         "title": "Erweiterte Optionen",
         "data": {

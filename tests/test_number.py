@@ -132,7 +132,6 @@ async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) ->
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSNumberEntity] = []
     with patch(
@@ -144,17 +143,23 @@ async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) ->
     assert isinstance(created[0], OpenEMSNumberEntity)
 
 
-async def test_async_setup_entry_number_mode_from_config(hass: HomeAssistant) -> None:
-    """Numbers configured with mode "box" become input fields, others sliders."""
+async def test_async_setup_entry_number_mode_from_fixed_step(
+    hass: HomeAssistant,
+) -> None:
+    """Numbers with a fixed step become input fields, others use the automatic mode."""
     mock_component = MagicMock()
     mock_component.name = "ctrlIoHeatPump0"
     mock_component.alias = "Heat pump"
     mock_component.edge.hostname = "host"
     mock_component.create_entities = True
     channels = []
-    for name in ("_PropertyMinimumSwitchingTime", "_PropertyAutomaticLockSoc"):
+    for name, fixed_step in (
+        ("_PropertyMinimumSwitchingTime", 1),
+        ("_PropertyAutomaticLockSoc", None),
+    ):
         channel = MagicMock()
         channel.name = name
+        channel.fixed_step = fixed_step
         channel.unit = ""
         channel.unique_id.return_value = f"host/edge-1/ctrlIoHeatPump0/{name}"
         channel.orig_json = {}
@@ -167,7 +172,6 @@ async def test_async_setup_entry_number_mode_from_config(hass: HomeAssistant) ->
     mock_entry.runtime_data.backend.the_edge.components = {
         "ctrlIoHeatPump0": mock_component
     }
-    mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list[OpenEMSNumberEntity] = []
     with patch(
@@ -176,7 +180,7 @@ async def test_async_setup_entry_number_mode_from_config(hass: HomeAssistant) ->
         await number.async_setup_entry(hass, mock_entry, created.extend)
 
     modes = [entity.entity_description.mode for entity in created]
-    assert modes == [NumberMode.BOX, NumberMode.SLIDER]
+    assert modes == [NumberMode.BOX, NumberMode.AUTO]
 
 
 async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -> None:
@@ -191,7 +195,6 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.add_component_callbacks = {}
 
     created: list = []
     with patch(
@@ -200,25 +203,3 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
         await number.async_setup_entry(hass, mock_entry, created.extend)
 
     assert not created
-
-
-async def test_async_setup_entry_registers_add_component_callback(
-    hass: HomeAssistant,
-) -> None:
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "host"
-    mock_backend.the_edge.components = {}
-
-    callbacks: dict = {}
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.add_component_callbacks = callbacks
-
-    with patch(
-        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
-    ):
-        await number.async_setup_entry(hass, mock_entry, MagicMock())
-
-    assert "number" in callbacks
-    assert callable(callbacks["number"])

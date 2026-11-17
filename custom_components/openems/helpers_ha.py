@@ -1,9 +1,8 @@
 """Helper methods using HA classes, eg for Entity creation."""
 
-from collections.abc import Callable
 from dataclasses import dataclass
 import re
-from typing import Any, ClassVar
+from typing import Any
 
 from openems_client.const import SLASH_ESC
 from openems_client.entry_data import ConnectionProperties
@@ -32,7 +31,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN
+from .const import DEFAULT_CHANNELS, DOMAIN
 
 
 @dataclass
@@ -49,7 +48,6 @@ class RuntimeData:
 
     backend: OpenEMSBackend
     edge_device: DeviceRuntimeData
-    add_component_callbacks: ClassVar[dict[str, Callable]] = {}
 
 
 type OpenEMSConfigEntry = ConfigEntry[RuntimeData]
@@ -136,6 +134,20 @@ def component_device(
         identifiers={component_identifier(component)},
         via_device_id=edge_device.id,
         entry_type=dr.DeviceEntryType.SERVICE,
+    )
+
+
+def is_component_enabled(component_name: str) -> bool:
+    """Return True if the component has at least one channel enabled by default."""
+    return any(re.fullmatch(regexp, component_name) for regexp in DEFAULT_CHANNELS)
+
+
+def is_channel_enabled(component_name: str, channel_name: str) -> bool:
+    """Return True if the channel is enabled by default."""
+    return any(
+        channel_name in channels
+        for regexp, channels in DEFAULT_CHANNELS.items()
+        if re.fullmatch(regexp, component_name)
     )
 
 

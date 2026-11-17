@@ -7,7 +7,6 @@ from typing import Any
 import jsonrpc_base
 from openems_client.const import (
     CONF_ADVANCED_OPTIONS,
-    CONF_COMPONENTS,
     CONF_FORWARD_INTERVAL,
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
     CONN_TYPE_CUSTOM_URL,
@@ -15,10 +14,8 @@ from openems_client.const import (
     CONN_TYPE_LOCAL_FEMS,
     CONN_TYPE_LOCAL_OPENEMS,
     CONN_TYPE_WEB_FENECON,
-    ConfigOptions,
 )
 from openems_client.entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
-from openems_client.openems import OpenEMSBackend
 import probatio
 from yarl import URL
 
@@ -50,7 +47,6 @@ from homeassistant.helpers.selector import (
 )
 
 from . import const as c
-from .config import CONFIG
 from .helpers_ha import OpenEMSConfigEntry, map_user_input
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,7 +55,7 @@ _LOGGER = logging.getLogger(__name__)
 class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
-    VERSION = 4
+    VERSION = 5
     MINOR_VERSION = 1
 
     def __init__(self) -> None:
@@ -265,11 +261,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
         # no reconfigure. Create new entry instead
         # initialize options with default settings
-        components_options: dict[str, bool] = {}
-        for component in components:
-            components_options[component] = CONFIG.is_component_enabled(component)
-        options: ConfigOptions = {
-            CONF_COMPONENTS: components_options,
+        options = {
             CONF_ADVANCED_OPTIONS: {
                 CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
                 CONF_FORWARD_INTERVAL: 0,
@@ -357,30 +349,7 @@ class OpenEMSOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage the OpenEMS options."""
-        return self.async_show_menu(
-            step_id="init",
-            menu_options=["select_components", "advanced_options"],
-        )
-
-    async def async_step_select_components(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Manage component selection."""
-        if user_input is not None:
-            options = {**self.config_entry.options, CONF_COMPONENTS: user_input}
-            return self.async_create_entry(data=options)
-
-        backend: OpenEMSBackend = self.config_entry.runtime_data.backend
-        schema: probatio.Schema = probatio.Schema({})
-        for comp_name, comp in backend.the_edge.components.items():
-            bool_selector = BooleanSelector(BooleanSelectorConfig())
-            schema_entry = probatio.Required(comp_name, default=comp.create_entities)
-            schema = schema.extend({schema_entry: bool_selector})
-
-        return self.async_show_form(
-            step_id="select_components",
-            data_schema=schema,
-        )
+        return await self.async_step_advanced_options(user_input)
 
     async def async_step_advanced_options(
         self, user_input: dict[str, Any] | None = None
