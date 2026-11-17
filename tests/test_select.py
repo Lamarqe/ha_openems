@@ -23,7 +23,6 @@ def _make_channel(current_option=None):
     ch = MagicMock()
     ch.current_option = current_option
     ch.property_options = _OPTIONS
-    ch.orig_json = {}
     return ch
 
 
@@ -128,7 +127,6 @@ async def test_async_setup_entry_creates_select_entities(hass: HomeAssistant) ->
     mock_channel.name = "_PropertyChargeMode"
     mock_channel.property_options = _OPTIONS
     mock_channel.unique_id.return_value = "host/edge-1/comp/_PropertyChargeMode"
-    mock_channel.orig_json = {}
 
     mock_component = MagicMock()
     mock_component.name = "ctrlEvcs0"

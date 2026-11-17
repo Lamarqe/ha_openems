@@ -23,7 +23,6 @@ def _make_channel(native_value=None, lower=0.0, upper=1000.0, step=1.0):
     ch.lower_limit = lower
     ch.upper_limit = upper
     ch.step = step
-    ch.orig_json = {}
     return ch
 
 
@@ -115,7 +114,6 @@ async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) ->
     mock_channel.name = "_PropertyEnergyLimit"
     mock_channel.unit = "W"
     mock_channel.unique_id.return_value = "host/edge-1/comp/EnergyLimit"
-    mock_channel.orig_json = {}
 
     mock_component = MagicMock()
     mock_component.name = "ctrlEvcs0"
@@ -162,7 +160,6 @@ async def test_async_setup_entry_number_mode_from_fixed_step(
         channel.fixed_step = fixed_step
         channel.unit = ""
         channel.unique_id.return_value = f"host/edge-1/ctrlIoHeatPump0/{name}"
-        channel.orig_json = {}
         channel.component = mock_component
         channels.append(channel)
     mock_component.number_properties = channels

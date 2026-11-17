@@ -18,7 +18,6 @@ from custom_components.openems.time import OpenEMSTimeDescription, OpenEMSTimeEn
 def _make_channel(native_value=None):
     ch = MagicMock()
     ch.native_value = native_value
-    ch.orig_json = {}
     return ch
 
 
@@ -98,7 +97,6 @@ async def test_async_setup_entry_creates_time_entities(hass: HomeAssistant) -> N
     mock_channel = MagicMock()
     mock_channel.name = "_PropertyManualTargetTime"
     mock_channel.unique_id.return_value = "host/edge-1/comp/_PropertyManualTargetTime"
-    mock_channel.orig_json = {}
 
     mock_component = MagicMock()
     mock_component.name = "ctrlEvcs0"
