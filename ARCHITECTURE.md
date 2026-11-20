@@ -41,6 +41,7 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 
 ### Unique IDs
 
+- Config entry: the edge hostname, read in the config flow (`config_flow._read_edge_hostname`), with `" <edge id>"` in multi-edge setups, so it equals the edge device identifier. Adding the same system twice aborts, and reconfigure and reauth abort when they lead to another system.
 - Channel based entities: `channel.unique_id()` → `<hostname>/<edge id>/<component>/<channel>`.
 - Edge level entities: `<hostname>/<edge id>/<key>` (e.g. `.../update`, `.../check_update`).
 - Unique IDs are persisted in the entity registry. Never change an existing one without a migration in `async_migrate_entry`.

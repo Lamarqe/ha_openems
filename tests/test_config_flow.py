@@ -25,6 +25,7 @@ from openems_client.exceptions import (
     OpenEMSError,
 )
 
+from .conftest import EDGE_HOSTNAME
 from .helpers_flow import make_mock_connection
 
 _USER_INPUT = {
@@ -73,6 +74,7 @@ async def test_form(hass: HomeAssistant, mock_setup_entry: AsyncMock) -> None:
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "1.1.1.1"
+    assert result["result"].unique_id == EDGE_HOSTNAME
     assert result["data"] == {
         CONF_HOST: "1.1.1.1",
         CONF_USERNAME: "test-username",
@@ -402,6 +404,7 @@ async def test_reconfigure_updates_entry_and_clears_cached_configuration(
     entry = MockConfigEntry(
         domain=DOMAIN,
         version=6,
+        unique_id=EDGE_HOSTNAME,
         data={
             CONF_HOST: "2.2.2.2",
             CONF_USERNAME: "old-username",
@@ -464,7 +467,9 @@ async def test_reauth_shows_error_and_recovers(
     expected_error: str,
 ) -> None:
     """A failed login shows an error, valid credentials update the entry."""
-    entry = MockConfigEntry(domain=DOMAIN, version=6, data=_REAUTH_ENTRY_DATA)
+    entry = MockConfigEntry(
+        domain=DOMAIN, version=6, unique_id=EDGE_HOSTNAME, data=_REAUTH_ENTRY_DATA
+    )
     entry.add_to_hass(hass)
 
     result = await entry.start_reauth_flow(hass)
@@ -502,3 +507,68 @@ async def test_reauth_shows_error_and_recovers(
     # the login is validated with the stored connection data and the new credentials
     assert connection_class.call_args.args[0]["host"] == "1.1.1.1"
     assert connection_class.call_args.args[0]["password"] == "new-password"
+
+
+async def test_form_aborts_for_configured_system(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A system that is already configured, e.g. with another connection type, aborts."""
+    MockConfigEntry(domain=DOMAIN, version=6, unique_id=EDGE_HOSTNAME).add_to_hass(hass)
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, edges_patch, components_patch = _success_patches()
+    with conn_patch, edges_patch, components_patch:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT
+        )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    assert not mock_setup_entry.mock_calls
+
+
+async def test_reconfigure_aborts_for_other_system(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Reconfiguring an entry to a different system aborts and keeps the entry data."""
+    entry = MockConfigEntry(
+        domain=DOMAIN, version=6, unique_id="fems2", data=_REAUTH_ENTRY_DATA
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reconfigure_flow(hass)
+    conn_patch, edges_patch, components_patch = _success_patches()
+    with conn_patch, edges_patch, components_patch:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT
+        )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "unique_id_mismatch"
+    assert entry.data == _REAUTH_ENTRY_DATA
+
+
+async def test_reauth_aborts_for_other_system(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Credentials of a different system abort the reauth and keep the entry data."""
+    entry = MockConfigEntry(
+        domain=DOMAIN, version=6, unique_id="fems2", data=_REAUTH_ENTRY_DATA
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+    with patch(
+        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        return_value=make_mock_connection(),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "other-username", CONF_PASSWORD: "other-password"},
+        )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "unique_id_mismatch"
+    assert entry.data == _REAUTH_ENTRY_DATA

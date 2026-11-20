@@ -518,9 +518,38 @@ async def test_migrate_v5_moves_components_to_store(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 1)
+    assert (entry.version, entry.minor_version) == (6, 2)
     assert entry.data == _USER_INPUT
     assert hass_storage[_storage_key(entry)]["data"] == {"comp1": {}}
+
+
+@pytest.mark.parametrize(
+    "edge_identifier",
+    [
+        pytest.param("fems1", id="single_edge"),
+        pytest.param("fems1 edge0", id="multi_edge"),
+    ],
+)
+async def test_migrate_v6_1_sets_unique_id_from_edge_device(
+    hass: HomeAssistant, edge_identifier: str
+) -> None:
+    """The unique ID is taken from the identifier of the edge device."""
+    entry = MockConfigEntry(domain=DOMAIN, version=6, minor_version=1, data=_USER_INPUT)
+    entry.add_to_hass(hass)
+    device_registry = dr.async_get(hass)
+    edge_device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, edge_identifier)}
+    )
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, f"{edge_identifier} ess0")},
+        via_device_id=edge_device.id,
+    )
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert (entry.version, entry.minor_version) == (6, 2)
+    assert entry.unique_id == edge_identifier
 
 
 async def test_migrate_v4_moves_component_selection_to_devices(
@@ -551,7 +580,8 @@ async def test_migrate_v4_moves_component_selection_to_devices(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 1)
+    assert (entry.version, entry.minor_version) == (6, 2)
+    assert entry.unique_id == "host"
     assert entry.options == _DEFAULT_OPTIONS
     disabled_by = {
         name: device_registry.async_get_device_by_identifier(
