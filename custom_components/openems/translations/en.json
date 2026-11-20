@@ -53,13 +53,63 @@
         }
     },
     "entity": {
+        "binary_sensor": {
+            "ctrl_is_blocking_ess": {
+                "name": "Controller is blocking ESS"
+            },
+            "ctrl_is_charging_ess": {
+                "name": "Controller is charging ESS"
+            },
+            "ctrl_is_discharging_ess": {
+                "name": "Controller is discharging ESS"
+            },
+            "restriction_mode": {
+                "name": "Restriction mode"
+            }
+        },
         "button": {
             "restart": {
                 "name": "Restart"
             }
         },
+        "number": {
+            "automatic_force_on_soc": {
+                "name": "Automatic force on SoC"
+            },
+            "automatic_force_on_surplus_power": {
+                "name": "Automatic force on surplus power"
+            },
+            "automatic_lock_grid_buy_power": {
+                "name": "Automatic lock grid buy power"
+            },
+            "automatic_lock_soc": {
+                "name": "Automatic lock SoC"
+            },
+            "automatic_recommendation_surplus_power": {
+                "name": "Automatic recommendation surplus power"
+            },
+            "default_charge_min_power": {
+                "name": "Default charge min power"
+            },
+            "energy_session_limit": {
+                "name": "Energy session limit"
+            },
+            "force_charge_min_power": {
+                "name": "Force charge min power"
+            },
+            "manual_energy_session_limit": {
+                "name": "Manual energy session limit"
+            },
+            "minimum_switching_time": {
+                "name": "Minimum switching time"
+            },
+            "reserve_soc": {
+                "name": "Reserve SoC"
+            }
+        },
         "select": {
             "charge_mode": {
+                "name": "Charge mode",
                 "state": {
                     "excess_power": "Excess power",
                     "force_charge": "Force charge"
@@ -73,6 +123,7 @@
                 }
             },
             "delay_charge_risk_level": {
+                "name": "Delay charge risk level",
                 "state": {
                     "high": "High",
                     "low": "Low",
@@ -80,6 +131,7 @@
                 }
             },
             "manual_state": {
+                "name": "Manual state",
                 "state": {
                     "force_on": "Switch-on command",
                     "lock": "Lock",
@@ -88,6 +140,7 @@
                 }
             },
             "mode": {
+                "name": "Mode",
                 "state": {
                     "force": "Fast",
                     "minimum": "Minimal",
@@ -101,6 +154,7 @@
                 }
             },
             "phase_switching": {
+                "name": "Phase switching",
                 "state": {
                     "automatic": "Automatic",
                     "disable": "Disabled",
@@ -109,6 +163,7 @@
                 }
             },
             "priority": {
+                "name": "Priority",
                 "state": {
                     "car": "Car",
                     "storage": "Storage"
@@ -130,13 +185,26 @@
                     "undefined": "Undefined"
                 }
             },
+            "active_power": {
+                "name": "Active power"
+            },
+            "active_production_energy": {
+                "name": "Active production energy"
+            },
+            "actual_energy": {
+                "name": "Actual energy"
+            },
             "actual_mode": {
+                "name": "Actual mode",
                 "state": {
                     "force": "Force",
                     "minimum": "Minimum",
                     "surplus": "Surplus",
                     "zero": "Zero"
                 }
+            },
+            "actual_power": {
+                "name": "Actual power"
             },
             "arc_self_check_status": {
                 "state": {
@@ -252,11 +320,17 @@
                     "wait_for_force_mode": "WAIT_FOR_FORCE_MODE"
                 }
             },
+            "capacity": {
+                "name": "Capacity"
+            },
             "charge_mode": {
                 "state": {
                     "force-charge": "Force-Charge",
                     "use_surplus_power": "Use surplus power"
                 }
+            },
+            "charge_power": {
+                "name": "Charge power"
             },
             "charge_state": {
                 "state": {
@@ -294,6 +368,12 @@
                     "wifi_mode_of_wifi_lan_module": "Wifi mode of Wifi+Lan module"
                 }
             },
+            "consumption_active_power": {
+                "name": "Consumption active power"
+            },
+            "consumption_max_active_power": {
+                "name": "Consumption max active power"
+            },
             "cpld_warning_code": {
                 "state": {
                     "battery_over_current_hw": "Battery over current hw",
@@ -314,6 +394,15 @@
                     "sek": "SEK",
                     "undefined": "UNDEFINED"
                 }
+            },
+            "dc_charge_energy": {
+                "name": "DC charge energy"
+            },
+            "dc_discharge_energy": {
+                "name": "DC discharge energy"
+            },
+            "dc_discharge_power": {
+                "name": "DC discharge power"
             },
             "debug_ems_power_mode": {
                 "state": {
@@ -484,7 +573,11 @@
                     "undefined": "Undefined"
                 }
             },
+            "delay_charge_maximum_charge_limit": {
+                "name": "Delay charge maximum charge limit"
+            },
             "delay_charge_state": {
+                "name": "Delay charge state",
                 "state": {
                     "active_limit": "Active limit",
                     "avoid_charging_with_low_power_for_more_efficiency": "Avoid charging with low power for more efficiency",
@@ -611,6 +704,30 @@
                     "led_on": "Led On",
                     "undefined": "Undefined"
                 }
+            },
+            "energy_session": {
+                "name": "Energy session"
+            },
+            "ess_active_power": {
+                "name": "ESS active power"
+            },
+            "ess_dc_charge_energy": {
+                "name": "ESS DC charge energy"
+            },
+            "ess_dc_discharge_energy": {
+                "name": "ESS DC discharge energy"
+            },
+            "ess_discharge_power": {
+                "name": "ESS discharge power"
+            },
+            "ess_max_discharge_power": {
+                "name": "ESS max discharge power"
+            },
+            "ess_min_discharge_power": {
+                "name": "ESS min discharge power"
+            },
+            "ess_soc": {
+                "name": "ESS SoC"
             },
             "external_ems_flag": {
                 "state": {
@@ -743,6 +860,12 @@
                     "undefined": "Undefined"
                 }
             },
+            "grid_active_power": {
+                "name": "Grid active power"
+            },
+            "grid_buy_active_energy": {
+                "name": "Grid buy active energy"
+            },
             "grid_feed_in_limitation_type": {
                 "state": {
                     "dynamic_limitation": "Dynamic limitation",
@@ -758,7 +881,14 @@
                     "undefined": "Undefined"
                 }
             },
+            "grid_max_active_power": {
+                "name": "Grid max active power"
+            },
+            "grid_min_active_power": {
+                "name": "Grid min active power"
+            },
             "grid_mode": {
+                "name": "Grid mode",
                 "state": {
                     "off-grid": "Off-Grid",
                     "off-grid_genset": "Off-Grid Genset",
@@ -772,6 +902,9 @@
                     "enable_grid_protect": "Enable grid protect",
                     "undefined": "Undefined"
                 }
+            },
+            "grid_sell_active_energy": {
+                "name": "Grid sell active energy"
             },
             "is_battery_balanced": {
                 "state": {
@@ -810,6 +943,9 @@
                     "undefined": "Undefined"
                 }
             },
+            "maximum_hardware_power": {
+                "name": "Maximum hardware power"
+            },
             "meter_communicate_status": {
                 "state": {
                     "ng": "NG",
@@ -826,6 +962,9 @@
                     "undefined": "Undefined"
                 }
             },
+            "minimum_hardware_power": {
+                "name": "Minimum hardware power"
+            },
             "operation_mode": {
                 "state": {
                     "cut_off_all_the_connection_to_inverter": "cut off all the connection to Inverter",
@@ -836,6 +975,7 @@
                 }
             },
             "phases": {
+                "name": "Phases",
                 "state": {
                     "one_phase": "One Phase",
                     "three_phase": "Three Phase",
@@ -891,6 +1031,21 @@
                     "undefined": "Undefined",
                     "unknown_error": "Unknown error"
                 }
+            },
+            "production_ac_active_power": {
+                "name": "Production AC active power"
+            },
+            "production_active_energy": {
+                "name": "Production active energy"
+            },
+            "production_active_power": {
+                "name": "Production active power"
+            },
+            "production_dc_actual_power": {
+                "name": "Production DC actual power"
+            },
+            "production_max_active_power": {
+                "name": "Production max active power"
             },
             "pv_mode": {
                 "state": {
@@ -1082,7 +1237,11 @@
                     "undefined": "Undefined"
                 }
             },
+            "sell_to_grid_limit_minimum_charge_limit": {
+                "name": "Sell to grid limit minimum charge limit"
+            },
             "sell_to_grid_limit_state": {
+                "name": "Sell to grid limit state",
                 "state": {
                     "active_limitation_fix_limit": "Active limitation - Fix limit",
                     "active_limitation_minimum_charge_power": "Active limitation - Minimum charge power",
@@ -1093,6 +1252,15 @@
                     "selltogridlimit_part_was_not_started_because_there_is_no_production_or_to_less_production": "SellToGridLimit part was not started because there is no production or to less production",
                     "undefined": "Undefined"
                 }
+            },
+            "session_energy": {
+                "name": "Session energy"
+            },
+            "set_charge_power_limit": {
+                "name": "Set charge power limit"
+            },
+            "soc": {
+                "name": "SoC"
             },
             "soc_led1": {
                 "state": {
@@ -1146,6 +1314,7 @@
                 }
             },
             "state": {
+                "name": "State",
                 "state": {
                     "fault": "Fault",
                     "info": "Info",
@@ -1154,6 +1323,7 @@
                 }
             },
             "state_machine": {
+                "name": "State machine",
                 "state": {
                     "error": "Error",
                     "firmware_update": "FIRMWARE_UPDATE",
@@ -1210,6 +1380,7 @@
                 }
             },
             "status": {
+                "name": "Status",
                 "state": {
                     "blocks_everything_till_an_internal_maximum_time_of_default_two_hours": "Lock",
                     "default_energy-efficient_operation": "Normal",
@@ -1238,6 +1409,9 @@
                     "led_on": "Led On",
                     "undefined": "Undefined"
                 }
+            },
+            "target_minute": {
+                "name": "Target minute"
             },
             "ups_std_volt_type": {
                 "state": {
@@ -1516,6 +1690,37 @@
                     "only_lvrt_enable": "Only LVRT enable",
                     "undefined": "Undefined"
                 }
+            }
+        },
+        "switch": {
+            "automatic_force_on_ctrl_enabled": {
+                "name": "Automatic force on controller enabled"
+            },
+            "automatic_lock_ctrl_enabled": {
+                "name": "Automatic lock controller enabled"
+            },
+            "automatic_recommendation_ctrl_enabled": {
+                "name": "Automatic recommendation controller enabled"
+            },
+            "enabled_charging": {
+                "name": "Enabled charging"
+            },
+            "is_ess_charge_from_grid_allowed": {
+                "name": "ESS charge from grid allowed"
+            },
+            "is_reserve_soc_enabled": {
+                "name": "Reserve SoC enabled"
+            },
+            "is_running": {
+                "name": "Running"
+            },
+            "target_time_specified": {
+                "name": "Target time specified"
+            }
+        },
+        "time": {
+            "manual_target_time": {
+                "name": "Manual target time"
             }
         }
     },
