@@ -1868,6 +1868,12 @@
     },
     "update_component_config_failed": {
       "message": "Die Konfiguration der Komponente {component} konnte nicht aktualisiert werden."
+    },
+    "update_failed": {
+      "message": "Die Edge {edge} hat das Update abgelehnt."
+    },
+    "update_not_finished": {
+      "message": "Das Update der Edge {edge} wurde nicht innerhalb von 15 Minuten abgeschlossen."
     }
   },
   "services": {

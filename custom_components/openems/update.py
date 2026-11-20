@@ -6,7 +6,7 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-from openems_client.exceptions import OpenEMSError
+from openems_client.exceptions import OpenEMSConnectionError, OpenEMSError
 from openems_client.openems import OpenEMSBackend, OpenEMSEdge
 
 from homeassistant.components.update import (
@@ -15,10 +15,12 @@ from homeassistant.components.update import (
     UpdateEntityFeature,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import homeassistant.util.dt as dt_util
 
+from .const import DOMAIN
 from .helpers_ha import OpenEMSConfigEntry
 
 SCAN_INTERVAL = timedelta(hours=12)
@@ -80,27 +82,46 @@ class OpenEMSUpdateEntity(UpdateEntity):
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
-        """Install an update."""
+        """Install an update and wait until the edge reports the new version."""
         update_task = asyncio.create_task(self._edge.execute_system_update())
-        # give the backend some time to start the update before checking progress
         update_start_time = dt_util.naive_now()
-        await asyncio.sleep(0.5)
         try:
+            # give the backend some time to start the update before checking progress
+            await asyncio.sleep(0.5)
             # if the update did not finish after 15 minutes, something went wrong
             while dt_util.naive_now() - update_start_time < timedelta(minutes=15):
                 await self.async_update()
                 self.async_write_ha_state()
-                if not self.in_progress:
+                # connection losses are expected, as the edge restarts during the update
+                if (
+                    update_task.done()
+                    and isinstance(error := update_task.exception(), OpenEMSError)
+                    and not isinstance(error, OpenEMSConnectionError)
+                ):
+                    raise HomeAssistantError(
+                        translation_domain=DOMAIN,
+                        translation_key="update_failed",
+                        translation_placeholders={"edge": self._edge.hostname},
+                    ) from error
+                if (
+                    self.available
+                    and not self.in_progress
+                    and self.installed_version == self.latest_version
+                ):
                     _LOGGER.info("Update finished successfully: %s", self.unique_id)
                     return
                 await asyncio.sleep(10)
-            _LOGGER.info(
-                "Update still running after 15 minutes. Stop waiting to finish: %s",
-                self.unique_id,
-            )
         finally:
-            if not update_task.done():
+            if update_task.done():
+                # retrieve the result, a connection loss of the restarting edge is expected
+                update_task.exception()
+            else:
                 update_task.cancel()
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="update_not_finished",
+            translation_placeholders={"edge": self._edge.hostname},
+        )
 
     async def async_update(self) -> None:
         """Trigger the entity status update, will be called after SCAN_INTERVAL."""
