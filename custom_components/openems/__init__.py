@@ -12,7 +12,6 @@ from openems_client.const import (
 from openems_client.entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
 from openems_client.openems import OpenEMSBackend
-import probatio
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import Event, HomeAssistant, callback
@@ -56,13 +55,6 @@ _PLATFORMS: list[Platform] = [
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the OpenEMS integration."""
-
-    try:
-        config = CONFIG_SCHEMA(config)
-    except probatio.ValidationError as err:
-        # Handle invalid configuration
-        _LOGGER.error("Invalid yaml configuration: %s", err)
-
     async_setup_services(hass)
     return True
 
