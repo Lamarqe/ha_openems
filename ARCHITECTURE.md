@@ -61,7 +61,7 @@ Further rules:
 - Entity behaviour is implemented as **methods of the entity class**, not as module-level functions.
 - Entity constructor signature: `(<backend object>, entity_description, device_info)`. It stores the backend object in a typed private attribute (`self._channel` / `self._edge`), and sets `self.entity_description`, `self._attr_unique_id` and `self._attr_device_info`.
 - Use `translation_key` for names. Add new keys to `strings.json`, `translations/en.json` and `translations/de.json` (see `script/update_german_translations.py`).
-- Channel translation keys come from `helpers_ha.translation_key(channel)`: the snake_case channel name without the `_Property` prefix (e.g. `ChargeMode` → `charge_mode`). They are shared by all components, so state translations of one key cover the options of every component with that channel. Every channel in `DEFAULT_CHANNELS` that creates an entity has a `name` under its key (checked by `test_default_channels_have_translated_names`); all other channels show the channel id (`name=channel.name`) as fallback.
+- Channel translation keys come from `helpers_ha.translation_key(channel)`: the snake_case channel name without the `_Property` prefix (e.g. `ChargeMode` → `charge_mode`). They are shared by all components, so state translations of one key cover the options of every component with that channel. Every channel in `DEFAULT_CHANNELS` that creates an entity has a `name` under its key (checked by `test_default_channels_have_translated_names`); platforms pass `name=UNDEFINED` for them, so HA uses the translation. All other channels pass the channel id as `name`.
 
 ### Variant A: channel based platforms
 
@@ -78,10 +78,12 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
 
         entities: list[OpenEMS<Platform>Entity] = []
         for channel in component.<typed channel list>:
+            entity_enabled = is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMS<Platform>Description(
                 key=channel.unique_id(),
-                entity_registry_enabled_default=is_channel_enabled(component.name, channel.name),
-                name=channel.name[9:],  # properties: strip "_Property" prefix
+                entity_registry_enabled_default=entity_enabled,
+                # translated name for default channels; properties: strip "_Property" prefix
+                name=UNDEFINED if entity_enabled else channel.name[9:],
                 translation_key=translation_key(channel),
                 ...
             )
