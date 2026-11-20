@@ -1,6 +1,5 @@
 """Tests for the OpenEMS sensor platform."""
 
-from openems_client.const import CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.sensor import (
@@ -14,6 +13,10 @@ from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 import pytest
 
 from custom_components.openems import sensor
+from custom_components.openems.const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+)
 from openems_client.openems import OpenEMSChannel, OpenEMSEdge
 from yarl import URL
 from custom_components.openems.sensor import (
@@ -26,15 +29,18 @@ from custom_components.openems.sensor import (
 # ---------------------------------------------------------------------------
 
 
-def _make_entity(channel=None, state_class=None) -> OpenEMSSensorEntity:
+def _make_entity(
+    channel=None, state_class=None, ignore_decreasing: bool = False
+) -> OpenEMSSensorEntity:
     """Build an OpenEMSSensorEntity backed by a mock channel."""
     if channel is None:
         channel = MagicMock()
-        channel.native_value = None
+        channel.value = None
     desc = OpenEMSSensorDescription(
         key="test/key",
         name="TestChannel",
         state_class=state_class,
+        ignore_decreasing=ignore_decreasing,
     )
     device_info = DeviceInfo(name="dev", identifiers={("openems", "dev")})
     return OpenEMSSensorEntity(channel, desc, device_info)
@@ -48,21 +54,21 @@ def _make_entity(channel=None, state_class=None) -> OpenEMSSensorEntity:
 def test_native_value_none_when_channel_has_no_value() -> None:
     """Entity returns None when the underlying channel carries no value."""
     channel = MagicMock()
-    channel.native_value = None
+    channel.value = None
     assert _make_entity(channel).native_value is None
 
 
 def test_native_value_string_converted_to_snake_case() -> None:
     """String values (ENUM sensors) are lowercased and normalised to snake_case."""
     channel = MagicMock()
-    channel.native_value = "EXCESS_POWER"
+    channel.value = "EXCESS_POWER"
     assert _make_entity(channel).native_value == "excess_power"
 
 
 def test_native_value_numeric_passed_through_unchanged() -> None:
     """Numeric values are returned as-is."""
     channel = MagicMock()
-    channel.native_value = 42.5
+    channel.value = 42.5
     assert _make_entity(channel).native_value == 42.5
 
 
@@ -79,14 +85,15 @@ def test_total_increasing_channel_update(
 ) -> None:
     """A channel update keeps the previous value only for an ignored decrease."""
     channel = MagicMock()
-    channel.component.edge.advanced_options = {
-        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: ignore_decreasing
-    }
-    entity = _make_entity(channel, state_class=SensorStateClass.TOTAL_INCREASING)
+    entity = _make_entity(
+        channel,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        ignore_decreasing=ignore_decreasing,
+    )
     entity.async_schedule_update_ha_state = MagicMock()
     entity.previous_increasing_value_not_null = 100.0
 
-    channel.native_value = new_value
+    channel.value = new_value
     entity._handle_channel_update()
 
     assert entity.native_value == expected_value
@@ -97,11 +104,10 @@ def test_total_increasing_channel_update(
 def test_native_value_does_not_change_the_previous_value() -> None:
     """Reading the value has no side effects, only channel updates are remembered."""
     channel = MagicMock()
-    channel.native_value = 150.0
-    channel.component.edge.advanced_options = {
-        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True
-    }
-    entity = _make_entity(channel, state_class=SensorStateClass.TOTAL_INCREASING)
+    channel.value = 150.0
+    entity = _make_entity(
+        channel, state_class=SensorStateClass.TOTAL_INCREASING, ignore_decreasing=True
+    )
     entity.previous_increasing_value_not_null = 100.0
 
     assert entity.native_value == 150.0
@@ -113,28 +119,19 @@ def test_native_value_does_not_change_the_previous_value() -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_async_added_registers_callback_on_channel() -> None:
-    """async_added_to_hass passes the update callback to the channel."""
+async def test_async_added_adds_listener_removed_with_entity() -> None:
+    """The entity listens to the channel until it is removed."""
     channel = MagicMock()
-    channel.native_value = None
     entity = _make_entity(channel)
 
     with patch.object(SensorEntity, "async_added_to_hass", new=AsyncMock()):
         await entity.async_added_to_hass()
 
-    channel.register_callback.assert_called_once_with(entity._handle_channel_update)
-
-
-async def test_async_will_remove_unregisters_callback() -> None:
-    """async_will_remove_from_hass tears down the channel callback."""
-    channel = MagicMock()
-    channel.native_value = None
-    entity = _make_entity(channel)
-
-    with patch.object(SensorEntity, "async_will_remove_from_hass", new=AsyncMock()):
-        await entity.async_will_remove_from_hass()
-
-    channel.unregister_callback.assert_called_once()
+    channel.add_listener.assert_called_once_with(entity._handle_channel_update)
+    remove_listener = channel.add_listener.return_value
+    remove_listener.assert_not_called()
+    entity._call_on_remove_callbacks()
+    remove_listener.assert_called_once()
 
 
 def test_enum_channel_maps_integer_to_snake_case_option() -> None:
@@ -204,7 +201,6 @@ async def test_async_setup_entry_creates_sensor_entities(
     mock_component.name = component_name
     mock_component.alias = "Test Component"
     mock_component.edge.hostname = "test-host"
-    mock_component.create_entities = True
     mock_component.sensors = [mock_channel]
     mock_component.create_derived_channels.return_value = []
 
@@ -217,7 +213,11 @@ async def test_async_setup_entry_creates_sensor_entities(
 
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
+    mock_entry.options = {
+        CONF_ADVANCED_OPTIONS: {CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True}
+    }
     mock_entry.runtime_data.backend = mock_backend
+    mock_entry.runtime_data.enabled_components = [mock_component]
 
     created: list[OpenEMSSensorEntity] = []
     with patch(
@@ -228,15 +228,15 @@ async def test_async_setup_entry_creates_sensor_entities(
     assert len(created) == 1
     assert isinstance(created[0], OpenEMSSensorEntity)
     assert created[0].entity_description.name == expected_name
+    assert created[0].entity_description.ignore_decreasing is True
 
 
-async def test_async_setup_entry_skips_component_with_create_entities_false(
+async def test_async_setup_entry_skips_disabled_component(
     hass: HomeAssistant,
 ) -> None:
-    """Components where create_entities=False produce no sensor entities."""
+    """Components without an enabled device produce no sensor entities."""
     mock_component = MagicMock()
     mock_component.name = "ignored"
-    mock_component.create_entities = False
 
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "test-host"
@@ -244,7 +244,11 @@ async def test_async_setup_entry_skips_component_with_create_entities_false(
 
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
+    mock_entry.options = {
+        CONF_ADVANCED_OPTIONS: {CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True}
+    }
     mock_entry.runtime_data.backend = mock_backend
+    mock_entry.runtime_data.enabled_components = []
 
     created: list = []
     with patch(
@@ -295,17 +299,17 @@ async def test_combined_sensors_for_battery() -> None:
         voltage_difference = derived["VoltageDifference"]
         voltage_difference.handle_data_update("battery0/MaxCellVoltage", 3500)
         voltage_difference.handle_data_update("battery0/MinCellVoltage", 3300)
-        assert voltage_difference.native_value == 200
+        assert voltage_difference.value == 200
 
         module_difference = derived["Tower0Module0CellVoltageDifference"]
         module_difference.handle_data_update(
             "battery0/Tower0Module0Cell000Voltage", 3310
         )
-        assert module_difference.native_value is None
+        assert module_difference.value is None
         module_difference.handle_data_update(
             "battery0/Tower0Module0Cell001Voltage", 3350
         )
-        assert module_difference.native_value == 40
+        assert module_difference.value == 40
     finally:
         await edge.stop()
 

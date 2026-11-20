@@ -18,7 +18,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
-from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.connection import OpenEMSConfigReader
 from openems_client.exceptions import OpenEMSConnectionError, OpenEMSError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 

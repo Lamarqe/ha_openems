@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING
 
-from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.connection import OpenEMSConfigReader
 from openems_client.exceptions import OpenEMSError
 from openems_client.openems import OpenEMSBackend, OpenEMSEdge
 

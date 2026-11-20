@@ -5,7 +5,6 @@ import logging
 import re
 from typing import Any
 
-from openems_client.const import CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
 from openems_client.openems import (
     DerivedChannelDefinition,
     OpenEMSBackend,
@@ -26,7 +25,14 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
-from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
+from .const import (
+    ATTR_TIMEOUT,
+    ATTR_UPDATE_CYCLE,
+    ATTR_VALUE,
+    CONF_ADVANCED_OPTIONS,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+    DOMAIN,
+)
 from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
@@ -106,6 +112,7 @@ async def async_setup_entry(
                 state_class=state_class,
                 native_unit_of_measurement=uom,
                 translation_key=translation_key(channel),
+                ignore_decreasing=ignore_decreasing,
             )
             entities.append(
                 OpenEMSSensorEntity(
@@ -137,6 +144,7 @@ async def async_setup_entry(
                 state_class=state_class,
                 native_unit_of_measurement=uom,
                 translation_key=translation_key(derived_channel),
+                ignore_decreasing=ignore_decreasing,
             )
             entities.append(
                 OpenEMSSensorEntity(
@@ -150,6 +158,9 @@ async def async_setup_entry(
     ############ END MARKER _create_sensor_entities ##############
 
     backend: OpenEMSBackend = entry.runtime_data.backend
+    ignore_decreasing: bool = entry.options[CONF_ADVANCED_OPTIONS][
+        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
+    ]
     device_registry = dr.async_get(hass)
     # Create the edge device
     device_registry.async_get_or_create(
@@ -158,9 +169,8 @@ async def async_setup_entry(
         identifiers={(DOMAIN, backend.the_edge.hostname)},
     )
     component: OpenEMSComponent
-    for component in backend.the_edge.components.values():
-        if component.create_entities:
-            _create_sensor_entities(component)
+    for component in entry.runtime_data.enabled_components:
+        _create_sensor_entities(component)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -168,6 +178,8 @@ class OpenEMSSensorDescription(SensorEntityDescription):
     """Definition of OpenEMS sensor attributes."""
 
     has_entity_name = True
+    # drop decreasing values of total increasing sensors, see advanced options
+    ignore_decreasing: bool = False
 
 
 class OpenEMSSensorEntity(SensorEntity):
@@ -192,7 +204,7 @@ class OpenEMSSensorEntity(SensorEntity):
     @property
     def native_value(self) -> str | float | int | None:
         """Return the value of the sensor."""
-        val = self._channel.native_value
+        val = self._channel.value
         if val is None:
             return None
         if isinstance(val, str):
@@ -206,9 +218,7 @@ class OpenEMSSensorEntity(SensorEntity):
         """Return True if val is a decrease of a total increasing sensor to be ignored."""
         return (
             self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING
-            and self._channel.component.edge.advanced_options[
-                CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
-            ]
+            and self.entity_description.ignore_decreasing
             and self.previous_increasing_value_not_null is not None
             and self.previous_increasing_value_not_null > val
         )
@@ -216,7 +226,7 @@ class OpenEMSSensorEntity(SensorEntity):
     @callback
     def _handle_channel_update(self) -> None:
         """Remember the last accepted value of total increasing sensors, write the state."""
-        val = self._channel.native_value
+        val = self._channel.value
         if (
             self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING
             and val is not None
@@ -244,10 +254,5 @@ class OpenEMSSensorEntity(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
-        self._channel.register_callback(self._handle_channel_update)
+        self.async_on_remove(self._channel.add_listener(self._handle_channel_update))
         await super().async_added_to_hass()
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Entity removed."""
-        self._channel.unregister_callback()
-        await super().async_will_remove_from_hass()

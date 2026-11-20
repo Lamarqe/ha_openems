@@ -17,7 +17,7 @@ from custom_components.openems.time import OpenEMSTimeDescription, OpenEMSTimeEn
 
 def _make_channel(native_value=None):
     ch = MagicMock()
-    ch.native_value = native_value
+    ch.value = native_value
     return ch
 
 
@@ -49,16 +49,16 @@ def test_native_value_proxied_from_channel() -> None:
 
 
 async def test_async_set_value_calls_channel() -> None:
-    """async_set_value must delegate to the channel's async_set_value."""
+    """async_set_value must delegate to the channel's update_value."""
     channel = _make_channel()
-    channel.async_set_value = AsyncMock()
+    channel.update_value = AsyncMock()
     entity = _make_entity(channel)
     entity.async_write_ha_state = MagicMock()
 
     t = time(12, 0)
     await entity.async_set_value(t)
 
-    channel.async_set_value.assert_awaited_once_with(t)
+    channel.update_value.assert_awaited_once_with(t)
 
 
 # ---------------------------------------------------------------------------
@@ -66,26 +66,19 @@ async def test_async_set_value_calls_channel() -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_async_added_registers_callback() -> None:
-    channel = _make_channel()
+async def test_async_added_adds_listener_removed_with_entity() -> None:
+    """The entity listens to the channel until it is removed."""
+    channel = MagicMock()
     entity = _make_entity(channel)
 
     with patch.object(TimeEntity, "async_added_to_hass", new=AsyncMock()):
         await entity.async_added_to_hass()
 
-    channel.register_callback.assert_called_once_with(
-        entity.async_schedule_update_ha_state
-    )
-
-
-async def test_async_will_remove_unregisters_callback() -> None:
-    channel = _make_channel()
-    entity = _make_entity(channel)
-
-    with patch.object(TimeEntity, "async_will_remove_from_hass", new=AsyncMock()):
-        await entity.async_will_remove_from_hass()
-
-    channel.unregister_callback.assert_called_once()
+    channel.add_listener.assert_called_once_with(entity.async_schedule_update_ha_state)
+    remove_listener = channel.add_listener.return_value
+    remove_listener.assert_not_called()
+    entity._call_on_remove_callbacks()
+    remove_listener.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +95,6 @@ async def test_async_setup_entry_creates_time_entities(hass: HomeAssistant) -> N
     mock_component.name = "ctrlEvcs0"
     mock_component.alias = "EV Charger"
     mock_component.edge.hostname = "host"
-    mock_component.create_entities = True
     mock_component.time_properties = [mock_channel]
     mock_channel.component = mock_component
 
@@ -113,6 +105,7 @@ async def test_async_setup_entry_creates_time_entities(hass: HomeAssistant) -> N
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
+    mock_entry.runtime_data.enabled_components = [mock_component]
 
     created: list[OpenEMSTimeEntity] = []
     with patch("custom_components.openems.time.dr.async_get", return_value=MagicMock()):
@@ -125,7 +118,6 @@ async def test_async_setup_entry_creates_time_entities(hass: HomeAssistant) -> N
 async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -> None:
     mock_component = MagicMock()
     mock_component.name = "ignored"
-    mock_component.create_entities = False
 
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
@@ -134,6 +126,7 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
+    mock_entry.runtime_data.enabled_components = []
 
     created: list = []
     with patch("custom_components.openems.time.dr.async_get", return_value=MagicMock()):

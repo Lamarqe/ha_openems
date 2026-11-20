@@ -1,18 +1,19 @@
 """Tests for the OpenEMS options flow (advanced options)."""
 
-from openems_client.const import (
-    CONF_ADVANCED_OPTIONS,
-    CONF_FORWARD_INTERVAL,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-)
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from homeassistant import config_entries
+import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.openems.const import DOMAIN
-from openems_client.entry_data import OpenEMSConfigReader
+from custom_components.openems.const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_FORWARD_INTERVAL,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+    DOMAIN,
+)
+from openems_client.connection import OpenEMSConfigReader
 
 from .helpers_flow import make_mock_connection
 
@@ -87,40 +88,30 @@ async def test_advanced_options_shows_form(hass: HomeAssistant) -> None:
     assert CONF_FORWARD_INTERVAL in schema_keys
 
 
-async def test_advanced_options_saves_forward_interval(hass: HomeAssistant) -> None:
-    """Changing the forward_interval must be stored in options."""
+@pytest.mark.parametrize(
+    ("ignore_decreasing", "forward_interval"),
+    [
+        pytest.param(False, 30, id="forward_interval"),
+        pytest.param(True, 0, id="ignore_decreasing"),
+    ],
+)
+async def test_advanced_options_are_saved_and_reload_the_entry(
+    hass: HomeAssistant,
+    mock_setup_entry: AsyncMock,
+    ignore_decreasing: bool,
+    forward_interval: int,
+) -> None:
+    """Saved advanced options are stored and take effect with a reload of the entry."""
     entry = await _create_entry(hass)
+    user_input = {
+        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: ignore_decreasing,
+        CONF_FORWARD_INTERVAL: forward_interval,
+    }
 
     flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
-    result = await hass.config_entries.options.async_configure(
-        flow_id,
-        {
-            CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
-            CONF_FORWARD_INTERVAL: 30,
-        },
-    )
+    result = await hass.config_entries.options.async_configure(flow_id, user_input)
+    await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_ADVANCED_OPTIONS][CONF_FORWARD_INTERVAL] == 30
-
-
-async def test_advanced_options_saves_ignore_decreasing(hass: HomeAssistant) -> None:
-    """Enabling ignore_decreasing_if_total_increasing must be stored in options."""
-    entry = await _create_entry(hass)
-
-    flow_id = (await hass.config_entries.options.async_init(entry.entry_id))["flow_id"]
-    result = await hass.config_entries.options.async_configure(
-        flow_id,
-        {
-            CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True,
-            CONF_FORWARD_INTERVAL: 0,
-        },
-    )
-
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert (
-        result["data"][CONF_ADVANCED_OPTIONS][
-            CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
-        ]
-        is True
-    )
+    assert entry.options == {CONF_ADVANCED_OPTIONS: user_input}
+    mock_setup_entry.assert_awaited_once()

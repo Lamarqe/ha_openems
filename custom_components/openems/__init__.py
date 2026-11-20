@@ -2,16 +2,10 @@
 
 import logging
 
-from openems_client.const import (
-    CONF_ADVANCED_OPTIONS,
-    CONF_COMPONENTS,
-    CONF_FORWARD_INTERVAL,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-    CONN_TYPE_DIRECT_EDGE,
-)
-from openems_client.entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from openems_client.connection import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from openems_client.const import CONN_TYPE_DIRECT_EDGE
 from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
-from openems_client.openems import OpenEMSBackend
+from openems_client.openems import OpenEMSBackend, OpenEMSComponent
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import Event, HomeAssistant, callback
@@ -38,6 +32,9 @@ from .helpers_ha import (
 from .services import async_setup_services
 
 CONFIG_SCHEMA = cv.empty_config_schema(c.DOMAIN)
+
+# options key of the component selection of configuration version 4
+CONF_COMPONENTS = "components"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -122,13 +119,15 @@ async def async_setup_entry(
 
     # 5. Read and set config options
     # ==================== TODO REMOVE_LATER_START ============================
-    advanced = dict(config_entry.options.get(CONF_ADVANCED_OPTIONS, {}))
-    if CONF_FORWARD_INTERVAL not in advanced:
-        advanced[CONF_FORWARD_INTERVAL] = 0
-        options = {**config_entry.options, CONF_ADVANCED_OPTIONS: advanced}
+    advanced = dict(config_entry.options.get(c.CONF_ADVANCED_OPTIONS, {}))
+    if c.CONF_FORWARD_INTERVAL not in advanced:
+        advanced[c.CONF_FORWARD_INTERVAL] = 0
+        options = {**config_entry.options, c.CONF_ADVANCED_OPTIONS: advanced}
         hass.config_entries.async_update_entry(config_entry, options=options)
     # ==================== TODO REMOVE_LATER_END ============================
-    backend.the_edge.set_config_options(config_entry.options)
+    backend.the_edge.set_forward_interval(
+        config_entry.options[c.CONF_ADVANCED_OPTIONS][c.CONF_FORWARD_INTERVAL]
+    )
 
     # 6. Create central edge device in HA device registry, so that all component devices can be linked to it
     edge_device_identifiers = {(c.DOMAIN, backend.the_edge.hostname)}
@@ -146,6 +145,7 @@ async def async_setup_entry(
     # 7. Create component devices. Components without default channels start disabled.
     # Entities are only created for components with an enabled device.
     component_device_ids: list[str] = []
+    enabled_components: list[OpenEMSComponent] = []
     for component in backend.the_edge.components.values():
         is_new_device = (
             device_registry.async_get_device_by_identifier(
@@ -163,17 +163,18 @@ async def async_setup_entry(
                 component_device_entry.id,
                 disabled_by=dr.DeviceEntryDisabler.INTEGRATION,
             )
-        component.create_entities = not component_device_entry.disabled
+        if not component_device_entry.disabled:
+            enabled_components.append(component)
         component_device_ids.append(component_device_entry.id)
 
     # 8. Prepare runtime data for later access
     config_entry.runtime_data = RuntimeData(
         backend=backend,
         edge_device=DeviceRuntimeData(info=edge_device_info, entry=edge_device_entry),
+        enabled_components=enabled_components,
     )
 
     # 9. Forward setup to platforms
-    config_entry.async_on_unload(config_entry.add_update_listener(update_config))
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
 
     # 10. Reload to create or remove entities when a component device gets enabled or disabled
@@ -293,9 +294,9 @@ async def async_migrate_entry(
         old_options = dict(config_entry.options)
         new_options = {
             CONF_COMPONENTS: old_options,
-            CONF_ADVANCED_OPTIONS: {
-                CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
-                CONF_FORWARD_INTERVAL: 0,
+            c.CONF_ADVANCED_OPTIONS: {
+                c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+                c.CONF_FORWARD_INTERVAL: 0,
             },
         }
         hass.config_entries.async_update_entry(
@@ -386,16 +387,6 @@ async def async_migrate_entry(
         return True
 
     return False
-
-
-async def update_config(hass: HomeAssistant, entry: OpenEMSConfigEntry) -> None:
-    """Handle options update."""
-
-    if not entry.options:
-        return
-
-    backend: OpenEMSBackend = entry.runtime_data.backend
-    backend.the_edge.set_advanced_options(entry.options[CONF_ADVANCED_OPTIONS])
 
 
 async def async_remove_config_entry_device(

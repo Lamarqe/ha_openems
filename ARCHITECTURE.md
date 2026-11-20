@@ -6,7 +6,7 @@ This document describes how the OpenEMS integration (`custom_components/openems`
 
 | Module | Responsibility |
 | --- | --- |
-| `__init__.py` | Config entry setup/unload/migration, options update listener (`update_config`), device removal. Holds the `_PLATFORMS` list. |
+| `__init__.py` | Config entry setup/unload/migration, device removal. Holds the `_PLATFORMS` list. Option changes reload the entry (`OptionsFlowWithReload`). |
 | `helpers_ha.py` | Helpers that use HA classes: `RuntimeData`, `OpenEMSConfigEntry`, `component_device`, `unit_description`, `translation_key`, ... |
 | `const.py` | HA-only constants (`DOMAIN`, `ATTR_*`, config flow keys) and `DEFAULT_CHANNELS`, the channels and components enabled by default (lookups `is_channel_enabled` / `is_component_enabled` in `helpers_ha.py`). |
 | `<platform>.py` | One module per HA platform (`sensor`, `binary_sensor`, `number`, `select`, `switch`, `time`, `update`, `button`). |
@@ -16,11 +16,11 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 
 | Module | Responsibility |
 | --- | --- |
-| `openems_client.entry_data` | Websocket connection (`OpenEMSWebSocketConnection`, reconnect logic) and reading the edge configuration (`OpenEMSConfigReader`). |
+| `openems_client.connection` | Websocket connection (`OpenEMSWebSocketConnection`, reconnect logic) and reading the edge configuration (`OpenEMSConfigReader`). |
 | `openems_client.openems` | Backend object model: `OpenEMSBackend` → `OpenEMSEdge` → `OpenEMSComponent` → channels/properties (`OpenEMSDataHandler` subclasses). |
 | `openems_client.helpers_openems`, `openems_client.helpers` | Pure helpers. |
 | `openems_client.config`, `config/*.json` | Channel type and constraint knowledge missing in the OpenEMS metadata: enum options, time properties, number limits/multiplier/step, update groups. |
-| `openems_client.const` | Connection types, options keys/types and `SLASH_ESC`. |
+| `openems_client.const` | Connection types, timeouts and `SLASH_ESC`. The config entry keys (`CONF_ADVANCED_OPTIONS`, ...) are HA-only and live in the integration's `const.py`. |
 
 ### Object model and data flow
 
@@ -29,14 +29,14 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 - The edge configuration (component JSON with channels) is cached in a `Store` per config entry (`helpers_ha.component_store`, key `openems.<entry_id>`). Setup reads it from the edge only when the cache is empty; the **Refresh configuration** button (`button.py`) reads it again, saves it and reloads the entry. Reconfiguring the entry and removing it (`async_remove_entry`) delete the cache. The config entry data only holds the connection data (`host`, `username`, `password`, `type`, `url`, `edge`).
 - The edge parses the component JSON into `OpenEMSComponent`s. Each component sorts its channels into typed lists: `sensors`, `boolean_sensors`, `number_properties`, `enum_properties`, `boolean_properties`, `time_properties`.
 - Combined sensors are defined in `sensor.COMBINED_SENSORS` as `DerivedChannelDefinition`s (source channel patterns and a Python `value_fn`). `sensor.py` creates their channels with `component.create_derived_channels(...)`.
-- Runtime data lives in `entry.runtime_data` (`RuntimeData`): `backend` and `edge_device` (`info`: `DeviceInfo`, `entry`: `DeviceEntry`).
-- Value updates are push-based: the websocket calls `OpenEMSBackend.edgeRpc` → `OpenEMSEdge.currentData` → registered `OpenEMSDataHandler`s → `notify_ha()` → the entity's registered callback (`async_schedule_update_ha_state`). Channel entities therefore never poll.
+- Runtime data lives in `entry.runtime_data` (`RuntimeData`): `backend`, `edge_device` (`info`: `DeviceInfo`, `entry`: `DeviceEntry`) and `enabled_components`.
+- Value updates are push-based: the websocket calls `OpenEMSBackend.edgeRpc` → `OpenEMSEdge.currentData` → registered `OpenEMSDataHandler`s → their listeners (the entity's `async_schedule_update_ha_state`). Channel entities therefore never poll.
 
 ### Devices
 
 - One **edge device**, identifier `(DOMAIN, edge.hostname)`, created in `__init__.async_setup_entry`. Its `DeviceInfo` is available as `entry.runtime_data.edge_device.info`.
 - One **component device** per component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`. `__init__.async_setup_entry` creates them for all components. New devices of components without default channels (`is_component_enabled`) are created with `disabled_by=DeviceEntryDisabler.INTEGRATION`; existing devices keep their state.
-- `component.create_entities` is True only for components with an enabled device. Platforms create entities only for those, so disabled components have no entities at all.
+- `entry.runtime_data.enabled_components` holds the components with an enabled device. Platforms create entities only for those, so disabled components have no entities at all.
 - Enabling or disabling a component device reloads the config entry (`async_track_device_registry_updated_event` in `async_setup_entry`), which creates or removes the entities of the component.
 - In multi-edge setups the hostname is `"<hostname> <edge id>"`, so identifiers must never be split at the first space.
 
@@ -96,16 +96,14 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
 
     ############ END MARKER _create_<platform>_entities ##############
 
-    backend: OpenEMSBackend = entry.runtime_data.backend
-    for component in backend.the_edge.components.values():
-        if component.create_entities:
-            _create_<platform>_entities(component)
+    for component in entry.runtime_data.enabled_components:
+        _create_<platform>_entities(component)
 ```
 
 - Properties (writable `_Property*` channels) use `entity_category=EntityCategory.CONFIG`.
 - The entity sets `self._attr_should_poll = False`. It has no extra state attributes; the channel metadata is part of the diagnostics.
-- State is read from the channel in properties (`native_value`, `is_on`, ...). Writes go through the channel (`await self._channel.update_value(...)`) followed by `self.async_write_ha_state()`.
-- `async_added_to_hass` calls `self._channel.register_callback(self.async_schedule_update_ha_state)` and `async_will_remove_from_hass` calls `self._channel.unregister_callback()`, each followed by the `super()` call.
+- State is read from the channel in properties (`channel.value`, `is_on`, ...). Writes go through the channel (`await self._channel.update_value(...)`) followed by `self.async_write_ha_state()`.
+- `async_added_to_hass` calls `self.async_on_remove(self._channel.add_listener(self.async_schedule_update_ha_state))`, followed by the `super()` call. The channel is subscribed at the edge while it has listeners.
 
 ### Variant B: edge level platforms
 

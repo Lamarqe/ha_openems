@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from custom_components.openems.const import CONF_EDGE, CONF_EDGES, DOMAIN
-from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.connection import OpenEMSConfigReader
 from openems_client.exceptions import OpenEMSConnectionError
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
