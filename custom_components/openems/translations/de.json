@@ -66,6 +66,9 @@
       "check_update": {
         "name": "Nach Update suchen"
       },
+      "refresh_configuration": {
+        "name": "Konfiguration aktualisieren"
+      },
       "restart": {
         "name": "Neustart"
       }
@@ -1823,6 +1826,9 @@
   "exceptions": {
     "no_component_device": {
       "message": "Gerät {device_id} ist keine OpenEMS Komponente einer geladenen Edge."
+    },
+    "refresh_configuration_failed": {
+      "message": "Die Konfiguration von Edge {edge} konnte nicht aktualisiert werden."
     },
     "restart_failed": {
       "message": "Neustart der Edge {edge} konnte nicht ausgelöst werden."

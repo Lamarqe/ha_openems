@@ -1,7 +1,6 @@
 """The HA OpenEMS integration."""
 
 import asyncio
-import copy
 import logging
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
@@ -17,7 +16,7 @@ from openems_client.openems import OpenEMSBackend
 import probatio
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
-from homeassistant.core import CoreState, Event, HomeAssistant, callback
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 import homeassistant.helpers.config_validation as cv
@@ -33,6 +32,7 @@ from .helpers_ha import (
     RuntimeData,
     component_device,
     component_identifier,
+    component_store,
     is_component_enabled,
     map_user_input,
 )
@@ -72,16 +72,11 @@ async def async_setup_entry(
     config_entry: OpenEMSConfigEntry,
 ) -> None:
     """Set up HA OpenEMS from a config entry."""
-    # 0. Copy config data because we will hand over ownership to backend
-    data_copy = copy.deepcopy(
-        config_entry.data.copy()  # copy() before deepcopy because its a mappingproxy
-    )
-
     try:
         # 1. Create connection instance
-        connection = OpenEMSWebSocketConnection(map_user_input(data_copy["user_input"]))
+        connection = OpenEMSWebSocketConnection(map_user_input(dict(config_entry.data)))
 
-        edge_id = data_copy["user_input"][c.CONF_EDGE]
+        edge_id = config_entry.data[c.CONF_EDGE]
         # 2. Trigger the API connection (and authentication)
         await asyncio.wait_for(connection.connect_to_server(), timeout=2)
 
@@ -108,24 +103,22 @@ async def async_setup_entry(
             f"Connection lost during login to {connection.conn_url.host}"
         ) from ex
 
-    # 3. Reload component list in case explicit user request to reload (hass.is_running)
-    if hass.state == CoreState.running:
+    # 3. Load the cached edge configuration. Read it from the edge if there is none yet,
+    # later refreshes are triggered by the refresh configuration button.
+    store = component_store(hass, config_entry.entry_id)
+    components = await store.async_load()
+    if components is None:
         config_reader = OpenEMSConfigReader(connection, edge_id)
+        try:
+            components = await config_reader.read_edge_components()
+        except (ProtocolError, TransportError) as ex:
+            await connection.stop()
+            raise ConfigEntryNotReady(
+                f"Cannot read the configuration of {connection.conn_url.host}"
+            ) from ex
+        await store.async_save(components)
 
-        components = await config_reader.read_edge_components()
-        entry_data = {
-            "user_input": data_copy["user_input"],
-            "components": components,
-        }
-        hass.config_entries.async_update_entry(
-            entry=config_entry,
-            # copy data because backend has ownership
-            data=copy.deepcopy(entry_data),
-        )
-    else:
-        components = data_copy["components"]
-
-    # 4. Prepare HA entity structures from config entry data
+    # 4. Prepare HA entity structures from the edge configuration
     multi_edge = OpenEMSConfigReader.parse_login_response(login_response)
     backend = OpenEMSBackend(connection, edge_id, multi_edge, components)
 
@@ -210,6 +203,13 @@ async def async_unload_entry(
     backend: OpenEMSBackend = config_entry.runtime_data.backend
     await backend.stop()
     await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
+
+
+async def async_remove_entry(
+    hass: HomeAssistant, config_entry: OpenEMSConfigEntry
+) -> None:
+    """Remove the cached edge configuration of a removed config entry."""
+    await component_store(hass, config_entry.entry_id).async_remove()
 
 
 async def async_migrate_entry(
@@ -338,6 +338,23 @@ async def async_migrate_entry(
                     )
         hass.config_entries.async_update_entry(
             config_entry, options=options, version=5, minor_version=1
+        )
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
+
+    if config_entry.version == 5:
+        # edge configuration moved from the entry data to a store, connection data flattened
+        await component_store(hass, config_entry.entry_id).async_save(
+            config_entry.data["components"]
+        )
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data=dict(config_entry.data["user_input"]),
+            version=6,
+            minor_version=1,
         )
         _LOGGER.debug(
             "Migration to configuration version %s.%s successful",

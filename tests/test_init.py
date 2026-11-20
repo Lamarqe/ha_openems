@@ -6,6 +6,7 @@ from openems_client.const import (
     CONF_FORWARD_INTERVAL,
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
 )
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from jsonrpc_base.jsonrpc import ProtocolError, TransportError
@@ -14,6 +15,7 @@ import pytest
 from custom_components.openems import (
     async_migrate_entry,
     async_remove_config_entry_device,
+    async_remove_entry,
     async_setup_entry,
     async_unload_entry,
     update_config,
@@ -93,7 +95,7 @@ async def _create_real_entry(hass: HomeAssistant) -> config_entries.ConfigEntry:
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
-        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
+        patch.object(OpenEMSConfigReader, "read_edge_config", return_value={}),
         patch("custom_components.openems.async_setup_entry", return_value=True),
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -141,6 +143,103 @@ async def test_setup_entry_success(hass: HomeAssistant) -> None:
 
     assert entry.runtime_data.backend is mock_backend
     mock_backend.start.assert_called_once()
+
+
+def _storage_key(entry: config_entries.ConfigEntry) -> str:
+    return f"{DOMAIN}.{entry.entry_id}"
+
+
+async def _setup_with_mocked_backend(
+    hass: HomeAssistant,
+    entry: config_entries.ConfigEntry,
+    read_edge_components: AsyncMock,
+) -> MagicMock:
+    """Run async_setup_entry and return the patched OpenEMSBackend class."""
+    mock_backend = MagicMock()
+    mock_backend.the_edge.hostname = "host"
+    mock_backend.the_edge.components = {}
+
+    conn_patch, _ = _make_conn_patches()
+    with (
+        conn_patch,
+        patch.object(
+            OpenEMSConfigReader, "read_edge_components", new=read_edge_components
+        ),
+        patch(
+            "custom_components.openems.OpenEMSBackend", return_value=mock_backend
+        ) as backend_class,
+        patch.object(
+            hass.config_entries,
+            "async_forward_entry_setups",
+            new=AsyncMock(return_value=True),
+        ),
+    ):
+        await async_setup_entry(hass, entry)
+    return backend_class
+
+
+async def test_setup_entry_reads_and_caches_configuration(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    """Without a cached configuration, setup reads it from the edge and caches it."""
+    entry = await _create_real_entry(hass)
+    read_edge_components = AsyncMock(return_value={"comp1": {"channels": []}})
+
+    backend_class = await _setup_with_mocked_backend(hass, entry, read_edge_components)
+
+    read_edge_components.assert_awaited_once()
+    assert hass_storage[_storage_key(entry)]["data"] == {"comp1": {"channels": []}}
+    assert backend_class.call_args.args[3] == {"comp1": {"channels": []}}
+
+
+async def test_setup_entry_uses_cached_configuration(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    """A cached configuration is used without reading it from the edge."""
+    entry = await _create_real_entry(hass)
+    hass_storage[_storage_key(entry)] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": _storage_key(entry),
+        "data": {"cached": {"channels": []}},
+    }
+    read_edge_components = AsyncMock()
+
+    backend_class = await _setup_with_mocked_backend(hass, entry, read_edge_components)
+
+    read_edge_components.assert_not_awaited()
+    assert backend_class.call_args.args[3] == {"cached": {"channels": []}}
+
+
+async def test_setup_entry_read_configuration_error_raises_not_ready(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    """A failure while reading the configuration raises ConfigEntryNotReady."""
+    entry = await _create_real_entry(hass)
+    read_edge_components = AsyncMock(side_effect=TransportError("connection lost"))
+
+    with pytest.raises(ConfigEntryNotReady):
+        await _setup_with_mocked_backend(hass, entry, read_edge_components)
+
+    assert _storage_key(entry) not in hass_storage
+
+
+async def test_remove_entry_removes_cached_configuration(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    """Removing the config entry removes its cached configuration."""
+    entry = MockConfigEntry(domain=DOMAIN, data=_USER_INPUT)
+    entry.add_to_hass(hass)
+    hass_storage[_storage_key(entry)] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": _storage_key(entry),
+        "data": {"comp1": {}},
+    }
+
+    await async_remove_entry(hass, entry)
+
+    assert _storage_key(entry) not in hass_storage
 
 
 async def test_setup_entry_transport_error_raises_not_ready(
@@ -427,6 +526,26 @@ async def test_component_device_enable_schedules_reload(hass: HomeAssistant) -> 
 # ---------------------------------------------------------------------------
 
 
+async def test_migrate_v5_moves_components_to_store(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    """The edge configuration moves to the store, the connection data is flattened."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=5,
+        minor_version=1,
+        data=_ENTRY_DATA,
+        options=_DEFAULT_OPTIONS,
+    )
+    entry.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert (entry.version, entry.minor_version) == (6, 1)
+    assert entry.data == _USER_INPUT
+    assert hass_storage[_storage_key(entry)]["data"] == {"comp1": {}}
+
+
 async def test_migrate_v4_moves_component_selection_to_devices(
     hass: HomeAssistant,
 ) -> None:
@@ -455,7 +574,7 @@ async def test_migrate_v4_moves_component_selection_to_devices(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (5, 1)
+    assert (entry.version, entry.minor_version) == (6, 1)
     assert entry.options == _DEFAULT_OPTIONS
     disabled_by = {
         name: device_registry.async_get_device_by_identifier(
@@ -486,14 +605,14 @@ async def test_migrate_v4_without_edge_device(hass: HomeAssistant) -> None:
 
     assert await async_migrate_entry(hass, entry)
 
-    assert entry.version == 5
+    assert entry.version == 6
     assert entry.options == _DEFAULT_OPTIONS
     device_registry = dr.async_get(hass)
     assert not dr.async_entries_for_config_entry(device_registry, entry.entry_id)
 
 
-async def test_migrate_v3_continues_to_v5(hass: HomeAssistant) -> None:
-    """A version 3 entry is migrated in one go to version 5."""
+async def test_migrate_v3_continues_to_v6(hass: HomeAssistant) -> None:
+    """A version 3 entry is migrated in one go to version 6."""
     entry = MockConfigEntry(
         domain=DOMAIN,
         version=3,
@@ -505,7 +624,7 @@ async def test_migrate_v3_continues_to_v5(hass: HomeAssistant) -> None:
 
     assert await async_migrate_entry(hass, entry)
 
-    assert entry.version == 5
+    assert entry.version == 6
     assert entry.options == _DEFAULT_OPTIONS
 
 
