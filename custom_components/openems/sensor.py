@@ -21,7 +21,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
@@ -198,27 +198,40 @@ class OpenEMSSensorEntity(SensorEntity):
         if isinstance(val, str):
             # self.entity_description.device_class == SensorDeviceClass.ENUM
             return to_snake_case(val)
+        if self._ignore_decrease(val):
+            return self.previous_increasing_value_not_null
+        return val
 
-        if self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING:
-            if (
-                self._channel.component.edge.advanced_options[
-                    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
-                ]
-                and val is not None
-                and self.previous_increasing_value_not_null is not None
-                and self.previous_increasing_value_not_null > val
-            ):
+    def _ignore_decrease(self, val: float) -> bool:
+        """Return True if val is a decrease of a total increasing sensor to be ignored."""
+        return (
+            self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING
+            and self._channel.component.edge.advanced_options[
+                CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
+            ]
+            and self.previous_increasing_value_not_null is not None
+            and self.previous_increasing_value_not_null > val
+        )
+
+    @callback
+    def _handle_channel_update(self) -> None:
+        """Remember the last accepted value of total increasing sensors, write the state."""
+        val = self._channel.native_value
+        if (
+            self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING
+            and val is not None
+            and not isinstance(val, str)
+        ):
+            if self._ignore_decrease(val):
                 _LOGGER.debug(
                     "Ignoring new backend value %s for %s since it is smaller than the previous value %.1f and state class is total_increasing",
                     val,
                     self.entity_id,
                     self.previous_increasing_value_not_null,
                 )
-                return self.previous_increasing_value_not_null
-            # else:
-            self.previous_increasing_value_not_null = val
-
-        return val
+            else:
+                self.previous_increasing_value_not_null = val
+        self.async_schedule_update_ha_state()
 
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""
@@ -231,9 +244,7 @@ class OpenEMSSensorEntity(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
-        self._channel.register_callback(
-            self.async_schedule_update_ha_state,
-        )
+        self._channel.register_callback(self._handle_channel_update)
         await super().async_added_to_hass()
 
     async def async_will_remove_from_hass(self) -> None:
