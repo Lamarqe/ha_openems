@@ -1,7 +1,8 @@
 {
   "config": {
     "abort": {
-      "already_configured": "Gerät bereits konfiguriert"
+      "already_configured": "Gerät bereits konfiguriert",
+      "reauth_successful": "Die erneute Authentifizierung war erfolgreich"
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen",
@@ -19,6 +20,14 @@
       "edges": {
         "data": {
           "edges": "OpenEMS Edge zur Integration auswählen"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Authentifizierung für {name} abgelaufen",
+        "description": "Die Anmeldung bei {name} wurde abgelehnt. Gib den aktuellen Benutzernamen und das Passwort ein.",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
         }
       },
       "user": {
