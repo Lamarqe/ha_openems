@@ -1772,6 +1772,12 @@
         },
         "update_component_config_failed": {
             "message": "Failed to update the configuration of component {component}."
+        },
+        "update_failed": {
+            "message": "The edge {edge} rejected the update."
+        },
+        "update_not_finished": {
+            "message": "The update of edge {edge} did not finish within 15 minutes."
         }
     },
     "options": {
