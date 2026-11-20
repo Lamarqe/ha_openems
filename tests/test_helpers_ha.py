@@ -1,5 +1,7 @@
 """Tests for small helpers used by the OpenEMS integration."""
 
+import json
+from pathlib import Path
 from unittest.mock import MagicMock
 
 from homeassistant.config_entries import ConfigEntryState
@@ -10,8 +12,9 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from openems_client import openems
-from custom_components.openems.const import DOMAIN
+from custom_components.openems.const import DEFAULT_CHANNELS, DOMAIN
 from custom_components.openems.helpers_ha import (
+    CAMEL_CASE_PATTERN,
     component_from_device,
     to_snake_case,
     translation_key,
@@ -46,6 +49,30 @@ def test_translation_key(dummy_backend) -> None:
         assert translation_key(channel) == "state_machine"
     finally:
         edge.stop()
+
+
+def test_default_channels_have_translated_names() -> None:
+    """Every channel enabled by default has a name in strings.json."""
+    entity_strings = json.loads(
+        (
+            Path(__file__).parents[1] / "custom_components/openems/strings.json"
+        ).read_text(encoding="utf-8")
+    )["entity"]
+    named_keys = {
+        key
+        for platform_strings in entity_strings.values()
+        for key, value in platform_strings.items()
+        if "name" in value
+    }
+    # string property without enum or time options, no entity is created for it
+    channel_names = set().union(*DEFAULT_CHANNELS.values()) - {"_PropertyTargetTime"}
+    missing = {
+        name
+        for name in channel_names
+        if to_snake_case(CAMEL_CASE_PATTERN.sub("_", name.removeprefix("_Property")))
+        not in named_keys
+    }
+    assert not missing
 
 
 def test_to_snake_case_matches_translation_key_format() -> None:

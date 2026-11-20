@@ -1,16 +1,22 @@
 """Tests for the OpenEMS select platform."""
 
+from datetime import timedelta
+import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import EntityPlatform
 
 from custom_components.openems import select as select_module
+from custom_components.openems.const import DOMAIN
 from custom_components.openems.select import (
     OpenEMSSelectDescription,
     OpenEMSSelectEntity,
 )
+
+from .helpers_component import setup_evcs_component
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -174,3 +180,33 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
         await select_module.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
+
+
+async def test_entity_name_from_translation(hass: HomeAssistant) -> None:
+    """Channels with a translated name use it instead of the channel id."""
+    loaded_component = setup_evcs_component(hass)
+    loaded_component.component.create_entities = True
+    loaded_component.entry.runtime_data.edge_device.entry = loaded_component.edge_device
+    try:
+        platform = EntityPlatform(
+            hass=hass,
+            logger=logging.getLogger(__name__),
+            domain="select",
+            platform_name=DOMAIN,
+            platform=None,
+            scan_interval=timedelta(seconds=30),
+            entity_namespace=None,
+        )
+        platform.config_entry = loaded_component.entry
+        await platform.platform_data.async_load_translations()
+        created: list[OpenEMSSelectEntity] = []
+        await select_module.async_setup_entry(
+            hass, loaded_component.entry, created.extend
+        )
+        await platform.async_add_entities(created)
+
+        state = hass.states.get(created[0].entity_id)
+        assert state is not None
+        assert state.name == "h1 ctrlEvcs0 Charge mode"
+    finally:
+        loaded_component.stop()

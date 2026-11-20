@@ -48,6 +48,20 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "ctrl_is_blocking_ess": {
+        "name": "Controller blockiert Speicher"
+      },
+      "ctrl_is_charging_ess": {
+        "name": "Controller lädt Speicher"
+      },
+      "ctrl_is_discharging_ess": {
+        "name": "Controller entlädt Speicher"
+      },
+      "restriction_mode": {
+        "name": "Einschränkungsmodus"
+      }
+    },
     "button": {
       "check_update": {
         "name": "Nach Update suchen"
@@ -56,8 +70,44 @@
         "name": "Neustart"
       }
     },
+    "number": {
+      "automatic_force_on_soc": {
+        "name": "Automatik Zwangseinschaltung Ladezustand"
+      },
+      "automatic_force_on_surplus_power": {
+        "name": "Automatik Zwangseinschaltung Überschussleistung"
+      },
+      "automatic_lock_grid_buy_power": {
+        "name": "Automatik Sperre Netzbezugsleistung"
+      },
+      "automatic_lock_soc": {
+        "name": "Automatik Sperre Ladezustand"
+      },
+      "automatic_recommendation_surplus_power": {
+        "name": "Automatik Empfehlung Überschussleistung"
+      },
+      "default_charge_min_power": {
+        "name": "Standard minimale Ladeleistung"
+      },
+      "energy_session_limit": {
+        "name": "Energielimit Ladevorgang"
+      },
+      "force_charge_min_power": {
+        "name": "Zwangsladung minimale Ladeleistung"
+      },
+      "manual_energy_session_limit": {
+        "name": "Manuelles Energielimit Ladevorgang"
+      },
+      "minimum_switching_time": {
+        "name": "Minimale Schaltzeit"
+      },
+      "reserve_soc": {
+        "name": "Reserve Ladezustand"
+      }
+    },
     "select": {
       "charge_mode": {
+        "name": "Lademodus",
         "state": {
           "excess_power": "Überschuss",
           "force_charge": "Zielwert"
@@ -71,6 +121,7 @@
         }
       },
       "delay_charge_risk_level": {
+        "name": "Verzögerte Beladung Risikostufe",
         "state": {
           "high": "Hoch",
           "low": "Gering",
@@ -78,6 +129,7 @@
         }
       },
       "manual_state": {
+        "name": "Manueller Zustand",
         "state": {
           "lock": "Sperre",
           "regular": "Normalbetrieb",
@@ -86,6 +138,7 @@
         }
       },
       "mode": {
+        "name": "Modus",
         "state": {
           "force": "Schnellladen",
           "minimum": "Minimal Beladung mit PV-Überschuss",
@@ -99,6 +152,7 @@
         }
       },
       "phase_switching": {
+        "name": "Phasenumschaltung",
         "state": {
           "automatic": "Automatisch",
           "disable": "Deaktiviert",
@@ -107,6 +161,7 @@
         }
       },
       "priority": {
+        "name": "Priorität",
         "state": {
           "car": "Auto",
           "storage": "Speicher"
@@ -128,13 +183,26 @@
           "undefined": "Nicht definiert"
         }
       },
+      "active_power": {
+        "name": "Wirkleistung"
+      },
+      "active_production_energy": {
+        "name": "Erzeugte Wirkenergie"
+      },
+      "actual_energy": {
+        "name": "Tatsächliche Energie"
+      },
       "actual_mode": {
+        "name": "Aktueller Modus",
         "state": {
           "force": "Schnellladen",
           "minimum": "Minimal Beladung mit PV-Überschuss",
           "surplus": "PV-Überschuss",
           "zero": "Keine Beladung"
         }
+      },
+      "actual_power": {
+        "name": "Tatsächliche Leistung"
       },
       "arc_self_check_status": {
         "state": {
@@ -250,11 +318,17 @@
           "wait_for_force_mode": "WARTE_AUF_ZWANGSENTLADUNG_MODUS"
         }
       },
+      "capacity": {
+        "name": "Kapazität"
+      },
       "charge_mode": {
         "state": {
           "force-charge": "Zwangsladung",
           "use_surplus_power": "Überschussleistung nutzen"
         }
+      },
+      "charge_power": {
+        "name": "Ladeleistung"
       },
       "charge_state": {
         "state": {
@@ -292,6 +366,12 @@
           "wifi_mode_of_wifi_lan_module": "WiFi-Modus des WiFi+LAN-Moduls"
         }
       },
+      "consumption_active_power": {
+        "name": "Verbrauch Wirkleistung"
+      },
+      "consumption_max_active_power": {
+        "name": "Verbrauch maximale Wirkleistung"
+      },
       "cpld_warning_code": {
         "state": {
           "battery_over_current_hw": "Hardware-Überstrom Batterie",
@@ -312,6 +392,15 @@
           "sek": "SEK",
           "undefined": "NICHT_DEFINIERT"
         }
+      },
+      "dc_charge_energy": {
+        "name": "DC-Ladeenergie"
+      },
+      "dc_discharge_energy": {
+        "name": "DC-Entladeenergie"
+      },
+      "dc_discharge_power": {
+        "name": "DC-Entladeleistung"
       },
       "debug_ems_power_mode": {
         "state": {
@@ -482,7 +571,11 @@
           "undefined": "Nicht definiert"
         }
       },
+      "delay_charge_maximum_charge_limit": {
+        "name": "Verzögerte Beladung maximale Ladegrenze"
+      },
       "delay_charge_state": {
+        "name": "Verzögerte Beladung Zustand",
         "state": {
           "active_limit": "Begrenzung aktiv",
           "avoid_charging_with_low_power_for_more_efficiency": "Laden mit geringer Leistung zwecks Effizienz vermieden",
@@ -609,6 +702,30 @@
           "led_on": "Energie-LED An",
           "undefined": "Nicht definiert"
         }
+      },
+      "energy_session": {
+        "name": "Energie Ladevorgang"
+      },
+      "ess_active_power": {
+        "name": "Speicher Wirkleistung"
+      },
+      "ess_dc_charge_energy": {
+        "name": "Speicher DC-Ladeenergie"
+      },
+      "ess_dc_discharge_energy": {
+        "name": "Speicher DC-Entladeenergie"
+      },
+      "ess_discharge_power": {
+        "name": "Speicher Entladeleistung"
+      },
+      "ess_max_discharge_power": {
+        "name": "Speicher maximale Entladeleistung"
+      },
+      "ess_min_discharge_power": {
+        "name": "Speicher minimale Entladeleistung"
+      },
+      "ess_soc": {
+        "name": "Speicher Ladezustand"
       },
       "external_ems_flag": {
         "state": {
@@ -741,6 +858,12 @@
           "undefined": "Nicht definiert"
         }
       },
+      "grid_active_power": {
+        "name": "Netz Wirkleistung"
+      },
+      "grid_buy_active_energy": {
+        "name": "Netzbezug Wirkenergie"
+      },
       "grid_feed_in_limitation_type": {
         "state": {
           "dynamic_limitation": "Dynamische Begrenzung",
@@ -756,7 +879,14 @@
           "undefined": "Nicht definiert"
         }
       },
+      "grid_max_active_power": {
+        "name": "Netz maximale Wirkleistung"
+      },
+      "grid_min_active_power": {
+        "name": "Netz minimale Wirkleistung"
+      },
       "grid_mode": {
+        "name": "Netzmodus",
         "state": {
           "off-grid": "Inselbetrieb (Off-Grid)",
           "off-grid_genset": "Inselbetrieb mit Generator (Genset)",
@@ -770,6 +900,9 @@
           "enable_grid_protect": "Netzschutz aktivieren",
           "undefined": "Nicht definiert"
         }
+      },
+      "grid_sell_active_energy": {
+        "name": "Netzeinspeisung Wirkenergie"
       },
       "is_battery_balanced": {
         "state": {
@@ -808,6 +941,9 @@
           "disable": "Deaktivieren"
         }
       },
+      "maximum_hardware_power": {
+        "name": "Maximale Hardwareleistung"
+      },
       "meter_communicate_status": {
         "state": {
           "ng": "Nicht gut (Fehler)",
@@ -824,6 +960,9 @@
           "undefined": "Nicht definiert"
         }
       },
+      "minimum_hardware_power": {
+        "name": "Minimale Hardwareleistung"
+      },
       "operation_mode": {
         "state": {
           "cut_off_all_the_connection_to_inverter": "Alle Verbindungen zum Wechselrichter trennen",
@@ -834,6 +973,7 @@
         }
       },
       "phases": {
+        "name": "Phasen",
         "state": {
           "one_phase": "Einphasig",
           "three_phase": "Dreiphasig",
@@ -889,6 +1029,21 @@
           "undefined": "Nicht definiert",
           "unknown_error": "Unbekannter Fehler"
         }
+      },
+      "production_ac_active_power": {
+        "name": "Erzeugung AC-Wirkleistung"
+      },
+      "production_active_energy": {
+        "name": "Erzeugung Wirkenergie"
+      },
+      "production_active_power": {
+        "name": "Erzeugung Wirkleistung"
+      },
+      "production_dc_actual_power": {
+        "name": "Erzeugung DC-Leistung"
+      },
+      "production_max_active_power": {
+        "name": "Erzeugung maximale Wirkleistung"
       },
       "pv_mode": {
         "state": {
@@ -1080,7 +1235,11 @@
           "undefined": "Nicht definiert"
         }
       },
+      "sell_to_grid_limit_minimum_charge_limit": {
+        "name": "Einspeisebegrenzung minimale Ladegrenze"
+      },
       "sell_to_grid_limit_state": {
+        "name": "Einspeisebegrenzung Zustand",
         "state": {
           "limit_cannot_be_adapted_because_of_other_constraints_with_higher_priority": "Begrenzung wegen anderer Beschränkungen mit höherer Priorität nicht angepasst",
           "no_active_limitation": "Keine Begrenzung aktiv",
@@ -1091,6 +1250,15 @@
           "active_limitation_minimum_charge_power": "Aktive Begrenzung - Minimale Ladeleistung",
           "not_active_the_controller_has_no_flexibility_left_to_delay_charge_because_the_limitation_is_nearly_zero": "Nicht aktiv. Der Regler hat keine Flexibilität mehr für verzögertes Laden, da die Begrenzung nahezu Null ist."
         }
+      },
+      "session_energy": {
+        "name": "Energie Ladevorgang"
+      },
+      "set_charge_power_limit": {
+        "name": "Vorgegebene Ladeleistungsgrenze"
+      },
+      "soc": {
+        "name": "Ladezustand"
       },
       "soc_led1": {
         "state": {
@@ -1144,6 +1312,7 @@
         }
       },
       "state": {
+        "name": "Zustand",
         "state": {
           "fault": "Fehler",
           "info": "Info",
@@ -1152,6 +1321,7 @@
         }
       },
       "state_machine": {
+        "name": "Zustandsautomat",
         "state": {
           "charge_disabled": "Laden deaktiviert",
           "charge_paused": "Pause (wenig Überschuss)",
@@ -1208,6 +1378,7 @@
         }
       },
       "status": {
+        "name": "Status",
         "state": {
           "charging": "Ladevorgang aktiv",
           "charging_rejected": "Laden verweigert",
@@ -1243,6 +1414,9 @@
           "led_on": "System-LED An",
           "undefined": "Nicht definiert"
         }
+      },
+      "target_minute": {
+        "name": "Zielminute"
       },
       "ups_std_volt_type": {
         "state": {
@@ -1521,6 +1695,37 @@
           "only_lvrt_enable": "Nur LVRT (Unterspannungs-Durchfahren) aktivieren",
           "undefined": "Nicht definiert"
         }
+      }
+    },
+    "switch": {
+      "automatic_force_on_ctrl_enabled": {
+        "name": "Automatik Zwangseinschaltung aktiviert"
+      },
+      "automatic_lock_ctrl_enabled": {
+        "name": "Automatik Sperre aktiviert"
+      },
+      "automatic_recommendation_ctrl_enabled": {
+        "name": "Automatik Empfehlung aktiviert"
+      },
+      "enabled_charging": {
+        "name": "Laden aktiviert"
+      },
+      "is_ess_charge_from_grid_allowed": {
+        "name": "Speicherbeladung aus dem Netz erlaubt"
+      },
+      "is_reserve_soc_enabled": {
+        "name": "Reserve Ladezustand aktiviert"
+      },
+      "is_running": {
+        "name": "Läuft"
+      },
+      "target_time_specified": {
+        "name": "Zielzeit festgelegt"
+      }
+    },
+    "time": {
+      "manual_target_time": {
+        "name": "Manuelle Zielzeit"
       }
     }
   },
