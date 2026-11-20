@@ -18,7 +18,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.openems.const import CONF_EDGE, CONF_MORE_OPTIONS, DOMAIN
-from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.connection import OpenEMSConfigReader
 from openems_client.exceptions import (
     OpenEMSAuthError,
     OpenEMSConnectionError,

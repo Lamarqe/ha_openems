@@ -1,11 +1,5 @@
 """Tests for config entry setup, migration and options update in __init__.py."""
 
-from openems_client.const import (
-    CONF_ADVANCED_OPTIONS,
-    CONF_COMPONENTS,
-    CONF_FORWARD_INTERVAL,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-)
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -22,10 +16,15 @@ from custom_components.openems import (
     async_remove_entry,
     async_setup_entry,
     async_unload_entry,
-    update_config,
+    CONF_COMPONENTS,
+)
+from custom_components.openems.const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_FORWARD_INTERVAL,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
 )
 from custom_components.openems.const import DOMAIN
-from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.connection import OpenEMSConfigReader
 from custom_components.openems.helpers_ha import RuntimeData
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
@@ -117,7 +116,7 @@ async def _create_real_entry(hass: HomeAssistant) -> config_entries.ConfigEntry:
     placeholder_backend = MagicMock()
     placeholder_backend.stop = AsyncMock()
     entry.runtime_data = RuntimeData(
-        backend=placeholder_backend, edge_device=MagicMock()
+        backend=placeholder_backend, edge_device=MagicMock(), enabled_components=[]
     )
     return entry
 
@@ -326,7 +325,9 @@ async def test_unload_entry_stops_backend(hass: HomeAssistant) -> None:
 
     mock_backend = MagicMock()
     mock_backend.stop = AsyncMock()
-    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
+    entry.runtime_data = RuntimeData(
+        backend=mock_backend, edge_device=MagicMock(), enabled_components=[]
+    )
 
     with patch.object(
         hass.config_entries,
@@ -336,46 +337,6 @@ async def test_unload_entry_stops_backend(hass: HomeAssistant) -> None:
         result = await async_unload_entry(hass, entry)
 
     mock_backend.stop.assert_awaited_once()
-
-
-# ---------------------------------------------------------------------------
-# update_config
-# ---------------------------------------------------------------------------
-
-
-async def test_update_config_applies_advanced_options(hass: HomeAssistant) -> None:
-    """update_config must propagate advanced options to the backend edge."""
-    entry = await _create_real_entry(hass)
-
-    mock_backend = MagicMock()
-    mock_backend.the_edge.components = {}
-    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
-
-    new_advanced = {
-        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True,
-        CONF_FORWARD_INTERVAL: 10,
-    }
-    hass.config_entries.async_update_entry(
-        entry,
-        options={CONF_ADVANCED_OPTIONS: new_advanced},
-    )
-
-    await update_config(hass, entry)
-
-    mock_backend.the_edge.set_advanced_options.assert_called_once_with(new_advanced)
-
-
-async def test_update_config_no_options_returns_early(hass: HomeAssistant) -> None:
-    """update_config must be a no-op when the entry has no options."""
-    entry = await _create_real_entry(hass)
-
-    mock_backend = MagicMock()
-    entry.runtime_data = RuntimeData(backend=mock_backend, edge_device=MagicMock())
-    hass.config_entries.async_update_entry(entry, options={})
-
-    await update_config(hass, entry)
-
-    mock_backend.the_edge.set_advanced_options.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -389,7 +350,6 @@ def _make_component(name: str) -> MagicMock:
     component.name = name
     component.alias = name
     component.edge.hostname = "host"
-    component.create_entities = False
     return component
 
 
@@ -436,8 +396,7 @@ async def test_setup_entry_creates_component_devices(hass: HomeAssistant) -> Non
     )
     assert ess_device.disabled_by is None
     assert debug_device.disabled_by is dr.DeviceEntryDisabler.INTEGRATION
-    assert components["ess0"].create_entities is True
-    assert components["ctrlDebugLog0"].create_entities is False
+    assert entry.runtime_data.enabled_components == [components["ess0"]]
 
 
 async def test_setup_entry_keeps_component_device_enabled_by_user(
@@ -452,7 +411,7 @@ async def test_setup_entry_keeps_component_device_enabled_by_user(
 
     await _setup_with_components(hass, entry, components)
 
-    assert components["ctrlDebugLog0"].create_entities is True
+    assert entry.runtime_data.enabled_components == [components["ctrlDebugLog0"]]
 
 
 async def test_setup_entry_keeps_component_device_disabled_by_user(
@@ -471,7 +430,7 @@ async def test_setup_entry_keeps_component_device_disabled_by_user(
 
     await _setup_with_components(hass, entry, components)
 
-    assert components["ess0"].create_entities is False
+    assert entry.runtime_data.enabled_components == []
     assert (
         device_registry.async_get(device.id).disabled_by is dr.DeviceEntryDisabler.USER
     )

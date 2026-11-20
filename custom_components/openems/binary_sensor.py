@@ -75,9 +75,8 @@ async def async_setup_entry(
         identifiers={(DOMAIN, backend.the_edge.hostname)},
     )
     component: OpenEMSComponent
-    for component in backend.the_edge.components.values():
-        if component.create_entities:
-            _create_sensor_entities(component)
+    for component in entry.runtime_data.enabled_components:
+        _create_sensor_entities(component)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -108,8 +107,8 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
     @property
     def is_on(self) -> int | None:
         """Return the binary state of the sensor."""
-        if isinstance(self._channel.native_value, int):
-            return self._channel.native_value
+        if isinstance(self._channel.value, int):
+            return self._channel.value
 
         return None
 
@@ -123,12 +122,7 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
-        self._channel.register_callback(
-            self.async_schedule_update_ha_state,
+        self.async_on_remove(
+            self._channel.add_listener(self.async_schedule_update_ha_state)
         )
         await super().async_added_to_hass()
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Entity removed."""
-        self._channel.unregister_callback()
-        await super().async_will_remove_from_hass()

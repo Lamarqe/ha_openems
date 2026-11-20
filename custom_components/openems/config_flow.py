@@ -4,17 +4,14 @@ from collections.abc import Mapping
 import logging
 from typing import Any
 
+from openems_client.connection import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from openems_client.const import (
-    CONF_ADVANCED_OPTIONS,
-    CONF_FORWARD_INTERVAL,
-    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
     CONN_TYPE_CUSTOM_URL,
     CONN_TYPE_DIRECT_EDGE,
     CONN_TYPE_LOCAL_FEMS,
     CONN_TYPE_LOCAL_OPENEMS,
     CONN_TYPE_WEB_FENECON,
 )
-from openems_client.entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
 import probatio
 from yarl import URL
@@ -23,7 +20,7 @@ from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
+    OptionsFlowWithReload,
 )
 from homeassistant.const import (
     CONF_BASE,
@@ -280,9 +277,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         self._abort_if_unique_id_configured()
         # initialize options with default settings
         options = {
-            CONF_ADVANCED_OPTIONS: {
-                CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
-                CONF_FORWARD_INTERVAL: 0,
+            c.CONF_ADVANCED_OPTIONS: {
+                c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+                c.CONF_FORWARD_INTERVAL: 0,
             },
         }
 
@@ -410,7 +407,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         return OpenEMSOptionsFlow()
 
 
-class OpenEMSOptionsFlow(OptionsFlow):
+class OpenEMSOptionsFlow(OptionsFlowWithReload):
     """Handle OpenEMS options."""
 
     async def async_step_init(
@@ -424,19 +421,19 @@ class OpenEMSOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Manage advanced options."""
         if user_input is not None:
-            options = {**self.config_entry.options, CONF_ADVANCED_OPTIONS: user_input}
+            options = {**self.config_entry.options, c.CONF_ADVANCED_OPTIONS: user_input}
             return self.async_create_entry(data=options)
 
-        advanced = self.config_entry.options[CONF_ADVANCED_OPTIONS]
+        advanced = self.config_entry.options[c.CONF_ADVANCED_OPTIONS]
         schema = probatio.Schema(
             {
                 probatio.Required(
-                    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
-                    default=advanced[CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING],
+                    c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+                    default=advanced[c.CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING],
                 ): BooleanSelector(BooleanSelectorConfig()),
                 probatio.Required(
-                    CONF_FORWARD_INTERVAL,
-                    default=advanced[CONF_FORWARD_INTERVAL],
+                    c.CONF_FORWARD_INTERVAL,
+                    default=advanced[c.CONF_FORWARD_INTERVAL],
                 ): NumberSelector(
                     NumberSelectorConfig(
                         min=0, max=3600, step=1, mode=NumberSelectorMode.BOX

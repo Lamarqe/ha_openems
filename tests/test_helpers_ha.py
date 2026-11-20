@@ -169,7 +169,6 @@ async def test_write_errors_raise_translated_error(
     channel = MagicMock()
     channel.property_options = ["MANUAL"]
     channel.update_value = AsyncMock(side_effect=OpenEMSError("rejected"))
-    channel.async_set_value = AsyncMock(side_effect=OpenEMSError("rejected"))
     entity = entity_class(
         channel,
         description_class(key="h1/edge0/comp1/_PropertyMode"),

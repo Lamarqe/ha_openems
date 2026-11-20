@@ -3,11 +3,7 @@
 from dataclasses import dataclass
 import logging
 
-from openems_client.openems import (
-    OpenEMSBackend,
-    OpenEMSComponent,
-    OpenEMSNumberProperty,
-)
+from openems_client.openems import OpenEMSComponent, OpenEMSNumberProperty
 
 from homeassistant.components.number import (
     NumberEntity,
@@ -80,11 +76,9 @@ async def async_setup_entry(
 
     ############ END MARKER _create_number_entities ##############
 
-    backend: OpenEMSBackend = entry.runtime_data.backend
     component: OpenEMSComponent
-    for component in backend.the_edge.components.values():
-        if component.create_entities:
-            _create_number_entities(component)
+    for component in entry.runtime_data.enabled_components:
+        _create_number_entities(component)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -130,7 +124,7 @@ class OpenEMSNumberEntity(NumberEntity):
     @property
     def native_value(self) -> float | None:
         """Return the value of the number entity."""
-        return self._channel.native_value
+        return self._channel.value
 
     @handle_write_errors
     async def async_set_native_value(self, value: float) -> None:
@@ -140,12 +134,7 @@ class OpenEMSNumberEntity(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
-        self._channel.register_callback(
-            self.async_schedule_update_ha_state,
+        self.async_on_remove(
+            self._channel.add_listener(self.async_schedule_update_ha_state)
         )
         await super().async_added_to_hass()
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Entity removed."""
-        self._channel.unregister_callback()
-        await super().async_will_remove_from_hass()

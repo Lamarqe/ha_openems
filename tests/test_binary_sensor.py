@@ -22,7 +22,7 @@ def _make_entity(channel=None) -> OpenEMSBinarySensorEntity:
     """Build an OpenEMSBinarySensorEntity backed by a mock channel."""
     if channel is None:
         channel = MagicMock()
-        channel.native_value = None
+        channel.value = None
     desc = OpenEMSBinarySensorDescription(key="test/key", name="TestChannel")
     device_info = DeviceInfo(name="dev", identifiers={("openems", "dev")})
     return OpenEMSBinarySensorEntity(channel, desc, device_info)
@@ -51,7 +51,7 @@ def _make_real_channel(value=None) -> OpenEMSChannel:
 def test_is_on_none_when_channel_has_no_value() -> None:
     """Entity returns None when the channel carries no value yet."""
     channel = MagicMock()
-    channel.native_value = None
+    channel.value = None
     assert _make_entity(channel).is_on is None
 
 
@@ -72,7 +72,7 @@ def test_is_on_falsy_for_zero() -> None:
 def test_is_on_none_for_string_value() -> None:
     """is_on returns None when native_value is not an int (e.g. unavailable)."""
     channel = MagicMock()
-    channel.native_value = "unavailable"
+    channel.value = "unavailable"
     assert _make_entity(channel).is_on is None
 
 
@@ -81,32 +81,19 @@ def test_is_on_none_for_string_value() -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_async_added_registers_callback_on_channel() -> None:
-    """async_added_to_hass passes the HA-update callback to the channel."""
+async def test_async_added_adds_listener_removed_with_entity() -> None:
+    """The entity listens to the channel until it is removed."""
     channel = MagicMock()
-    channel.native_value = None
     entity = _make_entity(channel)
 
     with patch.object(BinarySensorEntity, "async_added_to_hass", new=AsyncMock()):
         await entity.async_added_to_hass()
 
-    channel.register_callback.assert_called_once_with(
-        entity.async_schedule_update_ha_state
-    )
-
-
-async def test_async_will_remove_unregisters_callback() -> None:
-    """async_will_remove_from_hass tears down the channel callback."""
-    channel = MagicMock()
-    channel.native_value = None
-    entity = _make_entity(channel)
-
-    with patch.object(
-        BinarySensorEntity, "async_will_remove_from_hass", new=AsyncMock()
-    ):
-        await entity.async_will_remove_from_hass()
-
-    channel.unregister_callback.assert_called_once()
+    channel.add_listener.assert_called_once_with(entity.async_schedule_update_ha_state)
+    remove_listener = channel.add_listener.return_value
+    remove_listener.assert_not_called()
+    entity._call_on_remove_callbacks()
+    remove_listener.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +113,6 @@ async def test_async_setup_entry_creates_binary_sensor_entities(
     mock_component.name = "ctrlEvcs0"
     mock_component.alias = "EV Charger"
     mock_component.edge.hostname = "host"
-    mock_component.create_entities = True
     mock_component.boolean_sensors = [mock_channel]
     mock_channel.component = mock_component
 
@@ -137,6 +123,7 @@ async def test_async_setup_entry_creates_binary_sensor_entities(
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
+    mock_entry.runtime_data.enabled_components = [mock_component]
 
     created: list[OpenEMSBinarySensorEntity] = []
     with patch(
@@ -148,13 +135,12 @@ async def test_async_setup_entry_creates_binary_sensor_entities(
     assert isinstance(created[0], OpenEMSBinarySensorEntity)
 
 
-async def test_async_setup_entry_skips_component_with_create_entities_false(
+async def test_async_setup_entry_skips_disabled_component(
     hass: HomeAssistant,
 ) -> None:
-    """Components where create_entities=False produce no binary sensor entities."""
+    """Components without an enabled device produce no binary sensor entities."""
     mock_component = MagicMock()
     mock_component.name = "ignored"
-    mock_component.create_entities = False
 
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
@@ -163,6 +149,7 @@ async def test_async_setup_entry_skips_component_with_create_entities_false(
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
     mock_entry.runtime_data.backend = mock_backend
+    mock_entry.runtime_data.enabled_components = []
 
     created: list = []
     with patch(

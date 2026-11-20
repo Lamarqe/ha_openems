@@ -6,7 +6,7 @@ import functools
 import re
 from typing import Any, Concatenate
 
-from openems_client.entry_data import ConnectionProperties
+from openems_client.connection import ConnectionProperties
 from openems_client.exceptions import OpenEMSError
 from openems_client.helpers import to_snake_case
 from openems_client.openems import (
@@ -62,6 +62,8 @@ class RuntimeData:
 
     backend: OpenEMSBackend
     edge_device: DeviceRuntimeData
+    # components with an enabled device, the platforms create entities only for these
+    enabled_components: list[OpenEMSComponent]
 
 
 type OpenEMSConfigEntry = ConfigEntry[RuntimeData]

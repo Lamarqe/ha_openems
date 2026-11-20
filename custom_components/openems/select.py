@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 import logging
 
-from openems_client.openems import OpenEMSBackend, OpenEMSComponent, OpenEMSEnumProperty
+from openems_client.openems import OpenEMSComponent, OpenEMSEnumProperty
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.const import EntityCategory
@@ -65,11 +65,9 @@ async def async_setup_entry(
 
     ############ END MARKER _create_select_entities ##############
 
-    backend: OpenEMSBackend = entry.runtime_data.backend
     component: OpenEMSComponent
-    for component in backend.the_edge.components.values():
-        if component.create_entities:
-            _create_select_entities(component)
+    for component in entry.runtime_data.enabled_components:
+        _create_select_entities(component)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -114,12 +112,7 @@ class OpenEMSSelectEntity(SelectEntity):
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""
-        self._channel.register_callback(
-            self.async_schedule_update_ha_state,
+        self.async_on_remove(
+            self._channel.add_listener(self.async_schedule_update_ha_state)
         )
         await super().async_added_to_hass()
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Entity removed."""
-        self._channel.unregister_callback()
-        await super().async_will_remove_from_hass()
