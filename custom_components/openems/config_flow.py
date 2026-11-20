@@ -35,6 +35,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import SectionConfig, section
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
@@ -194,7 +195,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             del user_input[CONF_HOST]
 
         try:
-            connection = OpenEMSWebSocketConnection(map_user_input(user_input))
+            connection = OpenEMSWebSocketConnection(
+                map_user_input(user_input), async_get_clientsession(self.hass)
+            )
         except ValueError:
             errors[CONF_HOST] = "invalid_host"
             return self._show_form(user_input, errors)
@@ -314,7 +317,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         if user_input is not None:
             self._config_data[c.CONF_EDGE] = user_input[c.CONF_EDGES]
             connection: OpenEMSWebSocketConnection = OpenEMSWebSocketConnection(
-                map_user_input(self._config_data)
+                map_user_input(self._config_data), async_get_clientsession(self.hass)
             )
             try:
                 await connection.connect_to_server()
@@ -360,7 +363,8 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         reauth_entry = self._get_reauth_entry()
         if user_input is not None:
             connection = OpenEMSWebSocketConnection(
-                map_user_input({**reauth_entry.data, **user_input})
+                map_user_input({**reauth_entry.data, **user_input}),
+                async_get_clientsession(self.hass),
             )
             try:
                 await connection.connect_to_server()

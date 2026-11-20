@@ -309,7 +309,7 @@ async def test_combined_sensors_for_battery() -> None:
         )
         assert module_difference.native_value == 40
     finally:
-        edge.stop()
+        await edge.stop()
 
 
 def test_combined_sensors_only_for_matching_components() -> None:

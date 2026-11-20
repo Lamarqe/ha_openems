@@ -79,7 +79,7 @@ async def test_heat_pump_sg_ready_translations() -> None:
         status_states = strings["entity"]["sensor"][translation_key(status)]["state"]
         assert {to_snake_case(o) for o in status.options.values()} <= set(status_states)
     finally:
-        edge.stop()
+        await edge.stop()
 
 
 def test_heat_pump_sg_ready_defaults() -> None:

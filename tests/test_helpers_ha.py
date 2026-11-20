@@ -59,11 +59,8 @@ def test_translation_key(dummy_backend) -> None:
     }
     component_config = {"_host": {"Hostname": "h1"}, "comp1": component_json}
     edge = openems.OpenEMSEdge(dummy_backend, "e1", component_config)
-    try:
-        channel = next(iter(edge.components["comp1"].sensors))
-        assert translation_key(channel) == "state_machine"
-    finally:
-        edge.stop()
+    channel = next(iter(edge.components["comp1"].sensors))
+    assert translation_key(channel) == "state_machine"
 
 
 def test_default_channels_have_translated_names() -> None:

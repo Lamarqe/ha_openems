@@ -27,15 +27,14 @@ class LoadedComponent:
     edge_device: dr.DeviceEntry
 
     def stop(self) -> None:
-        """Stop the edge and prevent unloading of the mocked entry at teardown."""
-        self.edge.stop()
+        """Prevent unloading of the mocked entry at teardown."""
         self.entry.mock_state(self.hass, ConfigEntryState.NOT_LOADED)
 
 
 def setup_evcs_component(hass: HomeAssistant) -> LoadedComponent:
     """Create an edge with component ctrlEvcs0 and register entry and devices.
 
-    The caller must call stop() at the end of the test.
+    The edge is not started. The caller must call stop() at the end of the test.
     """
     backend = MagicMock()
     backend.multi_edge = False

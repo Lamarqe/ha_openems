@@ -25,6 +25,7 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 ### Object model and data flow
 
 - `async_setup_entry` creates one `OpenEMSBackend` per config entry; it owns exactly one edge: `backend.the_edge`.
+- Connections get HA's shared session (`OpenEMSWebSocketConnection(..., async_get_clientsession(hass))`), in setup and in the config flow. Constructing library objects starts no background tasks: `backend.start()` at the end of `async_setup_entry` starts them, `await backend.stop()` in `async_unload_entry` closes the connection and waits until they have finished.
 - The edge configuration (component JSON with channels) is cached in a `Store` per config entry (`helpers_ha.component_store`, key `openems.<entry_id>`). Setup reads it from the edge only when the cache is empty; the **Refresh configuration** button (`button.py`) reads it again, saves it and reloads the entry. Reconfiguring the entry and removing it (`async_remove_entry`) delete the cache. The config entry data only holds the connection data (`host`, `username`, `password`, `type`, `url`, `edge`).
 - The edge parses the component JSON into `OpenEMSComponent`s. Each component sorts its channels into typed lists: `sensors`, `boolean_sensors`, `number_properties`, `enum_properties`, `boolean_properties`, `time_properties`.
 - Combined sensors are defined in `sensor.COMBINED_SENSORS` as `DerivedChannelDefinition`s (source channel patterns and a Python `value_fn`). `sensor.py` creates their channels with `component.create_derived_channels(...)`.
