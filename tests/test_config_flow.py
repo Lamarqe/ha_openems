@@ -433,3 +433,72 @@ async def test_reconfigure_updates_entry_and_clears_cached_configuration(
     assert result["reason"] == "reconfigure_successful"
     assert entry.data[CONF_HOST] == "1.1.1.1"
     assert storage_key not in hass_storage
+
+
+_REAUTH_ENTRY_DATA = {
+    CONF_HOST: "1.1.1.1",
+    CONF_USERNAME: "test-username",
+    CONF_PASSWORD: "old-password",
+    CONF_TYPE: "direct_edge",
+    CONF_EDGE: "edge-1",
+}
+
+
+@pytest.mark.parametrize(
+    ("login_error", "expected_error"),
+    [
+        pytest.param(
+            OpenEMSAuthError("Authentication failed"), "invalid_auth", id="rejected"
+        ),
+        pytest.param(
+            OpenEMSConnectionError("Connection lost"),
+            "cannot_connect",
+            id="no_connection",
+        ),
+    ],
+)
+async def test_reauth_shows_error_and_recovers(
+    hass: HomeAssistant,
+    mock_setup_entry: AsyncMock,
+    login_error: OpenEMSError,
+    expected_error: str,
+) -> None:
+    """A failed login shows an error, valid credentials update the entry."""
+    entry = MockConfigEntry(domain=DOMAIN, version=6, data=_REAUTH_ENTRY_DATA)
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "reauth_confirm"
+
+    error_conn = make_mock_connection()
+    error_conn.login_to_server = AsyncMock(side_effect=login_error)
+    with patch(
+        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        return_value=error_conn,
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "test-username", CONF_PASSWORD: "wrong-password"},
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_BASE: expected_error}
+    error_conn.stop.assert_awaited_once()
+
+    with patch(
+        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        return_value=make_mock_connection(),
+    ) as connection_class:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "test-username", CONF_PASSWORD: "new-password"},
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reauth_successful"
+    assert entry.data == {**_REAUTH_ENTRY_DATA, CONF_PASSWORD: "new-password"}
+    # the login is validated with the stored connection data and the new credentials
+    assert connection_class.call_args.args[0]["host"] == "1.1.1.1"
+    assert connection_class.call_args.args[0]["password"] == "new-password"
