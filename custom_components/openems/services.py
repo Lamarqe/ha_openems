@@ -3,6 +3,7 @@
 from collections import defaultdict
 from typing import Any
 
+from openems_client.exceptions import OpenEMSError
 from openems_client.openems import OpenEMSComponent, OpenEMSProperty
 import probatio
 
@@ -10,7 +11,7 @@ from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAI
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import ATTR_DEVICE_ID
 from homeassistant.core import HomeAssistant, ServiceCall, callback
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv, service
 
 from .const import ATTR_PROPERTIES, ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
@@ -65,7 +66,14 @@ async def async_update_component_config(call: ServiceCall) -> None:
             updates[component][prop] = _to_backend_value(prop, value)
 
     for component, values in updates.items():
-        await component.update_properties(values)
+        try:
+            await component.update_properties(values)
+        except OpenEMSError as ex:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="update_component_config_failed",
+                translation_placeholders={"component": component.name},
+            ) from ex
 
 
 @callback

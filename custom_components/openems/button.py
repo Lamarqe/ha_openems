@@ -4,8 +4,8 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING
 
-import jsonrpc_base
 from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.exceptions import OpenEMSError
 from openems_client.openems import OpenEMSBackend, OpenEMSEdge
 
 from homeassistant.components.button import (
@@ -139,10 +139,7 @@ class OpenEMSRestartButtonEntity(ButtonEntity):
         """Trigger a hard restart of the edge."""
         try:
             await self._edge.execute_system_restart()
-        except (
-            jsonrpc_base.jsonrpc.TransportError,
-            jsonrpc_base.jsonrpc.ProtocolError,
-        ) as ex:
+        except OpenEMSError as ex:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
                 translation_key="restart_failed",
@@ -187,10 +184,7 @@ class OpenEMSRefreshConfigurationButtonEntity(ButtonEntity):
         )
         try:
             components = await config_reader.read_edge_components()
-        except (
-            jsonrpc_base.jsonrpc.TransportError,
-            jsonrpc_base.jsonrpc.ProtocolError,
-        ) as ex:
+        except OpenEMSError as ex:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
                 translation_key="refresh_configuration_failed",

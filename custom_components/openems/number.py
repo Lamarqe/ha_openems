@@ -24,6 +24,7 @@ from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
     component_device,
+    handle_write_errors,
     is_channel_enabled,
     translation_key,
     unit_description,
@@ -131,6 +132,7 @@ class OpenEMSNumberEntity(NumberEntity):
         """Return the value of the number entity."""
         return self._channel.native_value
 
+    @handle_write_errors
     async def async_set_native_value(self, value: float) -> None:
         """Change the current value."""
         await self._channel.update_value(value)

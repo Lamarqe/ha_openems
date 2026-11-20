@@ -61,6 +61,7 @@ Further rules:
 - The description dataclass only holds static class-level defaults (at least `has_entity_name = True`). Per-entity values (`key`, `name`, `translation_key`, `entity_registry_enabled_default`, `entity_category`, units, ...) are passed when it is instantiated.
 - Entity behaviour is implemented as **methods of the entity class**, not as module-level functions.
 - Entity constructor signature: `(<backend object>, entity_description, device_info)`. It stores the backend object in a typed private attribute (`self._channel` / `self._edge`), and sets `self.entity_description`, `self._attr_unique_id` and `self._attr_device_info`.
+- Errors: the library raises only `openems_client.exceptions` (`OpenEMSError`, `OpenEMSConnectionError`, `OpenEMSAuthError`) and handles the timeouts itself; HA code never catches `jsonrpc_base` errors and adds no timeouts. Raised HA exceptions are translated (`translation_key` and placeholders, no stringified exception). Write methods of channel entities use the `@handle_write_errors` decorator from `helpers_ha.py`.
 - Use `translation_key` for names. Add new keys to `strings.json`, `translations/en.json` and `translations/de.json` (see `script/update_german_translations.py`).
 - Channel translation keys come from `helpers_ha.translation_key(channel)`: the snake_case channel name without the `_Property` prefix (e.g. `ChargeMode` → `charge_mode`). They are shared by all components, so state translations of one key cover the options of every component with that channel. Every channel in `DEFAULT_CHANNELS` that creates an entity has a `name` under its key (checked by `test_default_channels_have_translated_names`); platforms pass `name=UNDEFINED` for them, so HA uses the translation. All other channels pass the channel id as `name`.
 
@@ -138,7 +139,7 @@ class OpenEMS<Name>Entity(<Platform>Entity):
 ```
 
 - If another module needs an edge level unique id, expose it as a module-level function next to its platform (e.g. `update.update_unique_id(edge)`). Do not duplicate the string format.
-- Edge requests (`edge.get_system_update_state()`, ...) catch `jsonrpc_base` `TransportError` / `ProtocolError` and set the entity unavailable instead of raising.
+- Polling edge requests (`edge.get_system_update_state()`) catch `OpenEMSError` and set the entity unavailable instead of raising. Requests triggered by the user (buttons) raise a translated `HomeAssistantError`.
 
 ## Tests
 

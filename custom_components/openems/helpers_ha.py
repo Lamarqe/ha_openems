@@ -1,10 +1,13 @@
 """Helper methods using HA classes, eg for Entity creation."""
 
+from collections.abc import Awaitable, Callable, Coroutine
 from dataclasses import dataclass
+import functools
 import re
-from typing import Any
+from typing import Any, Concatenate
 
 from openems_client.entry_data import ConnectionProperties
+from openems_client.exceptions import OpenEMSError
 from openems_client.helpers import to_snake_case
 from openems_client.openems import (
     OpenEMSBackend,
@@ -27,8 +30,9 @@ from homeassistant.const import (
     CONF_USERNAME,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.storage import Store
 
 from .const import DEFAULT_CHANNELS, DOMAIN
@@ -242,3 +246,22 @@ def map_user_input(user_input: dict[str, str]) -> ConnectionProperties:
         url=user_input.get(CONF_URL),
         username=user_input[CONF_USERNAME],
     )
+
+
+def handle_write_errors[_EntityT: Entity, **_P](
+    func: Callable[Concatenate[_EntityT, _P], Awaitable[None]],
+) -> Callable[Concatenate[_EntityT, _P], Coroutine[Any, Any, None]]:
+    """Raise a translated HomeAssistantError when writing a value to the edge fails."""
+
+    @functools.wraps(func)
+    async def wrapper(self: _EntityT, *args: _P.args, **kwargs: _P.kwargs) -> None:
+        try:
+            await func(self, *args, **kwargs)
+        except OpenEMSError as ex:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="write_failed",
+                translation_placeholders={"entity_id": self.entity_id},
+            ) from ex
+
+    return wrapper

@@ -1,10 +1,8 @@
 """Config flow for the HA OpenEMS integration."""
 
-import asyncio
 import logging
 from typing import Any
 
-import jsonrpc_base
 from openems_client.const import (
     CONF_ADVANCED_OPTIONS,
     CONF_FORWARD_INTERVAL,
@@ -16,6 +14,7 @@ from openems_client.const import (
     CONN_TYPE_WEB_FENECON,
 )
 from openems_client.entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
 import probatio
 from yarl import URL
 
@@ -162,9 +161,8 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
             try:
                 conn_url = URL(user_input[CONF_URL])
-            except ValueError as e:
+            except ValueError:
                 errors[c.CONF_MORE_OPTIONS] = "invalid_url"
-                errors[CONF_BASE] = str(e)
                 return self._show_form(user_input, errors)
 
             if not conn_url.absolute:
@@ -182,31 +180,32 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
         try:
             connection = OpenEMSWebSocketConnection(map_user_input(user_input))
-        except ValueError as e:
-            errors[CONF_HOST] = str(e)
+        except ValueError:
+            errors[CONF_HOST] = "invalid_host"
             return self._show_form(user_input, errors)
 
         try:
             self._config_data = user_input
             try:
                 # connect
-                await asyncio.wait_for(connection.connect_to_server(), timeout=2)
-            except jsonrpc_base.TransportError as err:
-                errors[CONF_HOST] = f"{err.args[0]}: {err.args[1]}"
+                await connection.connect_to_server()
+            except OpenEMSError:
+                errors[CONF_BASE] = "cannot_connect"
                 return self._show_form(user_input, errors)
 
             try:
                 # login
-                login_response = await asyncio.wait_for(
-                    connection.login_to_server(), timeout=2
-                )
-            except jsonrpc_base.jsonrpc.ProtocolError as pe:
-                errors[CONF_PASSWORD] = f"{pe.args[0]}: {pe.args[1]}"
+                login_response = await connection.login_to_server()
+            except OpenEMSAuthError:
+                errors[CONF_BASE] = "invalid_auth"
+                return self._show_form(user_input, errors)
+            except OpenEMSError:
+                errors[CONF_BASE] = "cannot_connect"
                 return self._show_form(user_input, errors)
 
             try:
                 config_reader = OpenEMSConfigReader(connection)
-                edges = await asyncio.wait_for(config_reader.read_edges(), timeout=2)
+                edges = await config_reader.read_edges()
                 multi_edge = OpenEMSConfigReader.parse_login_response(login_response)
                 if multi_edge:
                     if self.source == SOURCE_RECONFIGURE:
@@ -226,7 +225,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                 config_reader.set_edge_id(edge_id)
                 return await self._create_or_update_entry(config_reader, False)
 
-            except TimeoutError, KeyError, jsonrpc_base.jsonrpc.ProtocolError:
+            except OpenEMSError, KeyError:
                 _LOGGER.exception("Cannot read edge components")
                 errors[CONF_BASE] = "cannot_read_components"
                 return self._show_form(user_input, errors)
@@ -245,7 +244,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         self, config_reader: OpenEMSConfigReader, multi_edge: bool
     ) -> ConfigFlowResult:
         # read the edge config to validate the edge is correctly running
-        await asyncio.wait_for(config_reader.read_edge_config(), timeout=20)
+        await config_reader.read_edge_config()
 
         if self.source == SOURCE_RECONFIGURE:
             self._abort_if_unique_id_mismatch()
@@ -305,11 +304,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                     connection, user_input[c.CONF_EDGES]
                 )
                 return await self._create_or_update_entry(config_reader, True)
-            except (
-                jsonrpc_base.TransportError,
-                jsonrpc_base.jsonrpc.ProtocolError,
-                TimeoutError,
-            ):
+            except OpenEMSError:
                 _LOGGER.exception("Error during processing the selected edge")
                 errors[c.CONF_EDGES] = "error_processing_edge"
             finally:

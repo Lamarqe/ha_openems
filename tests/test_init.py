@@ -9,7 +9,11 @@ from openems_client.const import (
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from jsonrpc_base.jsonrpc import ProtocolError, TransportError
+from openems_client.exceptions import (
+    OpenEMSAuthError,
+    OpenEMSConnectionError,
+    OpenEMSError,
+)
 import pytest
 
 from custom_components.openems import (
@@ -26,7 +30,11 @@ from custom_components.openems.helpers_ha import RuntimeData
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    ConfigEntryNotReady,
+    HomeAssistantError,
+)
 from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -216,7 +224,9 @@ async def test_setup_entry_read_configuration_error_raises_not_ready(
 ) -> None:
     """A failure while reading the configuration raises ConfigEntryNotReady."""
     entry = await _create_real_entry(hass)
-    read_edge_components = AsyncMock(side_effect=TransportError("connection lost"))
+    read_edge_components = AsyncMock(
+        side_effect=OpenEMSConnectionError("connection lost")
+    )
 
     with pytest.raises(ConfigEntryNotReady):
         await _setup_with_mocked_backend(hass, entry, read_edge_components)
@@ -242,16 +252,52 @@ async def test_remove_entry_removes_cached_configuration(
     assert _storage_key(entry) not in hass_storage
 
 
-async def test_setup_entry_transport_error_raises_not_ready(
+@pytest.mark.parametrize(
+    ("connect_error", "login_error", "expected", "translation_key"),
+    [
+        pytest.param(
+            OpenEMSConnectionError("connection refused"),
+            None,
+            ConfigEntryNotReady,
+            "cannot_connect",
+            id="connect_error",
+        ),
+        pytest.param(
+            None,
+            OpenEMSConnectionError("connection lost"),
+            ConfigEntryNotReady,
+            "login_failed",
+            id="login_connection_error",
+        ),
+        pytest.param(
+            None,
+            OpenEMSAuthError("Authentication failed"),
+            ConfigEntryAuthFailed,
+            "invalid_auth",
+            id="login_rejected",
+        ),
+        pytest.param(
+            None,
+            OpenEMSError("Internal server error"),
+            ConfigEntryNotReady,
+            "login_failed",
+            id="login_error",
+        ),
+    ],
+)
+async def test_setup_entry_connection_errors(
     hass: HomeAssistant,
+    connect_error: OpenEMSError | None,
+    login_error: OpenEMSError | None,
+    expected: type[HomeAssistantError],
+    translation_key: str,
 ) -> None:
-    """A TransportError on connect must surface as ConfigEntryNotReady."""
+    """Connection and login errors raise translated setup errors and stop the connection."""
     entry = await _create_real_entry(hass)
 
     mock_conn = MagicMock()
-    mock_conn.connect_to_server = AsyncMock(
-        side_effect=TransportError("connection refused")
-    )
+    mock_conn.connect_to_server = AsyncMock(side_effect=connect_error)
+    mock_conn.login_to_server = AsyncMock(side_effect=login_error)
     mock_conn.stop = AsyncMock()
     mock_conn.conn_url.host = "192.0.2.1"
 
@@ -260,82 +306,13 @@ async def test_setup_entry_transport_error_raises_not_ready(
             "custom_components.openems.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
-        pytest.raises(ConfigEntryNotReady),
+        pytest.raises(expected) as exc_info,
     ):
         await async_setup_entry(hass, entry)
 
-
-async def test_setup_entry_transport_error_on_login_raises_not_ready(
-    hass: HomeAssistant,
-) -> None:
-    """A TransportError during login (e.g. connection lost) raises ConfigEntryNotReady."""
-    entry = await _create_real_entry(hass)
-
-    mock_conn = MagicMock()
-    mock_conn.connect_to_server = AsyncMock()
-    mock_conn.login_to_server = AsyncMock(
-        side_effect=TransportError("Connection closed before a response was received")
-    )
-    mock_conn.stop = AsyncMock()
-    mock_conn.conn_url.host = "192.0.2.1"
-
-    with (
-        patch(
-            "custom_components.openems.OpenEMSWebSocketConnection",
-            return_value=mock_conn,
-        ),
-        pytest.raises(ConfigEntryNotReady),
-    ):
-        await async_setup_entry(hass, entry)
+    assert exc_info.value.translation_key == translation_key
+    assert exc_info.value.translation_placeholders == {"host": "192.0.2.1"}
     mock_conn.stop.assert_awaited_once()
-
-
-async def test_setup_entry_auth_error_code_1003_raises_auth_failed(
-    hass: HomeAssistant,
-) -> None:
-    """ProtocolError code 1003 (OpenEMS authentication failure) raises ConfigEntryAuthFailed."""
-    entry = await _create_real_entry(hass)
-
-    mock_conn = MagicMock()
-    mock_conn.connect_to_server = AsyncMock()
-    mock_conn.login_to_server = AsyncMock(
-        side_effect=ProtocolError(1003, "Authentication failed", [])
-    )
-    mock_conn.stop = AsyncMock()
-    mock_conn.conn_url.host = "192.0.2.1"
-
-    with (
-        patch(
-            "custom_components.openems.OpenEMSWebSocketConnection",
-            return_value=mock_conn,
-        ),
-        pytest.raises(ConfigEntryAuthFailed),
-    ):
-        await async_setup_entry(hass, entry)
-
-
-async def test_setup_entry_other_protocol_error_raises_not_ready(
-    hass: HomeAssistant,
-) -> None:
-    """A ProtocolError with any code other than 1003 is treated as a transient error."""
-    entry = await _create_real_entry(hass)
-
-    mock_conn = MagicMock()
-    mock_conn.connect_to_server = AsyncMock()
-    mock_conn.login_to_server = AsyncMock(
-        side_effect=ProtocolError(500, "Internal server error", [])
-    )
-    mock_conn.stop = AsyncMock()
-    mock_conn.conn_url.host = "192.0.2.1"
-
-    with (
-        patch(
-            "custom_components.openems.OpenEMSWebSocketConnection",
-            return_value=mock_conn,
-        ),
-        pytest.raises(ConfigEntryNotReady),
-    ):
-        await async_setup_entry(hass, entry)
 
 
 # ---------------------------------------------------------------------------
