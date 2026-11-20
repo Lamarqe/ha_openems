@@ -29,10 +29,19 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.storage import Store
 
 from .const import DEFAULT_CHANNELS, DOMAIN
 
 CAMEL_CASE_PATTERN = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+
+
+STORAGE_VERSION = 1
+
+
+def component_store(hass: HomeAssistant, entry_id: str) -> Store[dict[str, Any]]:
+    """Return the store caching the edge configuration of a config entry."""
+    return Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry_id}")
 
 
 @dataclass

@@ -20,6 +20,7 @@ Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 - Advanced configuration options to support non-standard connection types.
 - FEMS update discovery and installation option
 - Restart option
+- Button to refresh the cached list of components and channels after changes in the backend
 - Access to REST write App (if installed)
 
 ## Table of contents
@@ -311,10 +312,9 @@ This will open the entities dialog. In this dialog, (1) activate multi-select, (
 
 #### Check the backend for configuration changes, change connection details
 
-In case of changes in the backend, users can check the backend for changes and with that update the config entries list of components and channels.
-In order to do so, select the 3 dots next to the config entry. From the resulting menu, select **Reload**
+The list of components and channels is read from the backend once and then cached. In case of changes in the backend, press the **Refresh configuration** button of the edge device. The integration then reads the components and channels again and reloads.
 
-Furthermore, in case the connection details shall be adjusted, you can use the same menu and select **Reconfigure**. This will bring up the main config dialog and allow you to make all necessary changes.
+In case the connection details shall be adjusted, select the 3 dots next to the config entry and select **Reconfigure** from the resulting menu. This will bring up the main config dialog and allow you to make all necessary changes. After a reconfiguration, the components and channels are read again as well.
 
 <img src="screenshots/reload_reconfigure.jpg" width="600"/>
 

@@ -47,7 +47,7 @@ from homeassistant.helpers.selector import (
 )
 
 from . import const as c
-from .helpers_ha import OpenEMSConfigEntry, map_user_input
+from .helpers_ha import OpenEMSConfigEntry, component_store, map_user_input
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ _LOGGER = logging.getLogger(__name__)
 class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
-    VERSION = 5
+    VERSION = 6
     MINOR_VERSION = 1
 
     def __init__(self) -> None:
@@ -210,9 +210,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                 multi_edge = OpenEMSConfigReader.parse_login_response(login_response)
                 if multi_edge:
                     if self.source == SOURCE_RECONFIGURE:
-                        default_edge = self._get_reconfigure_entry().data["user_input"][
-                            c.CONF_EDGE
-                        ]
+                        default_edge = self._get_reconfigure_entry().data[c.CONF_EDGE]
                     else:
                         default_edge = None
 
@@ -246,17 +244,16 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     async def _create_or_update_entry(
         self, config_reader: OpenEMSConfigReader, multi_edge: bool
     ) -> ConfigFlowResult:
-        # read edge components to validate it is correctly running
-        # and to initialize entry options
-        components = await asyncio.wait_for(
-            config_reader.read_edge_components(), timeout=20
-        )
-        entry_data = {"user_input": self._config_data, "components": components}
+        # read the edge config to validate the edge is correctly running
+        await asyncio.wait_for(config_reader.read_edge_config(), timeout=20)
 
         if self.source == SOURCE_RECONFIGURE:
             self._abort_if_unique_id_mismatch()
+            reconfigure_entry = self._get_reconfigure_entry()
+            # the connection may point to another edge now, so read its configuration again
+            await component_store(self.hass, reconfigure_entry.entry_id).async_remove()
             return self.async_update_reload_and_abort(
-                entry=self._get_reconfigure_entry(), data=entry_data
+                entry=reconfigure_entry, data=self._config_data
             )
 
         # no reconfigure. Create new entry instead
@@ -283,7 +280,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         if multi_edge:
             title += " " + self._config_data[c.CONF_EDGE]
 
-        return self.async_create_entry(title=title, data=entry_data, options=options)
+        return self.async_create_entry(
+            title=title, data=self._config_data, options=options
+        )
 
     async def async_step_edges(
         self, user_input: dict[str, Any] | None = None
@@ -328,7 +327,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=self._step_user_data_schema(
-                self._get_reconfigure_entry().data["user_input"]
+                dict(self._get_reconfigure_entry().data)
             ),
             errors=None,
         )

@@ -1,15 +1,23 @@
 """Test the HA OpenEMS config flow."""
 
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import jsonrpc_base
 import jsonrpc_base.jsonrpc
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_URL, CONF_USERNAME
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_PASSWORD,
+    CONF_TYPE,
+    CONF_URL,
+    CONF_USERNAME,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.openems.const import CONF_MORE_OPTIONS, DOMAIN
+from custom_components.openems.const import CONF_EDGE, CONF_MORE_OPTIONS, DOMAIN
 from openems_client.entry_data import OpenEMSConfigReader
 
 from .helpers_flow import make_mock_connection
@@ -39,9 +47,7 @@ def _success_patches(conn_url: str | None = None):
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
-        patch.object(
-            OpenEMSConfigReader, "read_edge_components", return_value=_COMPONENTS
-        ),
+        patch.object(OpenEMSConfigReader, "read_edge_config", return_value=_COMPONENTS),
     )
 
 
@@ -62,9 +68,14 @@ async def test_form(hass: HomeAssistant, mock_setup_entry: AsyncMock) -> None:
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "1.1.1.1"
-    assert result["data"]["user_input"][CONF_HOST] == "1.1.1.1"
-    assert result["data"]["user_input"][CONF_USERNAME] == "test-username"
-    assert result["data"]["user_input"][CONF_PASSWORD] == "test-password"
+    assert result["data"] == {
+        CONF_HOST: "1.1.1.1",
+        CONF_USERNAME: "test-username",
+        CONF_PASSWORD: "test-password",
+        CONF_TYPE: "direct_edge",
+        CONF_URL: "",
+        CONF_EDGE: "edge-1",
+    }
     assert len(mock_setup_entry.mock_calls) == 1
 
 
@@ -210,7 +221,7 @@ async def test_custom_url_creates_entry(
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    stored = result["data"]["user_input"]
+    stored = result["data"]
     assert stored[CONF_URL] == "ws://myserver.example.com:8085/openems-backend-ui"
     # host is not provided for custom_url; it is absent or empty in stored data
     assert not stored.get(CONF_HOST)
@@ -286,7 +297,7 @@ async def test_web_fenecon_creates_entry(
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    stored = result["data"]["user_input"]
+    stored = result["data"]
     assert stored["type"] == "web_fenecon"
     assert not stored.get(CONF_HOST)
 
@@ -335,7 +346,7 @@ async def test_web_fenecon_multi_edge_shows_edge_selection(
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_multi_edges),
-        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
+        patch.object(OpenEMSConfigReader, "read_edge_config", return_value={}),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], _USER_INPUT_WEB_FENECON
@@ -343,3 +354,43 @@ async def test_web_fenecon_multi_edge_shows_edge_selection(
 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "edges"
+
+
+async def test_reconfigure_updates_entry_and_clears_cached_configuration(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock, hass_storage: dict[str, Any]
+) -> None:
+    """Reconfigure stores the new connection data and drops the cached configuration."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=6,
+        data={
+            CONF_HOST: "2.2.2.2",
+            CONF_USERNAME: "old-username",
+            CONF_PASSWORD: "old-password",
+            CONF_TYPE: "direct_edge",
+            CONF_EDGE: "edge-1",
+        },
+    )
+    entry.add_to_hass(hass)
+    storage_key = f"{DOMAIN}.{entry.entry_id}"
+    hass_storage[storage_key] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": storage_key,
+        "data": {"comp1": {}},
+    }
+
+    result = await entry.start_reconfigure_flow(hass)
+    assert result["type"] is FlowResultType.FORM
+
+    conn_patch, edges_patch, components_patch = _success_patches()
+    with conn_patch, edges_patch, components_patch:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_HOST] == "1.1.1.1"
+    assert storage_key not in hass_storage

@@ -44,9 +44,7 @@ def _multi_edge_patches(login_response: dict | None = None):
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
-        patch.object(
-            OpenEMSConfigReader, "read_edge_components", return_value=_COMPONENTS
-        ),
+        patch.object(OpenEMSConfigReader, "read_edge_config", return_value=_COMPONENTS),
     )
 
 
@@ -113,7 +111,7 @@ async def test_multi_edge_selecting_edge_creates_entry(
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"]["user_input"][CONF_EDGE] == "edge-online-1"
+    assert result["data"][CONF_EDGE] == "edge-online-1"
     # Title must include the edge id for multi-edge setups
     assert "edge-online-1" in result["title"]
     assert len(mock_setup_entry.mock_calls) == 1
@@ -138,7 +136,7 @@ async def test_multi_edge_entry_stores_selected_edge_id(
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"]["user_input"][CONF_EDGE] == "edge-online-2"
+    assert result["data"][CONF_EDGE] == "edge-online-2"
 
 
 async def test_multi_edge_edges_step_error_on_connection_failure(

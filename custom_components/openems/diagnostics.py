@@ -11,7 +11,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from .helpers_ha import OpenEMSConfigEntry
+from .helpers_ha import OpenEMSConfigEntry, component_store
 
 TO_REDACT = [
     CONF_HOST,
@@ -38,6 +38,9 @@ async def async_get_config_entry_diagnostics(
     return {
         "entry_data": async_redact_data(entry.data, TO_REDACT),
         "options": dict(entry.options),
+        "components": async_redact_data(
+            await component_store(hass, entry.entry_id).async_load(), TO_REDACT
+        ),
         "fems_version": (
             update_state.attributes.get(ATTR_INSTALLED_VERSION)
             if update_state

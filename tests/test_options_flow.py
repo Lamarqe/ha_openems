@@ -45,7 +45,7 @@ def _setup_patches():
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
-        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
+        patch.object(OpenEMSConfigReader, "read_edge_config", return_value={}),
     )
 
 
