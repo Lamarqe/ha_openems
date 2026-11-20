@@ -66,22 +66,36 @@ def test_native_value_numeric_passed_through_unchanged() -> None:
     assert _make_entity(channel).native_value == 42.5
 
 
-def test_native_value_total_increasing_ignores_decrease_when_enabled() -> None:
-    """A new value lower than the previous one is discarded when ignore_decreasing=True."""
+@pytest.mark.parametrize(
+    ("ignore_decreasing", "new_value", "expected_value"),
+    [
+        pytest.param(True, 50.0, 100.0, id="decrease_ignored"),
+        pytest.param(True, 150.0, 150.0, id="increase_accepted"),
+        pytest.param(False, 50.0, 50.0, id="decrease_accepted_when_disabled"),
+    ],
+)
+def test_total_increasing_channel_update(
+    ignore_decreasing: bool, new_value: float, expected_value: float
+) -> None:
+    """A channel update keeps the previous value only for an ignored decrease."""
     channel = MagicMock()
-    channel.native_value = 50.0
     channel.component.edge.advanced_options = {
-        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True
+        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: ignore_decreasing
     }
     entity = _make_entity(channel, state_class=SensorStateClass.TOTAL_INCREASING)
+    entity.async_schedule_update_ha_state = MagicMock()
     entity.previous_increasing_value_not_null = 100.0
 
-    assert entity.native_value == 100.0
-    assert entity.previous_increasing_value_not_null == 100.0  # not updated
+    channel.native_value = new_value
+    entity._handle_channel_update()
+
+    assert entity.native_value == expected_value
+    assert entity.previous_increasing_value_not_null == expected_value
+    entity.async_schedule_update_ha_state.assert_called_once()
 
 
-def test_native_value_total_increasing_accepts_new_higher_value() -> None:
-    """An increasing value is returned and stored for future comparisons."""
+def test_native_value_does_not_change_the_previous_value() -> None:
+    """Reading the value has no side effects, only channel updates are remembered."""
     channel = MagicMock()
     channel.native_value = 150.0
     channel.component.edge.advanced_options = {
@@ -91,21 +105,7 @@ def test_native_value_total_increasing_accepts_new_higher_value() -> None:
     entity.previous_increasing_value_not_null = 100.0
 
     assert entity.native_value == 150.0
-    assert entity.previous_increasing_value_not_null == 150.0
-
-
-def test_native_value_total_increasing_decrease_allowed_when_disabled() -> None:
-    """A lower value is returned normally when ignore_decreasing=False."""
-    channel = MagicMock()
-    channel.native_value = 50.0
-    channel.component.edge.advanced_options = {
-        CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False
-    }
-    entity = _make_entity(channel, state_class=SensorStateClass.TOTAL_INCREASING)
-    entity.previous_increasing_value_not_null = 100.0
-
-    assert entity.native_value == 50.0
-    assert entity.previous_increasing_value_not_null == 50.0
+    assert entity.previous_increasing_value_not_null == 100.0
 
 
 # ---------------------------------------------------------------------------
@@ -114,7 +114,7 @@ def test_native_value_total_increasing_decrease_allowed_when_disabled() -> None:
 
 
 async def test_async_added_registers_callback_on_channel() -> None:
-    """async_added_to_hass passes the HA-update callback to the channel."""
+    """async_added_to_hass passes the update callback to the channel."""
     channel = MagicMock()
     channel.native_value = None
     entity = _make_entity(channel)
@@ -122,9 +122,7 @@ async def test_async_added_registers_callback_on_channel() -> None:
     with patch.object(SensorEntity, "async_added_to_hass", new=AsyncMock()):
         await entity.async_added_to_hass()
 
-    channel.register_callback.assert_called_once_with(
-        entity.async_schedule_update_ha_state
-    )
+    channel.register_callback.assert_called_once_with(entity._handle_channel_update)
 
 
 async def test_async_will_remove_unregisters_callback() -> None:
