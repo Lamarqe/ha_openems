@@ -7,6 +7,19 @@ import pytest
 from yarl import URL
 
 
+EDGE_HOSTNAME = "fems1"
+
+
+@pytest.fixture(autouse=True)
+def mock_edge_hostname() -> Generator[AsyncMock]:
+    """Return EDGE_HOSTNAME when the config flow reads the edge hostname."""
+    with patch(
+        "openems_client.entry_data.OpenEMSConfigReader.get_channel_values_via_websocket",
+        return_value={"_host/Hostname": EDGE_HOSTNAME},
+    ) as mock_read:
+        yield mock_read
+
+
 @pytest.fixture
 def mock_setup_entry() -> Generator[AsyncMock]:
     """Override async_setup_entry and async_unload_entry."""

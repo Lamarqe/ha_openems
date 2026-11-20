@@ -364,6 +364,30 @@ async def async_migrate_entry(
             config_entry.version,
             config_entry.minor_version,
         )
+
+    if config_entry.version == 6 and config_entry.minor_version == 1:
+        # the edge hostname became the unique ID, take it from the edge device identifier
+        device_registry = dr.async_get(hass)
+        edge_device = next(
+            (
+                device
+                for device in dr.async_entries_for_config_entry(
+                    device_registry, config_entry.entry_id
+                )
+                if device.via_device_id is None
+            ),
+            None,
+        )
+        hass.config_entries.async_update_entry(
+            config_entry,
+            unique_id=(next(iter(edge_device.identifiers))[1] if edge_device else None),
+            minor_version=2,
+        )
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
         return True
 
     return False

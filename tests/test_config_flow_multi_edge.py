@@ -11,6 +11,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType, InvalidData
 
+from .conftest import EDGE_HOSTNAME
 from .helpers_flow import make_mock_connection
 
 _LOGIN_RESPONSE_MULTI: dict = {"user": {"hasMultipleEdges": True}}
@@ -136,6 +137,8 @@ async def test_multi_edge_entry_stores_selected_edge_id(
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_EDGE] == "edge-online-2"
+    # multi edge backends append the edge ID, like the edge device identifier
+    assert result["result"].unique_id == f"{EDGE_HOSTNAME} edge-online-2"
 
 
 async def test_multi_edge_edges_step_error_on_connection_failure(

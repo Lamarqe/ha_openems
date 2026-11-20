@@ -52,11 +52,25 @@ from .helpers_ha import OpenEMSConfigEntry, component_store, map_user_input
 _LOGGER = logging.getLogger(__name__)
 
 
+async def _read_edge_hostname(
+    config_reader: OpenEMSConfigReader, multi_edge: bool
+) -> str:
+    """Read the edge hostname, which is the unique ID of the config entry.
+
+    Multi edge backends append the edge ID, like the edge device identifier.
+    """
+    data = await config_reader.get_channel_values_via_websocket(["_host/Hostname"])
+    hostname: str = data["_host/Hostname"]
+    if multi_edge:
+        hostname += " " + str(config_reader.edge_id)
+    return hostname
+
+
 class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
     VERSION = 6
-    MINOR_VERSION = 1
+    MINOR_VERSION = 2
 
     def __init__(self) -> None:
         """Initialize."""
@@ -246,6 +260,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     ) -> ConfigFlowResult:
         # read the edge config to validate the edge is correctly running
         await config_reader.read_edge_config()
+        await self.async_set_unique_id(
+            await _read_edge_hostname(config_reader, multi_edge)
+        )
 
         if self.source == SOURCE_RECONFIGURE:
             self._abort_if_unique_id_mismatch()
@@ -257,6 +274,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             )
 
         # no reconfigure. Create new entry instead
+        self._abort_if_unique_id_configured()
         # initialize options with default settings
         options = {
             CONF_ADVANCED_OPTIONS: {
@@ -346,12 +364,19 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             )
             try:
                 await connection.connect_to_server()
-                await connection.login_to_server()
+                login_response = await connection.login_to_server()
+                hostname = await _read_edge_hostname(
+                    OpenEMSConfigReader(connection, reauth_entry.data[c.CONF_EDGE]),
+                    OpenEMSConfigReader.parse_login_response(login_response),
+                )
             except OpenEMSAuthError:
                 errors[CONF_BASE] = "invalid_auth"
-            except OpenEMSError:
+            except OpenEMSError, KeyError:
                 errors[CONF_BASE] = "cannot_connect"
             else:
+                # the credentials must belong to the system of the entry
+                await self.async_set_unique_id(hostname)
+                self._abort_if_unique_id_mismatch()
                 return self.async_update_reload_and_abort(
                     reauth_entry, data_updates=user_input
                 )
