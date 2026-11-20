@@ -18,6 +18,7 @@ from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.helpers.event import async_track_device_registry_updated_event
@@ -73,7 +74,9 @@ async def async_setup_entry(
     """Set up HA OpenEMS from a config entry."""
     try:
         # 1. Create connection instance
-        connection = OpenEMSWebSocketConnection(map_user_input(dict(config_entry.data)))
+        connection = OpenEMSWebSocketConnection(
+            map_user_input(dict(config_entry.data)), async_get_clientsession(hass)
+        )
 
         edge_id = config_entry.data[c.CONF_EDGE]
         # 2. Trigger the API connection (and authentication)
