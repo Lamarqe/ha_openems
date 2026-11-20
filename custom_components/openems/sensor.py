@@ -24,6 +24,7 @@ from homeassistant.components.sensor import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import UNDEFINED
 
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
 from .helpers_ha import (
@@ -99,7 +100,8 @@ async def async_setup_entry(
             entity_description = OpenEMSSensorDescription(
                 key=channel.unique_id(),
                 entity_registry_enabled_default=enable_by_default,
-                name=channel.name,
+                # channels enabled by default have a translated name
+                name=UNDEFINED if enable_by_default else channel.name,
                 device_class=device_class,
                 state_class=state_class,
                 native_unit_of_measurement=uom,
@@ -129,7 +131,8 @@ async def async_setup_entry(
             entity_description = OpenEMSSensorDescription(
                 key=derived_channel.unique_id(),
                 entity_registry_enabled_default=enable_by_default,
-                name=derived_channel.name,
+                # channels enabled by default have a translated name
+                name=UNDEFINED if enable_by_default else derived_channel.name,
                 device_class=device_class,
                 state_class=state_class,
                 native_unit_of_measurement=uom,

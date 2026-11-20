@@ -10,6 +10,8 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.typing import UNDEFINED, UndefinedType
+import pytest
 
 from custom_components.openems import sensor
 from openems_client.openems import OpenEMSChannel, OpenEMSEdge
@@ -181,16 +183,27 @@ def test_enum_channel_maps_integer_to_snake_case_option() -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) -> None:
+@pytest.mark.parametrize(
+    ("component_name", "expected_name"),
+    [
+        pytest.param("meter0", UNDEFINED, id="default_channel_translated_name"),
+        pytest.param("comp1", "ActivePower", id="other_channel_channel_id"),
+    ],
+)
+async def test_async_setup_entry_creates_sensor_entities(
+    hass: HomeAssistant, component_name: str, expected_name: str | UndefinedType
+) -> None:
     """async_setup_entry creates one entity per sensor in the component."""
     mock_channel = MagicMock()
     mock_channel.options = None
     mock_channel.unit = "W"
     mock_channel.name = "ActivePower"
-    mock_channel.unique_id.return_value = "test-host/edge-1/comp1/ActivePower"
+    mock_channel.unique_id.return_value = (
+        f"test-host/edge-1/{component_name}/ActivePower"
+    )
 
     mock_component = MagicMock()
-    mock_component.name = "comp1"
+    mock_component.name = component_name
     mock_component.alias = "Test Component"
     mock_component.edge.hostname = "test-host"
     mock_component.create_entities = True
@@ -202,7 +215,7 @@ async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) ->
 
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "test-host"
-    mock_backend.the_edge.components = {"comp1": mock_component}
+    mock_backend.the_edge.components = {component_name: mock_component}
 
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"
@@ -216,6 +229,7 @@ async def test_async_setup_entry_creates_sensor_entities(hass: HomeAssistant) ->
 
     assert len(created) == 1
     assert isinstance(created[0], OpenEMSSensorEntity)
+    assert created[0].entity_description.name == expected_name
 
 
 async def test_async_setup_entry_skips_component_with_create_entities_false(

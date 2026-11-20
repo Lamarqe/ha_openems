@@ -11,6 +11,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.typing import UNDEFINED
 
 from .helpers_ha import (
     OpenEMSConfigEntry,
@@ -45,8 +46,9 @@ async def async_setup_entry(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                # remove "_Property" prefix
-                name=channel.name[9:],
+                # channels enabled by default have a translated name, others
+                # use the channel name without "_Property" prefix
+                name=UNDEFINED if entity_enabled else channel.name[9:],
                 translation_key=translation_key(channel),
             )
             entities.append(
