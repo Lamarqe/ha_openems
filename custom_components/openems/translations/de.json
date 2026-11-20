@@ -12,7 +12,8 @@
       "invalid_auth": "Fehler während der Authentifizierung",
       "invalid_url": "Ungültige URL angegeben",
       "unknown": "Unerwarter Fehler",
-      "url_not_absolute": "Indiviudelle URL muss absolut sein."
+      "url_not_absolute": "Indiviudelle URL muss absolut sein.",
+      "invalid_host": "Ungültiger Host"
     },
     "step": {
       "edges": {
@@ -1835,6 +1836,24 @@
     },
     "invalid_property_value": {
       "message": "Ungültiger Wert {value} für Eigenschaft {property} der Komponente {component}."
+    },
+    "cannot_connect": {
+      "message": "Verbindung zu {host} nicht möglich."
+    },
+    "invalid_auth": {
+      "message": "Benutzername oder Passwort für {host} falsch."
+    },
+    "login_failed": {
+      "message": "Anmeldung bei {host} fehlgeschlagen."
+    },
+    "cannot_read_configuration": {
+      "message": "Die Konfiguration von {host} kann nicht gelesen werden."
+    },
+    "write_failed": {
+      "message": "Der Wert von {entity_id} konnte nicht geschrieben werden."
+    },
+    "update_component_config_failed": {
+      "message": "Die Konfiguration der Komponente {component} konnte nicht aktualisiert werden."
     }
   },
   "services": {

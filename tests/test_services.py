@@ -10,7 +10,8 @@ from custom_components.openems.services import (
     async_setup_services,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from openems_client.exceptions import OpenEMSError
 
 from .helpers_component import LoadedComponent, setup_evcs_component
 
@@ -45,6 +46,25 @@ async def test_device_target_sends_single_request(
     loaded.update_config.assert_awaited_once_with(
         [("enabledCharging", True), ("chargeMode", "FORCE_CHARGE")]
     )
+
+
+async def test_write_error_raises_translated_error(
+    hass: HomeAssistant, loaded: LoadedComponent
+) -> None:
+    """An error while sending the update raises a translated HomeAssistantError."""
+    loaded.update_config.side_effect = OpenEMSError("rejected")
+
+    with pytest.raises(HomeAssistantError) as exc_info:
+        await _call(
+            hass,
+            {
+                "device_id": loaded.component_device.id,
+                "properties": {"enabledCharging": True},
+            },
+        )
+
+    assert exc_info.value.translation_key == "update_component_config_failed"
+    assert exc_info.value.translation_placeholders == {"component": "ctrlEvcs0"}
 
 
 async def test_device_target_adds_update_group_members(

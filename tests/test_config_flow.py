@@ -3,10 +3,10 @@
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
-import jsonrpc_base
-import jsonrpc_base.jsonrpc
+import pytest
 from homeassistant import config_entries
 from homeassistant.const import (
+    CONF_BASE,
     CONF_HOST,
     CONF_PASSWORD,
     CONF_TYPE,
@@ -19,6 +19,11 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.openems.const import CONF_EDGE, CONF_MORE_OPTIONS, DOMAIN
 from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.exceptions import (
+    OpenEMSAuthError,
+    OpenEMSConnectionError,
+    OpenEMSError,
+)
 
 from .helpers_flow import make_mock_connection
 
@@ -79,18 +84,43 @@ async def test_form(hass: HomeAssistant, mock_setup_entry: AsyncMock) -> None:
     assert len(mock_setup_entry.mock_calls) == 1
 
 
-async def test_form_invalid_auth(
-    hass: HomeAssistant, mock_setup_entry: AsyncMock
+@pytest.mark.parametrize(
+    ("failing_call", "error", "expected_errors"),
+    [
+        pytest.param(
+            "connect_to_server",
+            OpenEMSConnectionError("Connection refused"),
+            {CONF_BASE: "cannot_connect"},
+            id="connect_error",
+        ),
+        pytest.param(
+            "login_to_server",
+            OpenEMSAuthError("Authentication failed"),
+            {CONF_BASE: "invalid_auth"},
+            id="login_rejected",
+        ),
+        pytest.param(
+            "login_to_server",
+            OpenEMSConnectionError("Connection lost"),
+            {CONF_BASE: "cannot_connect"},
+            id="login_connection_error",
+        ),
+    ],
+)
+async def test_form_connection_errors(
+    hass: HomeAssistant,
+    mock_setup_entry: AsyncMock,
+    failing_call: str,
+    error: Exception,
+    expected_errors: dict[str, str],
 ) -> None:
-    """Test we handle a login ProtocolError (wrong password)."""
+    """Connection and login errors show translated errors, a retry creates the entry."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
 
     error_conn = make_mock_connection()
-    error_conn.login_to_server = AsyncMock(
-        side_effect=jsonrpc_base.jsonrpc.ProtocolError(401, "Unauthorized")
-    )
+    setattr(error_conn, failing_call, AsyncMock(side_effect=error))
     with patch(
         "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
         return_value=error_conn,
@@ -100,9 +130,8 @@ async def test_form_invalid_auth(
         )
 
     assert result["type"] is FlowResultType.FORM
-    assert CONF_PASSWORD in result["errors"]
+    assert result["errors"] == expected_errors
 
-    # Recover: submit again with correct credentials
     conn_patch, edges_patch, components_patch = _success_patches()
     with conn_patch, edges_patch, components_patch:
         result = await hass.config_entries.flow.async_configure(
@@ -114,39 +143,50 @@ async def test_form_invalid_auth(
     assert len(mock_setup_entry.mock_calls) == 1
 
 
-async def test_form_cannot_connect(
+async def test_form_cannot_read_edge(
     hass: HomeAssistant, mock_setup_entry: AsyncMock
 ) -> None:
-    """Test we handle a TransportError (host unreachable)."""
+    """An error while reading the edge shows the cannot_read_components error."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
 
-    error_conn = make_mock_connection()
-    error_conn.connect_to_server = AsyncMock(
-        side_effect=jsonrpc_base.TransportError("Connection refused", None, "errno 111")
-    )
-    with patch(
-        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
-        return_value=error_conn,
+    conn_patch, edges_patch, _ = _success_patches()
+    with (
+        conn_patch,
+        edges_patch,
+        patch.object(
+            OpenEMSConfigReader,
+            "read_edge_config",
+            side_effect=OpenEMSError("rejected"),
+        ),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], _USER_INPUT
         )
 
     assert result["type"] is FlowResultType.FORM
-    assert CONF_HOST in result["errors"]
+    assert result["errors"] == {CONF_BASE: "cannot_read_components"}
 
-    # Recover: submit again when host is reachable
-    conn_patch, edges_patch, components_patch = _success_patches()
-    with conn_patch, edges_patch, components_patch:
+
+async def test_form_invalid_host(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A host the connection cannot be built for shows the invalid_host error."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    with patch(
+        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        side_effect=ValueError("invalid host"),
+    ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], _USER_INPUT
         )
-        await hass.async_block_till_done()
 
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert len(mock_setup_entry.mock_calls) == 1
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_HOST: "invalid_host"}
 
 
 _USER_INPUT_CUSTOM_URL = {
@@ -266,8 +306,7 @@ async def test_custom_url_invalid_url_shows_error(
     )
 
     assert result["type"] is FlowResultType.FORM
-    assert result["errors"].get(CONF_MORE_OPTIONS) == "invalid_url"
-    assert "base" in result["errors"]
+    assert result["errors"] == {CONF_MORE_OPTIONS: "invalid_url"}
 
 
 # ---------------------------------------------------------------------------

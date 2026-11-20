@@ -1,9 +1,7 @@
 """The HA OpenEMS integration."""
 
-import asyncio
 import logging
 
-from jsonrpc_base.jsonrpc import ProtocolError, TransportError
 from openems_client.const import (
     CONF_ADVANCED_OPTIONS,
     CONF_COMPONENTS,
@@ -12,6 +10,7 @@ from openems_client.const import (
     CONN_TYPE_DIRECT_EDGE,
 )
 from openems_client.entry_data import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
 from openems_client.openems import OpenEMSBackend
 import probatio
 
@@ -78,29 +77,31 @@ async def async_setup_entry(
 
         edge_id = config_entry.data[c.CONF_EDGE]
         # 2. Trigger the API connection (and authentication)
-        await asyncio.wait_for(connection.connect_to_server(), timeout=2)
+        await connection.connect_to_server()
 
-    except (TransportError, TimeoutError) as ex:
+    except OpenEMSError as ex:
         await connection.stop()
         raise ConfigEntryNotReady(
-            f"Error while connecting to {connection.conn_url.host}"
+            translation_domain=c.DOMAIN,
+            translation_key="cannot_connect",
+            translation_placeholders={"host": str(connection.conn_url.host)},
         ) from ex
     # login
     try:
         login_response: dict = await connection.login_to_server()
-    except ProtocolError as ex:
+    except OpenEMSAuthError as ex:
         await connection.stop()
-        if ex.args and ex.args[0] == 1003:
-            raise ConfigEntryAuthFailed(
-                f"Wrong user / password for {connection.conn_url.host}"
-            ) from ex
-        raise ConfigEntryNotReady(
-            f"Server error during login to {connection.conn_url.host}: {ex}"
+        raise ConfigEntryAuthFailed(
+            translation_domain=c.DOMAIN,
+            translation_key="invalid_auth",
+            translation_placeholders={"host": str(connection.conn_url.host)},
         ) from ex
-    except TransportError as ex:
+    except OpenEMSError as ex:
         await connection.stop()
         raise ConfigEntryNotReady(
-            f"Connection lost during login to {connection.conn_url.host}"
+            translation_domain=c.DOMAIN,
+            translation_key="login_failed",
+            translation_placeholders={"host": str(connection.conn_url.host)},
         ) from ex
 
     # 3. Load the cached edge configuration. Read it from the edge if there is none yet,
@@ -111,10 +112,12 @@ async def async_setup_entry(
         config_reader = OpenEMSConfigReader(connection, edge_id)
         try:
             components = await config_reader.read_edge_components()
-        except (ProtocolError, TransportError) as ex:
+        except OpenEMSError as ex:
             await connection.stop()
             raise ConfigEntryNotReady(
-                f"Cannot read the configuration of {connection.conn_url.host}"
+                translation_domain=c.DOMAIN,
+                translation_key="cannot_read_configuration",
+                translation_placeholders={"host": str(connection.conn_url.host)},
             ) from ex
         await store.async_save(components)
 

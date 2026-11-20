@@ -12,7 +12,8 @@
             "invalid_auth": "Invalid authentication",
             "invalid_url": "Invalid URL provided",
             "unknown": "Unexpected error",
-            "url_not_absolute": "Custom URL must be absolute"
+            "url_not_absolute": "Custom URL must be absolute",
+            "invalid_host": "Invalid host"
         },
         "step": {
             "edges": {
@@ -1742,6 +1743,24 @@
         },
         "unknown_property": {
             "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
+        },
+        "cannot_connect": {
+            "message": "Cannot connect to {host}."
+        },
+        "invalid_auth": {
+            "message": "Wrong username or password for {host}."
+        },
+        "login_failed": {
+            "message": "Login to {host} failed."
+        },
+        "cannot_read_configuration": {
+            "message": "Cannot read the configuration of {host}."
+        },
+        "write_failed": {
+            "message": "Failed to write the value of {entity_id}."
+        },
+        "update_component_config_failed": {
+            "message": "Failed to update the configuration of component {component}."
         }
     },
     "options": {

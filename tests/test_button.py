@@ -3,7 +3,6 @@
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import jsonrpc_base
 import pytest
 
 from custom_components.openems import button as button_module
@@ -20,6 +19,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.exceptions import OpenEMSConnectionError, OpenEMSError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
@@ -78,8 +78,8 @@ async def test_restart_press_triggers_restart() -> None:
 @pytest.mark.parametrize(
     "error",
     [
-        jsonrpc_base.TransportError("connection lost"),
-        jsonrpc_base.ProtocolError(1, "rejected"),
+        OpenEMSConnectionError("connection lost"),
+        OpenEMSError("rejected"),
     ],
 )
 async def test_restart_press_raises_on_error(error: Exception) -> None:
@@ -137,8 +137,8 @@ async def test_refresh_configuration_press_caches_configuration_and_reloads(
 @pytest.mark.parametrize(
     "error",
     [
-        jsonrpc_base.TransportError("connection lost"),
-        jsonrpc_base.ProtocolError(1, "rejected"),
+        OpenEMSConnectionError("connection lost"),
+        OpenEMSError("rejected"),
     ],
 )
 async def test_refresh_configuration_press_raises_on_error(

@@ -6,7 +6,7 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-import jsonrpc_base
+from openems_client.exceptions import OpenEMSError
 from openems_client.openems import OpenEMSBackend, OpenEMSEdge
 
 from homeassistant.components.update import (
@@ -119,7 +119,7 @@ class OpenEMSUpdateEntity(UpdateEntity):
                 case _:
                     self._set_versions(None)
 
-        except jsonrpc_base.TransportError, jsonrpc_base.jsonrpc.ProtocolError:
+        except OpenEMSError:
             self._set_versions(None)
 
     def _set_versions(self, curr_ver: str | None, new_ver: str | None = None) -> None:

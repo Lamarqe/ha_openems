@@ -2,7 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock
 
-import jsonrpc_base
+from openems_client.exceptions import OpenEMSConnectionError, OpenEMSError
 
 from custom_components.openems import update as update_module
 from custom_components.openems.update import (
@@ -137,11 +137,11 @@ async def test_async_update_unknown_status_marks_unavailable() -> None:
     assert entity._attr_available is False
 
 
-async def test_async_update_transport_error_marks_unavailable() -> None:
-    """A TransportError during polling must not propagate."""
+async def test_async_update_connection_error_marks_unavailable() -> None:
+    """A connection error during polling must not propagate."""
     edge = _make_edge()
     edge.get_system_update_state = AsyncMock(
-        side_effect=jsonrpc_base.TransportError("connection lost")
+        side_effect=OpenEMSConnectionError("connection lost")
     )
     entity = _make_entity(edge)
     await entity.async_update()
@@ -149,12 +149,10 @@ async def test_async_update_transport_error_marks_unavailable() -> None:
     assert entity._attr_available is False
 
 
-async def test_async_update_protocol_error_marks_unavailable() -> None:
-    """A ProtocolError during polling must not propagate."""
+async def test_async_update_rejected_request_marks_unavailable() -> None:
+    """A request rejected during polling must not propagate."""
     edge = _make_edge()
-    edge.get_system_update_state = AsyncMock(
-        side_effect=jsonrpc_base.jsonrpc.ProtocolError(500, "error")
-    )
+    edge.get_system_update_state = AsyncMock(side_effect=OpenEMSError("error"))
     entity = _make_entity(edge)
     await entity.async_update()
 

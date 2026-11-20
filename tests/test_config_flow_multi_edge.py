@@ -2,11 +2,10 @@
 
 from unittest.mock import AsyncMock, patch
 
-import jsonrpc_base
-import jsonrpc_base.jsonrpc
 import pytest
 from custom_components.openems.const import CONF_EDGE, CONF_EDGES, DOMAIN
 from openems_client.entry_data import OpenEMSConfigReader
+from openems_client.exceptions import OpenEMSConnectionError
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
@@ -157,7 +156,7 @@ async def test_multi_edge_edges_step_error_on_connection_failure(
     # Simulate a connection failure when the user confirms edge selection
     error_conn = make_mock_connection(_LOGIN_RESPONSE_MULTI)
     error_conn.connect_to_server = AsyncMock(
-        side_effect=jsonrpc_base.TransportError("connect failed")
+        side_effect=OpenEMSConnectionError("connect failed")
     )
     with patch(
         "custom_components.openems.config_flow.OpenEMSWebSocketConnection",

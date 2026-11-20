@@ -20,6 +20,7 @@ from homeassistant.helpers.typing import UNDEFINED
 from .helpers_ha import (
     OpenEMSConfigEntry,
     component_device,
+    handle_write_errors,
     is_channel_enabled,
     translation_key,
 )
@@ -103,11 +104,13 @@ class OpenEMSSwitchEntity(SwitchEntity):
         """Return true if switch is on."""
         return self._channel.is_on
 
+    @handle_write_errors
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         await self._channel.update_value(True)
         self.async_write_ha_state()
 
+    @handle_write_errors
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         await self._channel.update_value(False)

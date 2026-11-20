@@ -15,6 +15,7 @@ from homeassistant.helpers.typing import UNDEFINED
 from .helpers_ha import (
     OpenEMSConfigEntry,
     component_device,
+    handle_write_errors,
     is_channel_enabled,
     to_snake_case,
     translation_key,
@@ -102,6 +103,7 @@ class OpenEMSSelectEntity(SelectEntity):
         val = self._channel.current_option
         return to_snake_case(val) if val is not None else None
 
+    @handle_write_errors
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         for property_option in self._channel.property_options:

@@ -16,6 +16,7 @@ from homeassistant.helpers.typing import UNDEFINED
 from .helpers_ha import (
     OpenEMSConfigEntry,
     component_device,
+    handle_write_errors,
     is_channel_enabled,
     translation_key,
 )
@@ -99,6 +100,7 @@ class OpenEMSTimeEntity(TimeEntity):
         """Return the current time."""
         return self._channel.native_value
 
+    @handle_write_errors
     async def async_set_value(self, value: time) -> None:
         """Update the selected time."""
         await self._channel.async_set_value(value)
