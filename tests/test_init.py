@@ -86,7 +86,7 @@ def _make_conn_patches(login_response=None):
     mock_conn = make_mock_connection(login_response)
     return (
         patch(
-            "custom_components.openems.OpenEMSWebSocketConnection",
+            "openems_client.client.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
         mock_conn,
@@ -101,7 +101,7 @@ async def _create_real_entry(hass: HomeAssistant) -> config_entries.ConfigEntry:
     mock_conn = make_mock_connection()
     with (
         patch(
-            "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+            "openems_client.client.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
@@ -142,7 +142,7 @@ async def test_setup_entry_success(hass: HomeAssistant) -> None:
     with (
         conn_patch,
         patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
-        patch("custom_components.openems.OpenEMSBackend", return_value=mock_backend),
+        patch("openems_client.client.OpenEMSBackend", return_value=mock_backend),
         patch.object(
             hass.config_entries,
             "async_forward_entry_setups",
@@ -186,7 +186,7 @@ async def _setup_with_mocked_backend(
             new=check_edge_components or AsyncMock(side_effect=_unchanged),
         ),
         patch(
-            "custom_components.openems.OpenEMSBackend", return_value=mock_backend
+            "openems_client.client.OpenEMSBackend", return_value=mock_backend
         ) as backend_class,
         patch.object(
             hass.config_entries,
@@ -374,7 +374,7 @@ async def test_remove_entry_removes_cached_configuration(
             None,
             OpenEMSConnectionError("connection lost"),
             ConfigEntryNotReady,
-            "login_failed",
+            "cannot_connect",
             id="login_connection_error",
         ),
         pytest.param(
@@ -411,7 +411,7 @@ async def test_setup_entry_connection_errors(
 
     with (
         patch(
-            "custom_components.openems.OpenEMSWebSocketConnection",
+            "openems_client.client.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
         pytest.raises(expected) as exc_info,
@@ -478,7 +478,7 @@ async def _setup_with_components(
     with (
         conn_patch,
         patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
-        patch("custom_components.openems.OpenEMSBackend", return_value=mock_backend),
+        patch("openems_client.client.OpenEMSBackend", return_value=mock_backend),
         patch.object(
             hass.config_entries,
             "async_forward_entry_setups",

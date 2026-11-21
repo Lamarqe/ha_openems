@@ -12,11 +12,20 @@ EDGE_HOSTNAME = "fems1"
 
 @pytest.fixture(autouse=True)
 def mock_edge_hostname() -> Generator[AsyncMock]:
-    """Return EDGE_HOSTNAME when the config flow reads the edge hostname."""
-    with patch(
-        "openems_client.connection.OpenEMSConfigReader.get_channel_values_via_websocket",
-        return_value={"_host/Hostname": EDGE_HOSTNAME},
-    ) as mock_read:
+    """Return EDGE_HOSTNAME when the config flow reads the edge hostname.
+
+    Reading the hostname also reads the edge configuration, to verify the edge runs.
+    """
+    with (
+        patch(
+            "openems_client.connection.OpenEMSConfigReader.get_channel_values_via_websocket",
+            return_value={"_host/Hostname": EDGE_HOSTNAME},
+        ) as mock_read,
+        patch(
+            "openems_client.connection.OpenEMSConfigReader.read_edge_config",
+            return_value={},
+        ),
+    ):
         yield mock_read
 
 

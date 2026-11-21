@@ -4,7 +4,7 @@ from collections.abc import Mapping
 import logging
 from typing import Any
 
-from openems_client.connection import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from openems_client.client import EdgeInfo, OpenEMSClient
 from openems_client.const import (
     CONN_TYPE_CUSTOM_URL,
     CONN_TYPE_DIRECT_EDGE,
@@ -48,20 +48,6 @@ from . import const as c
 from .helpers_ha import OpenEMSConfigEntry, component_store, map_user_input
 
 _LOGGER = logging.getLogger(__name__)
-
-
-async def _read_edge_hostname(
-    config_reader: OpenEMSConfigReader, multi_edge: bool
-) -> str:
-    """Read the edge hostname, which is the unique ID of the config entry.
-
-    Multi edge backends append the edge ID, like the edge device identifier.
-    """
-    data = await config_reader.get_channel_values_via_websocket(["_host/Hostname"])
-    hostname: str = data["_host/Hostname"]
-    if multi_edge:
-        hostname += " " + str(config_reader.edge_id)
-    return hostname
 
 
 class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
@@ -124,7 +110,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         return schema
 
     def _step_edges_data_schema(
-        self, edge_response: dict, default_edge
+        self, edges: list[EdgeInfo], default_edge
     ) -> probatio.Schema:
         """Define the edges step input options."""
         return probatio.Schema(
@@ -134,9 +120,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                     default=default_edge,
                 ): SelectSelector(
                     SelectSelectorConfig(
-                        options=[
-                            e["id"] for e in edge_response["edges"] if e.get("isOnline")
-                        ],
+                        options=[edge.id for edge in edges if edge.online],
                         multiple=False,
                         mode=SelectSelectorMode.LIST,
                     )
@@ -192,25 +176,17 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             del user_input[CONF_HOST]
 
         try:
-            connection = OpenEMSWebSocketConnection(
+            client = OpenEMSClient(
                 map_user_input(user_input), async_get_clientsession(self.hass)
             )
         except ValueError:
             errors[CONF_HOST] = "invalid_host"
             return self._show_form(user_input, errors)
 
-        try:
-            self._config_data = user_input
+        self._config_data = user_input
+        async with client:
             try:
-                # connect
-                await connection.connect_to_server()
-            except OpenEMSError:
-                errors[CONF_BASE] = "cannot_connect"
-                return self._show_form(user_input, errors)
-
-            try:
-                # login
-                login_response = await connection.login_to_server()
+                login = await client.connect()
             except OpenEMSAuthError:
                 errors[CONF_BASE] = "invalid_auth"
                 return self._show_form(user_input, errors)
@@ -219,10 +195,8 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                 return self._show_form(user_input, errors)
 
             try:
-                config_reader = OpenEMSConfigReader(connection)
-                edges = await config_reader.read_edges()
-                multi_edge = OpenEMSConfigReader.parse_login_response(login_response)
-                if multi_edge:
+                edges = await client.read_edges()
+                if login.multi_edge:
                     if self.source == SOURCE_RECONFIGURE:
                         default_edge = self._get_reconfigure_entry().data[c.CONF_EDGE]
                     else:
@@ -235,18 +209,14 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                     )
 
                 # single edge backend, all required data has been received.
-                edge_id = next(iter(edges["edges"]))["id"]
+                edge_id = edges[0].id
                 self._config_data[c.CONF_EDGE] = edge_id
-                config_reader.set_edge_id(edge_id)
-                return await self._create_or_update_entry(config_reader, False)
+                return await self._create_or_update_entry(client, edge_id)
 
             except OpenEMSError, KeyError:
                 _LOGGER.exception("Cannot read edge components")
                 errors[CONF_BASE] = "cannot_read_components"
                 return self._show_form(user_input, errors)
-
-        finally:
-            await connection.stop()
 
     def _show_form(self, user_input, errors):
         # show errors in form
@@ -256,13 +226,10 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         )
 
     async def _create_or_update_entry(
-        self, config_reader: OpenEMSConfigReader, multi_edge: bool
+        self, client: OpenEMSClient, edge_id: str
     ) -> ConfigFlowResult:
-        # read the edge config to validate the edge is correctly running
-        await config_reader.read_edge_config()
-        await self.async_set_unique_id(
-            await _read_edge_hostname(config_reader, multi_edge)
-        )
+        # the hostname identifies the edge, reading it validates the edge is running
+        await self.async_set_unique_id(await client.read_edge_hostname(edge_id))
 
         if self.source == SOURCE_RECONFIGURE:
             self._abort_if_unique_id_mismatch()
@@ -293,9 +260,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             title = self._config_data[CONF_HOST]
         elif self._config_data[CONF_TYPE] == CONN_TYPE_WEB_FENECON:
             title = "FEMS Web: " + self._config_data[CONF_USERNAME]
-        elif config_reader.connection.conn_url.host is not None:
-            title = config_reader.connection.conn_url.host
-        if multi_edge:
+        elif client.host is not None:
+            title = client.host
+        if client.login.multi_edge:
             title += " " + self._config_data[c.CONF_EDGE]
 
         return self.async_create_entry(
@@ -313,21 +280,17 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         edges_schema = self.cur_step.get("data_schema")
         if user_input is not None:
             self._config_data[c.CONF_EDGE] = user_input[c.CONF_EDGES]
-            connection: OpenEMSWebSocketConnection = OpenEMSWebSocketConnection(
+            async with OpenEMSClient(
                 map_user_input(self._config_data), async_get_clientsession(self.hass)
-            )
-            try:
-                await connection.connect_to_server()
-                await connection.login_to_server()
-                config_reader: OpenEMSConfigReader = OpenEMSConfigReader(
-                    connection, user_input[c.CONF_EDGES]
-                )
-                return await self._create_or_update_entry(config_reader, True)
-            except OpenEMSError:
-                _LOGGER.exception("Error during processing the selected edge")
-                errors[c.CONF_EDGES] = "error_processing_edge"
-            finally:
-                await connection.stop()
+            ) as client:
+                try:
+                    await client.connect()
+                    return await self._create_or_update_entry(
+                        client, user_input[c.CONF_EDGES]
+                    )
+                except OpenEMSError:
+                    _LOGGER.exception("Error during processing the selected edge")
+                    errors[c.CONF_EDGES] = "error_processing_edge"
 
         # show errors in form
         return self.async_show_form(
@@ -359,30 +322,26 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         errors: dict[str, str] = {}
         reauth_entry = self._get_reauth_entry()
         if user_input is not None:
-            connection = OpenEMSWebSocketConnection(
+            async with OpenEMSClient(
                 map_user_input({**reauth_entry.data, **user_input}),
                 async_get_clientsession(self.hass),
-            )
-            try:
-                await connection.connect_to_server()
-                login_response = await connection.login_to_server()
-                hostname = await _read_edge_hostname(
-                    OpenEMSConfigReader(connection, reauth_entry.data[c.CONF_EDGE]),
-                    OpenEMSConfigReader.parse_login_response(login_response),
-                )
-            except OpenEMSAuthError:
-                errors[CONF_BASE] = "invalid_auth"
-            except OpenEMSError, KeyError:
-                errors[CONF_BASE] = "cannot_connect"
-            else:
-                # the credentials must belong to the system of the entry
-                await self.async_set_unique_id(hostname)
-                self._abort_if_unique_id_mismatch()
-                return self.async_update_reload_and_abort(
-                    reauth_entry, data_updates=user_input
-                )
-            finally:
-                await connection.stop()
+            ) as client:
+                try:
+                    await client.connect()
+                    hostname = await client.read_edge_hostname(
+                        reauth_entry.data[c.CONF_EDGE]
+                    )
+                except OpenEMSAuthError:
+                    errors[CONF_BASE] = "invalid_auth"
+                except OpenEMSError, KeyError:
+                    errors[CONF_BASE] = "cannot_connect"
+                else:
+                    # the credentials must belong to the system of the entry
+                    await self.async_set_unique_id(hostname)
+                    self._abort_if_unique_id_mismatch()
+                    return self.async_update_reload_and_abort(
+                        reauth_entry, data_updates=user_input
+                    )
 
         return self.async_show_form(
             step_id="reauth_confirm",

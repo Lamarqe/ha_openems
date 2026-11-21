@@ -40,7 +40,7 @@ def _multi_edge_patches(login_response: dict | None = None):
     mock_conn = make_mock_connection(login_response)
     return (
         patch(
-            "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+            "openems_client.client.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
@@ -162,7 +162,7 @@ async def test_multi_edge_edges_step_error_on_connection_failure(
         side_effect=OpenEMSConnectionError("connect failed")
     )
     with patch(
-        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        "openems_client.client.OpenEMSWebSocketConnection",
         return_value=error_conn,
     ):
         result = await hass.config_entries.flow.async_configure(

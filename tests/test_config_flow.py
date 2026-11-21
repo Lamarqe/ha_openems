@@ -49,7 +49,7 @@ def _success_patches(conn_url: str | None = None):
         mock_conn.conn_url = URL(conn_url)
     return (
         patch(
-            "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+            "openems_client.client.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
@@ -124,7 +124,7 @@ async def test_form_connection_errors(
     error_conn = make_mock_connection()
     setattr(error_conn, failing_call, AsyncMock(side_effect=error))
     with patch(
-        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        "openems_client.client.OpenEMSWebSocketConnection",
         return_value=error_conn,
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -180,7 +180,7 @@ async def test_form_invalid_host(
     )
 
     with patch(
-        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        "openems_client.client.OpenEMSWebSocketConnection",
         side_effect=ValueError("invalid host"),
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -383,7 +383,7 @@ async def test_web_fenecon_multi_edge_shows_edge_selection(
     mock_conn = make_mock_connection(_multi_login)
     with (
         patch(
-            "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+            "openems_client.client.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_multi_edges),
@@ -479,7 +479,7 @@ async def test_reauth_shows_error_and_recovers(
     error_conn = make_mock_connection()
     error_conn.login_to_server = AsyncMock(side_effect=login_error)
     with patch(
-        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        "openems_client.client.OpenEMSWebSocketConnection",
         return_value=error_conn,
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -489,10 +489,10 @@ async def test_reauth_shows_error_and_recovers(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {CONF_BASE: expected_error}
-    error_conn.stop.assert_awaited_once()
+    error_conn.stop.assert_awaited()
 
     with patch(
-        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        "openems_client.client.OpenEMSWebSocketConnection",
         return_value=make_mock_connection(),
     ) as connection_class:
         result = await hass.config_entries.flow.async_configure(
@@ -561,7 +561,7 @@ async def test_reauth_aborts_for_other_system(
 
     result = await entry.start_reauth_flow(hass)
     with patch(
-        "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+        "openems_client.client.OpenEMSWebSocketConnection",
         return_value=make_mock_connection(),
     ):
         result = await hass.config_entries.flow.async_configure(

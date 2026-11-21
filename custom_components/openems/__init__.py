@@ -3,9 +3,13 @@
 import logging
 from typing import Any
 
-from openems_client.connection import OpenEMSConfigReader, OpenEMSWebSocketConnection
+from openems_client.client import OpenEMSClient
 from openems_client.const import CONN_TYPE_DIRECT_EDGE
-from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
+from openems_client.exceptions import (
+    OpenEMSAuthError,
+    OpenEMSConnectionError,
+    OpenEMSError,
+)
 from openems_client.openems import CONFIG, OpenEMSBackend, OpenEMSComponent
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
@@ -61,64 +65,55 @@ async def async_setup_entry(
     config_entry: OpenEMSConfigEntry,
 ) -> None:
     """Set up HA OpenEMS from a config entry."""
-    try:
-        # 1. Create connection instance
-        connection = OpenEMSWebSocketConnection(
-            map_user_input(dict(config_entry.data)), async_get_clientsession(hass)
-        )
+    client = OpenEMSClient(
+        map_user_input(dict(config_entry.data)), async_get_clientsession(hass)
+    )
+    edge_id = config_entry.data[c.CONF_EDGE]
+    placeholders = {"host": str(client.host)}
 
-        edge_id = config_entry.data[c.CONF_EDGE]
-        # 2. Trigger the API connection (and authentication)
-        await connection.connect_to_server()
-
-    except OpenEMSError as ex:
-        await connection.stop()
-        raise ConfigEntryNotReady(
-            translation_domain=c.DOMAIN,
-            translation_key="cannot_connect",
-            translation_placeholders={"host": str(connection.conn_url.host)},
-        ) from ex
-    # login
+    # 1. Connect and log in, the client closes the connection on failure
     try:
-        login_response: dict = await connection.login_to_server()
+        await client.connect()
     except OpenEMSAuthError as ex:
-        await connection.stop()
         raise ConfigEntryAuthFailed(
             translation_domain=c.DOMAIN,
             translation_key="invalid_auth",
-            translation_placeholders={"host": str(connection.conn_url.host)},
+            translation_placeholders=placeholders,
+        ) from ex
+    except OpenEMSConnectionError as ex:
+        raise ConfigEntryNotReady(
+            translation_domain=c.DOMAIN,
+            translation_key="cannot_connect",
+            translation_placeholders=placeholders,
         ) from ex
     except OpenEMSError as ex:
-        await connection.stop()
         raise ConfigEntryNotReady(
             translation_domain=c.DOMAIN,
             translation_key="login_failed",
-            translation_placeholders={"host": str(connection.conn_url.host)},
+            translation_placeholders=placeholders,
         ) from ex
 
-    # 3. Load the cached edge configuration. Read it from the edge if there is none yet,
+    # 2. Load the cached edge configuration. Read it from the edge if there is none yet,
     # otherwise check it in the background after the setup.
     store = component_store(hass, config_entry.entry_id)
     components = await store.async_load()
     cached = components is not None
     if components is None:
-        config_reader = OpenEMSConfigReader(connection, edge_id)
         try:
-            components = await config_reader.read_edge_components()
+            components = await client.read_edge_config(edge_id)
         except OpenEMSError as ex:
-            await connection.stop()
+            await client.close()
             raise ConfigEntryNotReady(
                 translation_domain=c.DOMAIN,
                 translation_key="cannot_read_configuration",
-                translation_placeholders={"host": str(connection.conn_url.host)},
+                translation_placeholders=placeholders,
             ) from ex
         await store.async_save(components)
 
-    # 4. Prepare HA entity structures from the edge configuration
-    multi_edge = OpenEMSConfigReader.parse_login_response(login_response)
-    backend = OpenEMSBackend(connection, edge_id, multi_edge, components)
+    # 3. Prepare HA entity structures from the edge configuration
+    backend = client.create_backend(edge_id, components)
 
-    # 5. Read and set config options
+    # 4. Read and set config options
     # ==================== TODO REMOVE_LATER_START ============================
     advanced = dict(config_entry.options.get(c.CONF_ADVANCED_OPTIONS, {}))
     if c.CONF_FORWARD_INTERVAL not in advanced:
@@ -130,7 +125,7 @@ async def async_setup_entry(
         config_entry.options[c.CONF_ADVANCED_OPTIONS][c.CONF_FORWARD_INTERVAL]
     )
 
-    # 6. Create central edge device in HA device registry, so that all component devices can be linked to it
+    # 5. Create central edge device in HA device registry, so that all component devices can be linked to it
     edge_device_identifiers = {(c.DOMAIN, backend.the_edge.hostname)}
     device_registry = dr.async_get(hass)
     edge_device_info = dr.DeviceInfo(
@@ -143,7 +138,7 @@ async def async_setup_entry(
         **edge_device_info,
     )
 
-    # 7. Create component devices. Components without default channels start disabled.
+    # 6. Create component devices. Components without default channels start disabled.
     # Entities are only created for components with an enabled device.
     component_device_ids: list[str] = []
     enabled_components: list[OpenEMSComponent] = []
@@ -168,17 +163,17 @@ async def async_setup_entry(
             enabled_components.append(component)
         component_device_ids.append(component_device_entry.id)
 
-    # 8. Prepare runtime data for later access
+    # 7. Prepare runtime data for later access
     config_entry.runtime_data = RuntimeData(
         backend=backend,
         edge_device=DeviceRuntimeData(info=edge_device_info, entry=edge_device_entry),
         enabled_components=enabled_components,
     )
 
-    # 9. Forward setup to platforms
+    # 8. Forward setup to platforms
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
 
-    # 10. Reload to create or remove entities when a component device gets enabled or disabled
+    # 9. Reload to create or remove entities when a component device gets enabled or disabled
     @callback
     def _handle_component_device_update(
         event: Event[dr.EventDeviceRegistryUpdatedData],
@@ -192,25 +187,29 @@ async def async_setup_entry(
         )
     )
 
-    # 11. Start backend
+    # 10. Start backend
     backend.start()
 
     if cached:
         config_entry.async_create_background_task(
             hass,
-            _async_check_edge_components(hass, config_entry, components),
+            _async_check_edge_components(hass, config_entry, client, components),
             "openems check edge configuration",
         )
 
 
 async def _async_check_edge_components(
-    hass: HomeAssistant, config_entry: OpenEMSConfigEntry, cached: dict[str, Any]
+    hass: HomeAssistant,
+    config_entry: OpenEMSConfigEntry,
+    client: OpenEMSClient,
+    cached: dict[str, Any],
 ) -> None:
     """Read the edge configuration again, save it and reload if it changed."""
     backend: OpenEMSBackend = config_entry.runtime_data.backend
-    reader = OpenEMSConfigReader(backend.connection, config_entry.data[c.CONF_EDGE])
     try:
-        components, change = await reader.check_edge_components(cached)
+        components, change = await client.check_edge_config(
+            config_entry.data[c.CONF_EDGE], cached
+        )
     except OpenEMSError as err:
         _LOGGER.warning(
             "Cannot check the configuration of edge %s: %s",

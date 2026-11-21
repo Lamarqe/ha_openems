@@ -12,7 +12,6 @@ from homeassistant.helpers import device_registry as dr
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
-from openems_client import openems
 from openems_client.exceptions import OpenEMSError
 from custom_components.openems.const import DOMAIN
 from custom_components.openems.number import (

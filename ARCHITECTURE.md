@@ -17,7 +17,8 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 
 | Module | Responsibility |
 | --- | --- |
-| `openems_client.connection` | Websocket connection (`OpenEMSWebSocketConnection`, reconnect logic) and reading the edge configuration (`OpenEMSConfigReader`). |
+| `openems_client.client` | `OpenEMSClient`, the entry point: connect and log in, list edges, read the hostname and configuration of an edge, create the backend. |
+| `openems_client.connection` | Websocket connection (`OpenEMSWebSocketConnection`, reconnect logic) and reading the edge configuration (`OpenEMSConfigReader`), used by the client. |
 | `openems_client.openems` | Backend object model: `OpenEMSBackend` → `OpenEMSEdge` → `OpenEMSComponent` → channels/properties (`OpenEMSDataHandler` subclasses). |
 | `openems_client.helpers_openems`, `openems_client.helpers` | Pure helpers. |
 | `openems_client.config`, `config/*.json` | Channel type and constraint knowledge missing in the OpenEMS metadata: enum options, time properties, number limits/multiplier/step, update groups. |
@@ -26,8 +27,8 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 ### Object model and data flow
 
 - `async_setup_entry` creates one `OpenEMSBackend` per config entry; it owns exactly one edge: `backend.the_edge`.
-- Connections get HA's shared session (`OpenEMSWebSocketConnection(..., async_get_clientsession(hass))`), in setup and in the config flow. Constructing library objects starts no background tasks: `backend.start()` at the end of `async_setup_entry` starts them, `await backend.stop()` in `async_unload_entry` closes the connection and waits until they have finished.
-- The edge configuration (component JSON with channels) is cached in a `Store` per config entry (`helpers_ha.component_store`, key `openems.<entry_id>`). Setup reads it from the edge only when the cache is empty. Otherwise, after the setup, a background task (`__init__._async_check_edge_components`) reads it again with `OpenEMSConfigReader.check_edge_components`: changes are saved, structural changes (components added, removed, `factoryId` or channels changed) also reload the entry. So "Reload" of the config entry is the explicit check for changes. Planned: the `edgeConfig` notification as automatic trigger, see [EDGE_CONFIG_LISTENER.md](EDGE_CONFIG_LISTENER.md). Reconfiguring the entry and removing it (`async_remove_entry`) delete the cache. The config entry data only holds the connection data (`host`, `username`, `password`, `type`, `url`, `edge`).
+- All access to the system goes through `OpenEMSClient(map_user_input(...), async_get_clientsession(hass))`, with HA's shared session. The config flow uses it as `async with` context manager, which closes the connection. Setup calls `client.connect()`, reads or loads the configuration and creates the backend with `client.create_backend(...)`, which takes over the connection. Constructing library objects starts no background tasks: `backend.start()` at the end of `async_setup_entry` starts them, `await backend.stop()` in `async_unload_entry` closes the connection and waits until they have finished.
+- The edge configuration (component JSON with channels) is cached in a `Store` per config entry (`helpers_ha.component_store`, key `openems.<entry_id>`). Setup reads it from the edge only when the cache is empty. Otherwise, after the setup, a background task (`__init__._async_check_edge_components`) reads it again with `client.check_edge_config`: changes are saved, structural changes (components added, removed, `factoryId` or channels changed) also reload the entry. So "Reload" of the config entry is the explicit check for changes. Reconfiguring the entry and removing it (`async_remove_entry`) delete the cache. The config entry data only holds the connection data (`host`, `username`, `password`, `type`, `url`, `edge`).
 - The edge parses the component JSON into `OpenEMSComponent`s. The library classifies every channel: `kind` (`openems_client.model.ChannelKind`: `SENSOR`, `ENUM_SENSOR`, `BINARY_SENSOR`, `NUMBER`, `SELECT`, `SWITCH`, `TIME`), `key`, normalised `unit`, `quantity`, `cumulative`, `primary`, `severity` and `option_keys`. Platforms get their channels with `component.channels_of(ChannelKind.<KIND>[, <channel class>])` and only map these attributes to HA concepts (device class, state class, ...). OpenEMS knowledge (units, default channels, enum options) belongs in the library, not in the integration.
 - Primary channels, the channels enabled by default, are defined in the library (`config/primary_channels.json`). Derived channels, eg the battery cell voltage differences, are created by the library (`openems.DERIVED_CHANNELS`) and are `SENSOR` channels of their component.
 - Runtime data lives in `entry.runtime_data` (`RuntimeData`): `backend`, `edge_device` (`info`: `DeviceInfo`, `entry`: `DeviceEntry`) and `enabled_components`.
@@ -43,7 +44,7 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 
 ### Unique IDs
 
-- Config entry: the edge hostname, read in the config flow (`config_flow._read_edge_hostname`), with `" <edge id>"` in multi-edge setups, so it equals the edge device identifier. Adding the same system twice aborts, and reconfigure and reauth abort when they lead to another system.
+- Config entry: the edge hostname, read in the config flow (`client.read_edge_hostname`), with `" <edge id>"` in multi-edge setups, so it equals the edge device identifier. Adding the same system twice aborts, and reconfigure and reauth abort when they lead to another system.
 - Channel based entities: `channel.unique_id()` → `<hostname>/<edge id>/<component>/<channel>`.
 - Edge level entities: `<hostname>/<edge id>/<key>` (e.g. `.../update`, `.../restart`).
 - Unique IDs are persisted in the entity registry. Never change an existing one without a migration in `async_migrate_entry`.

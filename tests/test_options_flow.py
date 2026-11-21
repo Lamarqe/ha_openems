@@ -42,7 +42,7 @@ def _setup_patches():
     mock_conn = make_mock_connection()
     return (
         patch(
-            "custom_components.openems.config_flow.OpenEMSWebSocketConnection",
+            "openems_client.client.OpenEMSWebSocketConnection",
             return_value=mock_conn,
         ),
         patch.object(OpenEMSConfigReader, "read_edges", return_value=_EDGES_RESPONSE),
