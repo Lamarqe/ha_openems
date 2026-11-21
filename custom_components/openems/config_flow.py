@@ -68,7 +68,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
     VERSION = 6
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
 
     def __init__(self) -> None:
         """Initialize."""

@@ -80,9 +80,6 @@
       }
     },
     "button": {
-      "refresh_configuration": {
-        "name": "Refresh configuration"
-      },
       "restart": {
         "name": "Restart"
       }
@@ -1760,9 +1757,6 @@
     },
     "no_component_device": {
       "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
-    },
-    "refresh_configuration_failed": {
-      "message": "Failed to refresh the configuration of edge {edge}."
     },
     "restart_failed": {
       "message": "Failed to trigger the restart of edge {edge}."

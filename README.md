@@ -312,7 +312,7 @@ This will open the entities dialog. In this dialog, (1) activate multi-select, (
 
 #### Check the backend for configuration changes, change connection details
 
-The list of components and channels is read from the backend once and then cached. In case of changes in the backend, press the **Refresh configuration** button of the edge device. The integration then reads the components and channels again and reloads.
+The list of components and channels is read from the backend once and then cached, so that the integration starts quickly. After each start, the integration reads the components and channels again in the background. If components or channels were added, removed or changed, it updates the cache and reloads. To check for changes immediately, e.g. after a software update or when new battery modules were installed, select **Reload** in the menu of the config entry.
 
 In case the connection details shall be adjusted, select the 3 dots next to the config entry and select **Reconfigure** from the resulting menu. This will bring up the main config dialog and allow you to make all necessary changes. After a reconfiguration, the components and channels are read again as well.
 

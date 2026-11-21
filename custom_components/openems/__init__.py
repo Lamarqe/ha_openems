@@ -1,6 +1,7 @@
 """The HA OpenEMS integration."""
 
 import logging
+from typing import Any
 
 from openems_client.connection import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from openems_client.const import CONN_TYPE_DIRECT_EDGE
@@ -10,7 +11,7 @@ from openems_client.openems import CONFIG, OpenEMSBackend, OpenEMSComponent
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_registry import async_migrate_entries
@@ -96,9 +97,10 @@ async def async_setup_entry(
         ) from ex
 
     # 3. Load the cached edge configuration. Read it from the edge if there is none yet,
-    # later refreshes are triggered by the refresh configuration button.
+    # otherwise check it in the background after the setup.
     store = component_store(hass, config_entry.entry_id)
     components = await store.async_load()
+    cached = components is not None
     if components is None:
         config_reader = OpenEMSConfigReader(connection, edge_id)
         try:
@@ -192,6 +194,43 @@ async def async_setup_entry(
 
     # 11. Start backend
     backend.start()
+
+    if cached:
+        config_entry.async_create_background_task(
+            hass,
+            _async_check_edge_components(hass, config_entry, components),
+            "openems check edge configuration",
+        )
+
+
+async def _async_check_edge_components(
+    hass: HomeAssistant, config_entry: OpenEMSConfigEntry, cached: dict[str, Any]
+) -> None:
+    """Read the edge configuration again, save it and reload if it changed."""
+    backend: OpenEMSBackend = config_entry.runtime_data.backend
+    reader = OpenEMSConfigReader(backend.connection, config_entry.data[c.CONF_EDGE])
+    try:
+        components, change = await reader.check_edge_components(cached)
+    except OpenEMSError as err:
+        _LOGGER.warning(
+            "Cannot check the configuration of edge %s: %s",
+            backend.the_edge.hostname,
+            err,
+        )
+        return
+    if components == cached:
+        return
+    await component_store(hass, config_entry.entry_id).async_save(components)
+    if change:
+        _LOGGER.info(
+            "Configuration of edge %s changed (added: %s, removed: %s, changed: %s), "
+            "reloading",
+            backend.the_edge.hostname,
+            sorted(change.added),
+            sorted(change.removed),
+            sorted(change.changed),
+        )
+        hass.config_entries.async_schedule_reload(config_entry.entry_id)
 
 
 async def async_unload_entry(
@@ -378,6 +417,23 @@ async def async_migrate_entry(
             unique_id=(next(iter(edge_device.identifiers))[1] if edge_device else None),
             minor_version=2,
         )
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
+
+    if config_entry.version == 6 and config_entry.minor_version == 2:
+        # the refresh configuration button was replaced by a check during the setup
+        entity_registry = er.async_get(hass)
+        for entity in er.async_entries_for_config_entry(
+            entity_registry, config_entry.entry_id
+        ):
+            if entity.domain == Platform.BUTTON and entity.unique_id.endswith(
+                "/refresh_configuration"
+            ):
+                entity_registry.async_remove(entity.entity_id)
+        hass.config_entries.async_update_entry(config_entry, minor_version=3)
         _LOGGER.debug(
             "Migration to configuration version %s.%s successful",
             config_entry.version,

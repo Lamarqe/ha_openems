@@ -25,6 +25,7 @@ from custom_components.openems.const import (
 )
 from custom_components.openems.const import DOMAIN
 from openems_client.connection import OpenEMSConfigReader
+from openems_client.edge_config import EdgeConfigChange
 from openems_client.openems import CONFIG
 from custom_components.openems.helpers_ha import RuntimeData
 from homeassistant import config_entries
@@ -35,7 +36,8 @@ from homeassistant.exceptions import (
     ConfigEntryNotReady,
     HomeAssistantError,
 )
-from homeassistant.helpers import device_registry as dr
+from homeassistant.const import Platform
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .helpers_flow import make_mock_connection
@@ -157,12 +159,17 @@ def _storage_key(entry: config_entries.ConfigEntry) -> str:
     return f"{DOMAIN}.{entry.entry_id}"
 
 
+def _unchanged(cached: dict[str, Any]) -> tuple[dict[str, Any], EdgeConfigChange]:
+    return cached, EdgeConfigChange()
+
+
 async def _setup_with_mocked_backend(
     hass: HomeAssistant,
     entry: config_entries.ConfigEntry,
     read_edge_components: AsyncMock,
+    check_edge_components: AsyncMock | None = None,
 ) -> MagicMock:
-    """Run async_setup_entry and return the patched OpenEMSBackend class."""
+    """Run async_setup_entry and its background tasks, return the OpenEMSBackend class."""
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
     mock_backend.the_edge.components = {}
@@ -172,6 +179,11 @@ async def _setup_with_mocked_backend(
         conn_patch,
         patch.object(
             OpenEMSConfigReader, "read_edge_components", new=read_edge_components
+        ),
+        patch.object(
+            OpenEMSConfigReader,
+            "check_edge_components",
+            new=check_edge_components or AsyncMock(side_effect=_unchanged),
         ),
         patch(
             "custom_components.openems.OpenEMSBackend", return_value=mock_backend
@@ -183,6 +195,7 @@ async def _setup_with_mocked_backend(
         ),
     ):
         await async_setup_entry(hass, entry)
+        await hass.async_block_till_done(wait_background_tasks=True)
     return backend_class
 
 
@@ -217,6 +230,101 @@ async def test_setup_entry_uses_cached_configuration(
 
     read_edge_components.assert_not_awaited()
     assert backend_class.call_args.args[3] == {"cached": {"channels": []}}
+
+
+def _cache(
+    hass_storage: dict[str, Any], entry: config_entries.ConfigEntry, data: dict
+) -> None:
+    hass_storage[_storage_key(entry)] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": _storage_key(entry),
+        "data": data,
+    }
+
+
+_CACHED = {"meter0": {"factoryId": "Meter.Socomec", "properties": {}, "channels": []}}
+_PROPERTY_CHANGED = {
+    "meter0": {"factoryId": "Meter.Socomec", "properties": {"a": 1}, "channels": []}
+}
+_COMPONENT_ADDED = {**_CACHED, "ess0": {"factoryId": "Ess", "channels": []}}
+
+
+@pytest.mark.parametrize(
+    ("result", "saved", "reloaded"),
+    [
+        pytest.param((_CACHED, EdgeConfigChange()), _CACHED, False, id="unchanged"),
+        pytest.param(
+            (_PROPERTY_CHANGED, EdgeConfigChange()),
+            _PROPERTY_CHANGED,
+            False,
+            id="properties_changed",
+        ),
+        pytest.param(
+            (_COMPONENT_ADDED, EdgeConfigChange(added=frozenset({"ess0"}))),
+            _COMPONENT_ADDED,
+            True,
+            id="component_added",
+        ),
+    ],
+)
+async def test_setup_entry_checks_cached_configuration(
+    hass: HomeAssistant,
+    hass_storage: dict[str, Any],
+    result: tuple[dict[str, Any], EdgeConfigChange],
+    saved: dict[str, Any],
+    reloaded: bool,
+) -> None:
+    """The cached configuration is checked in the background, changes are saved.
+
+    Structural changes reload the entry, to create the entities and devices.
+    """
+    entry = await _create_real_entry(hass)
+    _cache(hass_storage, entry, _CACHED)
+    check_edge_components = AsyncMock(return_value=result)
+
+    with patch.object(hass.config_entries, "async_schedule_reload") as reload:
+        await _setup_with_mocked_backend(
+            hass, entry, AsyncMock(), check_edge_components
+        )
+
+    check_edge_components.assert_awaited_once_with(_CACHED)
+    assert hass_storage[_storage_key(entry)]["data"] == saved
+    assert reload.called is reloaded
+
+
+async def test_setup_entry_check_error_keeps_configuration(
+    hass: HomeAssistant,
+    hass_storage: dict[str, Any],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A failed check keeps the cached configuration and only logs a warning."""
+    entry = await _create_real_entry(hass)
+    _cache(hass_storage, entry, _CACHED)
+    check_edge_components = AsyncMock(side_effect=OpenEMSError("timeout"))
+
+    with patch.object(hass.config_entries, "async_schedule_reload") as reload:
+        await _setup_with_mocked_backend(
+            hass, entry, AsyncMock(), check_edge_components
+        )
+
+    assert hass_storage[_storage_key(entry)]["data"] == _CACHED
+    reload.assert_not_called()
+    assert "Cannot check the configuration of edge host: timeout" in caplog.text
+
+
+async def test_setup_entry_without_cache_skips_check(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    """A configuration read during the setup is not checked again."""
+    entry = await _create_real_entry(hass)
+    check_edge_components = AsyncMock()
+
+    await _setup_with_mocked_backend(
+        hass, entry, AsyncMock(return_value=_CACHED), check_edge_components
+    )
+
+    check_edge_components.assert_not_awaited()
 
 
 async def test_setup_entry_read_configuration_error_raises_not_ready(
@@ -480,7 +588,7 @@ async def test_migrate_v5_moves_components_to_store(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 2)
+    assert (entry.version, entry.minor_version) == (6, 3)
     assert entry.data == _USER_INPUT
     assert hass_storage[_storage_key(entry)]["data"] == {"comp1": {}}
 
@@ -510,8 +618,29 @@ async def test_migrate_v6_1_sets_unique_id_from_edge_device(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 2)
+    assert (entry.version, entry.minor_version) == (6, 3)
     assert entry.unique_id == edge_identifier
+
+
+async def test_migrate_v6_2_removes_refresh_configuration_button(
+    hass: HomeAssistant,
+) -> None:
+    """The entity of the removed refresh configuration button is removed."""
+    entry = MockConfigEntry(domain=DOMAIN, version=6, minor_version=2, data=_USER_INPUT)
+    entry.add_to_hass(hass)
+    entity_registry = er.async_get(hass)
+    for key in ("refresh_configuration", "restart"):
+        entity_registry.async_get_or_create(
+            Platform.BUTTON, DOMAIN, f"fems1/0/{key}", config_entry=entry
+        )
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert (entry.version, entry.minor_version) == (6, 3)
+    assert not entity_registry.async_get_entity_id(
+        Platform.BUTTON, DOMAIN, "fems1/0/refresh_configuration"
+    )
+    assert entity_registry.async_get_entity_id(Platform.BUTTON, DOMAIN, "fems1/0/restart")
 
 
 async def test_migrate_v4_moves_component_selection_to_devices(
@@ -542,7 +671,7 @@ async def test_migrate_v4_moves_component_selection_to_devices(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 2)
+    assert (entry.version, entry.minor_version) == (6, 3)
     assert entry.unique_id == "host"
     assert entry.options == _DEFAULT_OPTIONS
     disabled_by = {
