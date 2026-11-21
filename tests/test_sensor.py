@@ -318,3 +318,14 @@ def test_combined_sensors_only_for_matching_components() -> None:
     """Components without combined sensor definitions get none."""
     assert sensor.combined_sensor_definitions("battery0")
     assert sensor.combined_sensor_definitions("ess0") == ()
+
+
+async def test_rest_write_action_writes_via_rest() -> None:
+    """The REST write action passes value, update cycle and timeout to the channel."""
+    channel = MagicMock(spec=OpenEMSChannel)
+    channel.write_via_rest = AsyncMock()
+    entity = _make_entity(channel)
+
+    await entity.update_value(value="12.5", update_cycle=30, timeout=600)
+
+    channel.write_via_rest.assert_awaited_once_with(12.5, 30, 600)
