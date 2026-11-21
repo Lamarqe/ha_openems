@@ -1,24 +1,23 @@
 """Component providing support for OpenEMS updates."""
 
-import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
 from typing import Any
 
-from openems_client.exceptions import OpenEMSConnectionError, OpenEMSError
+from openems_client.exceptions import OpenEMSError, OpenEMSTimeoutError
 from openems_client.openems import OpenEMSBackend, OpenEMSEdge
+from openems_client.system_update import SystemUpdateState, UpdateStatus
 
 from homeassistant.components.update import (
     UpdateEntity,
     UpdateEntityDescription,
     UpdateEntityFeature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN
 from .helpers_ha import OpenEMSConfigEntry
@@ -82,76 +81,51 @@ class OpenEMSUpdateEntity(UpdateEntity):
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
-        """Install an update and wait until the edge reports the new version."""
-        update_task = asyncio.create_task(self._edge.execute_system_update())
-        update_start_time = dt_util.naive_now()
+        """Install the update and show its progress until the edge reports it done."""
         try:
-            # give the backend some time to start the update before checking progress
-            await asyncio.sleep(0.5)
-            # if the update did not finish after 15 minutes, something went wrong
-            while dt_util.naive_now() - update_start_time < timedelta(minutes=15):
-                await self.async_update()
-                self.async_write_ha_state()
-                # connection losses are expected, as the edge restarts during the update
-                if (
-                    update_task.done()
-                    and isinstance(error := update_task.exception(), OpenEMSError)
-                    and not isinstance(error, OpenEMSConnectionError)
-                ):
-                    raise HomeAssistantError(
-                        translation_domain=DOMAIN,
-                        translation_key="update_failed",
-                        translation_placeholders={"edge": self._edge.hostname},
-                    ) from error
-                if (
-                    self.available
-                    and not self.in_progress
-                    and self.installed_version == self.latest_version
-                ):
-                    _LOGGER.info("Update finished successfully: %s", self.unique_id)
-                    return
-                await asyncio.sleep(10)
-        finally:
-            if update_task.done():
-                # retrieve the result, a connection loss of the restarting edge is expected
-                update_task.exception()
-            else:
-                update_task.cancel()
-        raise HomeAssistantError(
-            translation_domain=DOMAIN,
-            translation_key="update_not_finished",
-            translation_placeholders={"edge": self._edge.hostname},
-        )
+            await self._edge.install_system_update(self._handle_progress)
+        except OpenEMSTimeoutError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="update_not_finished",
+                translation_placeholders={"edge": self._edge.hostname},
+            ) from err
+        except OpenEMSError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="update_failed",
+                translation_placeholders={"edge": self._edge.hostname},
+            ) from err
+        _LOGGER.info("Update finished successfully: %s", self.unique_id)
+
+    @callback
+    def _handle_progress(self, state: SystemUpdateState) -> None:
+        self._apply_state(state)
+        self.async_write_ha_state()
 
     async def async_update(self) -> None:
-        """Trigger the entity status update, will be called after SCAN_INTERVAL."""
+        """Read the update state, called every SCAN_INTERVAL."""
         try:
             state = await self._edge.get_system_update_state()
-            status = next(iter(state))
-            match status:
-                case "updated":
-                    self._set_versions(state[status]["version"])
-                case "available":
-                    self._set_versions(
-                        state[status]["currentVersion"], state[status]["latestVersion"]
-                    )
-                case "running":
-                    self._set_progress_percentage(state[status]["percentCompleted"])
-                case _:
-                    self._set_versions(None)
-
         except OpenEMSError:
-            self._set_versions(None)
+            state = SystemUpdateState(status=UpdateStatus.UNKNOWN)
+        self._apply_state(state)
 
-    def _set_versions(self, curr_ver: str | None, new_ver: str | None = None) -> None:
-        self._attr_available = bool(curr_ver)
-        self._attr_installed_version = curr_ver
-        self._attr_latest_version = new_ver or curr_ver
-        # reset potential update in progress indicators
-        self._attr_in_progress = bool(self.in_progress) and not self._attr_available
-        self._attr_update_percentage = None
-
-    def _set_progress_percentage(self, percentage: int) -> None:
-        self._attr_available = True
-        self._attr_in_progress = True
-        self._attr_update_percentage = percentage
+    def _apply_state(self, state: SystemUpdateState) -> None:
+        match state.status:
+            case UpdateStatus.RUNNING:
+                self._attr_available = True
+                self._attr_in_progress = True
+                self._attr_update_percentage = state.percent_completed
+            case UpdateStatus.UNKNOWN:
+                # eg while the edge restarts during an update, which stays in progress
+                self._attr_available = False
+                self._attr_installed_version = None
+                self._attr_latest_version = None
+                self._attr_update_percentage = None
+            case _:
+                self._attr_available = True
+                self._attr_installed_version = state.installed_version
+                self._attr_latest_version = state.latest_version
+                self._attr_in_progress = False
+                self._attr_update_percentage = None

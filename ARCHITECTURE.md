@@ -141,6 +141,7 @@ class OpenEMS<Name>Entity(<Platform>Entity):
 
 - If another module needs an edge level unique id, expose it as a module-level function next to its platform (e.g. `update.update_unique_id(edge)`). Do not duplicate the string format.
 - Polling edge requests (`edge.get_system_update_state()`) catch `OpenEMSError` and set the entity unavailable instead of raising. Requests triggered by the user (buttons) raise a translated `HomeAssistantError`.
+- Long running edge operations are implemented in the library, not in the entity: `edge.install_system_update(on_progress)` installs the update and reports each state to the callback, which writes the entity state. The entity only maps the library exceptions (`OpenEMSTimeoutError`, `OpenEMSError`) to translated errors.
 
 ## Tests
 
