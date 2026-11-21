@@ -158,3 +158,14 @@ async def test_async_setup_entry_skips_disabled_component(
         await binary_sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
+
+
+async def test_rest_write_action_writes_via_rest() -> None:
+    """The REST write action passes value, update cycle and timeout to the channel."""
+    channel = MagicMock()
+    channel.write_via_rest = AsyncMock()
+    entity = _make_entity(channel)
+
+    await entity.update_value(value=1, update_cycle=0, timeout=0)
+
+    channel.write_via_rest.assert_awaited_once_with(1.0, 0, 0)

@@ -114,7 +114,7 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
 
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""
-        await self._channel.update_value(
+        await self._channel.write_via_rest(
             float(kwargs[ATTR_VALUE]),
             kwargs.get(ATTR_UPDATE_CYCLE),  # pyright: ignore[reportArgumentType]
             kwargs.get(ATTR_TIMEOUT),  # pyright: ignore[reportArgumentType]
