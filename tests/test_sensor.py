@@ -231,6 +231,41 @@ async def test_async_setup_entry_creates_sensor_entities(
     assert created[0].entity_description.ignore_decreasing is True
 
 
+async def test_async_setup_entry_enum_sensor_sets_options(
+    hass: HomeAssistant,
+) -> None:
+    """ENUM channels expose their snake_case options on the entity description."""
+    mock_component = MagicMock()
+    mock_component.name = "ctrlEvcs0"
+    mock_component.alias = "Test Component"
+    mock_component.edge.hostname = "test-host"
+    mock_component.create_derived_channels.return_value = []
+    channel = OpenEMSChannel(
+        mock_component,
+        {"id": "ChargeMode", "unit": "", "category": "ENUM"},
+        options={"EXCESS_POWER": 0, "FORCE_CHARGE": 1},
+    )
+    mock_component.sensors = [channel]
+
+    mock_entry = MagicMock()
+    mock_entry.entry_id = "test-entry-id"
+    mock_entry.options = {
+        CONF_ADVANCED_OPTIONS: {CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True}
+    }
+    mock_entry.runtime_data.enabled_components = [mock_component]
+
+    created: list[OpenEMSSensorEntity] = []
+    with patch(
+        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
+    ):
+        await sensor.async_setup_entry(hass, mock_entry, created.extend)
+
+    assert len(created) == 1
+    description = created[0].entity_description
+    assert description.device_class == SensorDeviceClass.ENUM
+    assert description.options == ["excess_power", "force_charge"]
+
+
 async def test_async_setup_entry_skips_disabled_component(
     hass: HomeAssistant,
 ) -> None:

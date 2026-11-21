@@ -37,6 +37,7 @@ from .helpers_ha import (
     OpenEMSConfigEntry,
     OpenEMSUnitClass,
     component_device,
+    ha_options,
     is_channel_enabled,
     to_snake_case,
     translation_key,
@@ -92,10 +93,12 @@ async def async_setup_entry(
         channel: OpenEMSChannel
         channel_list: list[OpenEMSChannel] = component.sensors
         for channel in channel_list:
+            options: list[str] | None = None
             if channel.options:
                 device_class = SensorDeviceClass.ENUM
                 state_class = None
                 uom = None
+                options = ha_options(channel.options.values())
             else:
                 unit_desc: OpenEMSUnitClass = unit_description(channel.unit)
                 device_class = unit_desc.sensor_device_class
@@ -111,6 +114,7 @@ async def async_setup_entry(
                 device_class=device_class,
                 state_class=state_class,
                 native_unit_of_measurement=uom,
+                options=options,
                 translation_key=translation_key(channel),
                 ignore_decreasing=ignore_decreasing,
             )

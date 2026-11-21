@@ -1,6 +1,6 @@
 """Helper methods using HA classes, eg for Entity creation."""
 
-from collections.abc import Awaitable, Callable, Coroutine
+from collections.abc import Awaitable, Callable, Coroutine, Iterable
 from dataclasses import dataclass
 import functools
 import re
@@ -204,12 +204,17 @@ def component_from_device(hass: HomeAssistant, device_id: str) -> OpenEMSCompone
     )
 
 
+def ha_options(raw_options: Iterable[str]) -> list[str]:
+    """Return the deduplicated snake_case options, as used for HA states and translation keys."""
+    return list(dict.fromkeys(to_snake_case(o) for o in raw_options))
+
+
 def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
     """Return the selector config matching the type of the property."""
     if isinstance(prop, OpenEMSEnumProperty):
         return {
             "select": {
-                "options": [to_snake_case(o) for o in prop.property_options],
+                "options": ha_options(prop.property_options),
                 "mode": "dropdown",
                 # option translations in section "selector" of strings.json
                 "translation_key": translation_key(prop),

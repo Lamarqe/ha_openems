@@ -31,6 +31,7 @@ from custom_components.openems.time import OpenEMSTimeDescription, OpenEMSTimeEn
 from custom_components.openems.helpers_ha import (
     CAMEL_CASE_PATTERN,
     component_from_device,
+    ha_options,
     to_snake_case,
     translation_key,
     unit_description,
@@ -97,6 +98,14 @@ def test_to_snake_case_matches_translation_key_format() -> None:
         == "not_active_the_controller_has_no_flexibility_left_to_delay_charge_"
         "because_the_limitation_is_nearly_zero"
     )
+
+
+def test_ha_options_snake_case_deduplicated_in_order() -> None:
+    """Options are converted to snake_case, keeping the first of colliding names."""
+    assert ha_options(["Force Charge", "EXCESS_POWER", "FORCE_CHARGE"]) == [
+        "force_charge",
+        "excess_power",
+    ]
 
 
 async def test_component_from_device_multi_edge(hass: HomeAssistant) -> None:
