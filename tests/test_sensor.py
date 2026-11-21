@@ -17,12 +17,14 @@ from custom_components.openems.const import (
     CONF_ADVANCED_OPTIONS,
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
 )
+from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSChannel, OpenEMSEdge
-from yarl import URL
 from custom_components.openems.sensor import (
     OpenEMSSensorDescription,
     OpenEMSSensorEntity,
 )
+
+from .helpers_component import HOSTNAME, make_channel, make_edge, make_entry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -58,10 +60,10 @@ def test_native_value_none_when_channel_has_no_value() -> None:
     assert _make_entity(channel).native_value is None
 
 
-def test_native_value_string_converted_to_snake_case() -> None:
-    """String values (ENUM sensors) are lowercased and normalised to snake_case."""
+def test_native_value_option_key_passed_through() -> None:
+    """Option keys of ENUM sensors are returned as provided by the channel."""
     channel = MagicMock()
-    channel.value = "EXCESS_POWER"
+    channel.value = "excess_power"
     assert _make_entity(channel).native_value == "excess_power"
 
 
@@ -134,43 +136,45 @@ async def test_async_added_adds_listener_removed_with_entity() -> None:
     remove_listener.assert_called_once()
 
 
-def test_enum_channel_maps_integer_to_snake_case_option() -> None:
-    """An ENUM channel converts the backend integer value to a snake_case option string.
-
-    OpenEMSChannel stores options as {int_value: option_name}.  A data update
-    with the matching integer should surface as the lower-cased option name on
-    the entity.
-    """
-    comp = MagicMock()
-    comp.name = "ctrlEvcs0"
-    comp.edge.hostname = "host"
-    comp.edge.id = "edge-1"
-    comp.edge.register_channel = MagicMock()
-    comp.edge.unregister_channel = MagicMock()
-
-    channel_json = {"id": "ChargeMode", "type": "STRING", "unit": ""}
-    # options are stored as {name: int_value}; OpenEMSChannel inverts them to {int_value: name}
-    options = {"EXCESS_POWER": 0, "MANUAL": 1, "OFF": 2}
-    channel_json["category"] = "ENUM"  # mark as enum so options are applied
-    # rebuild with category set so the branch is exercised
-    channel = OpenEMSChannel(
-        component=comp,
-        channel_json={**channel_json, "category": "ENUM"},
-        options=options,
+def test_enum_channel_provides_option_key() -> None:
+    """An ENUM sensor shows the option key of the backend integer value."""
+    edge = make_edge(
+        {
+            "ctrlEvcs0": [
+                make_channel(
+                    "ChargeMode",
+                    category="ENUM",
+                    options={"EXCESS_POWER": 0, "MANUAL": 1, "OFF": 2},
+                )
+            ]
+        }
     )
-
-    channel.handle_data_update("ctrlEvcs0/ChargeMode", 1)  # 1 → "MANUAL"
+    channel = edge.components["ctrlEvcs0"].channels_of(ChannelKind.ENUM_SENSOR)[0]
+    channel.handle_data_update("ctrlEvcs0/ChargeMode", 1)
 
     desc = OpenEMSSensorDescription(
-        key=channel.unique_id(),
+        key=channel.unique_id,
         name="ChargeMode",
         device_class=SensorDeviceClass.ENUM,
-        state_class=None,
     )
     device_info = DeviceInfo(name="dev", identifiers={("openems", "dev")})
     entity = OpenEMSSensorEntity(channel, desc, device_info)
 
     assert entity.native_value == "manual"
+
+
+async def _setup_sensors(
+    hass: HomeAssistant, edge: OpenEMSEdge, ignore_decreasing: bool = False
+) -> dict[str, OpenEMSSensorEntity]:
+    """Set up the sensor platform, return the entities by channel name."""
+    created: list[OpenEMSSensorEntity] = []
+    with patch(
+        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
+    ):
+        await sensor.async_setup_entry(
+            hass, make_entry(edge, ignore_decreasing), created.extend
+        )
+    return {entity._channel.name: entity for entity in created}
 
 
 # ---------------------------------------------------------------------------
@@ -179,91 +183,150 @@ def test_enum_channel_maps_integer_to_snake_case_option() -> None:
 
 
 @pytest.mark.parametrize(
-    ("component_name", "expected_name"),
+    ("component_name", "expected_name", "enabled"),
     [
-        pytest.param("meter0", UNDEFINED, id="default_channel_translated_name"),
-        pytest.param("comp1", "ActivePower", id="other_channel_channel_id"),
+        pytest.param("meter0", UNDEFINED, True, id="primary_channel_translated_name"),
+        pytest.param("comp1", "ActivePower", False, id="other_channel_channel_id"),
     ],
 )
 async def test_async_setup_entry_creates_sensor_entities(
-    hass: HomeAssistant, component_name: str, expected_name: str | UndefinedType
+    hass: HomeAssistant,
+    component_name: str,
+    expected_name: str | UndefinedType,
+    enabled: bool,
 ) -> None:
     """async_setup_entry creates one entity per sensor in the component."""
-    mock_channel = MagicMock()
-    mock_channel.options = None
-    mock_channel.unit = "W"
-    mock_channel.name = "ActivePower"
-    mock_channel.unique_id.return_value = (
-        f"test-host/edge-1/{component_name}/ActivePower"
-    )
+    edge = make_edge({component_name: [make_channel("ActivePower", unit="W")]})
 
-    mock_component = MagicMock()
-    mock_component.name = component_name
-    mock_component.alias = "Test Component"
-    mock_component.edge.hostname = "test-host"
-    mock_component.sensors = [mock_channel]
-    mock_component.create_derived_channels.return_value = []
+    entities = await _setup_sensors(hass, edge, ignore_decreasing=True)
 
-    # link channel back to its component so translation_key() can read .component.name
-    mock_channel.component = mock_component
+    description = entities["ActivePower"].entity_description
+    assert description.key == f"{HOSTNAME}/0/{component_name}/ActivePower"
+    assert description.name == expected_name
+    assert description.translation_key == "active_power"
+    assert description.entity_registry_enabled_default is enabled
+    assert description.ignore_decreasing is True
 
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "test-host"
-    mock_backend.the_edge.components = {component_name: mock_component}
 
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.options = {
-        CONF_ADVANCED_OPTIONS: {CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True}
-    }
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.enabled_components = [mock_component]
+@pytest.mark.parametrize(
+    ("channel_id", "unit", "device_class", "state_class", "native_unit"),
+    [
+        pytest.param(
+            "ActivePower",
+            "W",
+            SensorDeviceClass.POWER,
+            SensorStateClass.MEASUREMENT,
+            "W",
+            id="power",
+        ),
+        pytest.param(
+            "Capacity",
+            "Wh",
+            SensorDeviceClass.ENERGY,
+            SensorStateClass.TOTAL,
+            "Wh",
+            id="energy",
+        ),
+        pytest.param(
+            "ActiveEnergy",
+            "Wh_Σ",
+            SensorDeviceClass.ENERGY,
+            SensorStateClass.TOTAL_INCREASING,
+            "Wh",
+            id="energy_counter",
+        ),
+        pytest.param(
+            "OffGridTime",
+            "sec_Σ",
+            SensorDeviceClass.DURATION,
+            SensorStateClass.TOTAL_INCREASING,
+            "s",
+            id="duration_counter",
+        ),
+        pytest.param(
+            "Soc",
+            "%",
+            SensorDeviceClass.BATTERY,
+            SensorStateClass.MEASUREMENT,
+            "%",
+            id="state_of_charge",
+        ),
+        pytest.param(
+            "Efficiency", "%", None, SensorStateClass.MEASUREMENT, "%", id="percentage"
+        ),
+        pytest.param(
+            "CpuTemperature",
+            "°C",
+            SensorDeviceClass.TEMPERATURE,
+            SensorStateClass.MEASUREMENT,
+            "°C",
+            id="temperature",
+        ),
+        pytest.param(
+            "Counter", "", None, SensorStateClass.MEASUREMENT, None, id="no_unit"
+        ),
+    ],
+)
+async def test_async_setup_entry_sensor_classes(
+    hass: HomeAssistant,
+    channel_id: str,
+    unit: str,
+    device_class: SensorDeviceClass | None,
+    state_class: SensorStateClass,
+    native_unit: str | None,
+) -> None:
+    """Units of the channels determine device class, state class and unit."""
+    edge = make_edge({"comp1": [make_channel(channel_id, unit=unit)]})
 
-    created: list[OpenEMSSensorEntity] = []
-    with patch(
-        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
-    ):
-        await sensor.async_setup_entry(hass, mock_entry, created.extend)
+    description = (await _setup_sensors(hass, edge))[channel_id].entity_description
 
-    assert len(created) == 1
-    assert isinstance(created[0], OpenEMSSensorEntity)
-    assert created[0].entity_description.name == expected_name
-    assert created[0].entity_description.ignore_decreasing is True
+    assert description.device_class == device_class
+    assert description.state_class == state_class
+    assert description.native_unit_of_measurement == native_unit
 
 
 async def test_async_setup_entry_enum_sensor_sets_options(
     hass: HomeAssistant,
 ) -> None:
-    """ENUM channels expose their snake_case options on the entity description."""
-    mock_component = MagicMock()
-    mock_component.name = "ctrlEvcs0"
-    mock_component.alias = "Test Component"
-    mock_component.edge.hostname = "test-host"
-    mock_component.create_derived_channels.return_value = []
-    channel = OpenEMSChannel(
-        mock_component,
-        {"id": "ChargeMode", "unit": "", "category": "ENUM"},
-        options={"EXCESS_POWER": 0, "FORCE_CHARGE": 1},
+    """ENUM channels expose their option keys on the entity description."""
+    edge = make_edge(
+        {
+            "ctrlEvcs0": [
+                make_channel(
+                    "ChargeMode",
+                    category="ENUM",
+                    options={"EXCESS_POWER": 0, "FORCE_CHARGE": 1},
+                )
+            ]
+        }
     )
-    mock_component.sensors = [channel]
 
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.options = {
-        CONF_ADVANCED_OPTIONS: {CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: True}
-    }
-    mock_entry.runtime_data.enabled_components = [mock_component]
+    description = (await _setup_sensors(hass, edge))["ChargeMode"].entity_description
 
-    created: list[OpenEMSSensorEntity] = []
-    with patch(
-        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
-    ):
-        await sensor.async_setup_entry(hass, mock_entry, created.extend)
-
-    assert len(created) == 1
-    description = created[0].entity_description
     assert description.device_class == SensorDeviceClass.ENUM
+    assert description.state_class is None
     assert description.options == ["excess_power", "force_charge"]
+
+
+async def test_async_setup_entry_creates_derived_sensors(
+    hass: HomeAssistant,
+) -> None:
+    """Battery components get the voltage difference sensors of the library."""
+    edge = make_edge(
+        {
+            "battery0": [
+                make_channel("MaxCellVoltage", unit="mV"),
+                make_channel("MinCellVoltage", unit="mV"),
+            ]
+        }
+    )
+
+    entities = await _setup_sensors(hass, edge)
+
+    description = entities["VoltageDifference"].entity_description
+    assert description.device_class == SensorDeviceClass.VOLTAGE
+    assert description.native_unit_of_measurement == "mV"
+    assert description.translation_key == "voltage_difference"
 
 
 async def test_async_setup_entry_skips_disabled_component(
@@ -292,67 +355,6 @@ async def test_async_setup_entry_skips_disabled_component(
         await sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
-
-
-async def test_combined_sensors_for_battery() -> None:
-    """Battery components get the voltage difference sensors with calculated values."""
-    channels = [
-        {"id": channel_id, "type": "INTEGER", "unit": "mV", "accessMode": "RO"}
-        for channel_id in (
-            "MaxCellVoltage",
-            "MinCellVoltage",
-            "Tower0Module0Cell000Voltage",
-            "Tower0Module0Cell001Voltage",
-            "Tower0Module1Cell000Voltage",
-        )
-    ]
-    backend = MagicMock()
-    backend.multi_edge = False
-    backend.connection.conn_url = URL("ws://localhost:8085/")
-    edge = OpenEMSEdge(
-        backend,
-        "edge0",
-        {
-            "_host": {"Hostname": "testhost"},
-            "battery0": {"properties": {}, "channels": channels},
-        },
-    )
-    try:
-        derived = {
-            channel.name: channel
-            for channel in edge.components["battery0"].create_derived_channels(
-                sensor.combined_sensor_definitions("battery0")
-            )
-        }
-        assert set(derived) == {
-            "VoltageDifference",
-            "Tower0Module0CellVoltageDifference",
-            "Tower0Module1CellVoltageDifference",
-        }
-        assert all(channel.unit == "mV" for channel in derived.values())
-
-        voltage_difference = derived["VoltageDifference"]
-        voltage_difference.handle_data_update("battery0/MaxCellVoltage", 3500)
-        voltage_difference.handle_data_update("battery0/MinCellVoltage", 3300)
-        assert voltage_difference.value == 200
-
-        module_difference = derived["Tower0Module0CellVoltageDifference"]
-        module_difference.handle_data_update(
-            "battery0/Tower0Module0Cell000Voltage", 3310
-        )
-        assert module_difference.value is None
-        module_difference.handle_data_update(
-            "battery0/Tower0Module0Cell001Voltage", 3350
-        )
-        assert module_difference.value == 40
-    finally:
-        await edge.stop()
-
-
-def test_combined_sensors_only_for_matching_components() -> None:
-    """Components without combined sensor definitions get none."""
-    assert sensor.combined_sensor_definitions("battery0")
-    assert sensor.combined_sensor_definitions("ess0") == ()
 
 
 async def test_rest_write_action_writes_via_rest() -> None:

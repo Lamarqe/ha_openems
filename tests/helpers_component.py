@@ -4,7 +4,11 @@ from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock
 
 from openems_client import openems
-from custom_components.openems.const import DOMAIN
+from custom_components.openems.const import (
+    CONF_ADVANCED_OPTIONS,
+    CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
+    DOMAIN,
+)
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -80,3 +84,37 @@ def setup_evcs_component(hass: HomeAssistant) -> LoadedComponent:
         component_device=component_device,
         edge_device=edge_device,
     )
+
+
+def make_edge(components: dict[str, list[dict]]) -> openems.OpenEMSEdge:
+    """Create an edge with hostname HOSTNAME from component name -> channel list."""
+    backend = MagicMock()
+    backend.multi_edge = False
+    backend.connection.conn_url = URL("ws://localhost:8085/openems-backend-ui")
+    config: dict[str, dict] = {"_host": {"Hostname": HOSTNAME}}
+    for name, channels in components.items():
+        config[name] = {"properties": {}, "channels": channels}
+    edge = openems.OpenEMSEdge(backend, "0", config)
+    backend.the_edge = edge
+    return edge
+
+
+def make_channel(
+    id_: str, type_: str = "INTEGER", unit: str = "", **extra: object
+) -> dict:
+    """Create the edge config of a read-only channel."""
+    return {"id": id_, "type": type_, "unit": unit, "accessMode": "RO", **extra}
+
+
+def make_entry(edge: openems.OpenEMSEdge, ignore_decreasing: bool = False) -> MagicMock:
+    """Create a config entry mock with all components of the edge enabled."""
+    entry = MagicMock()
+    entry.entry_id = "test-entry-id"
+    entry.options = {
+        CONF_ADVANCED_OPTIONS: {
+            CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: ignore_decreasing
+        }
+    }
+    entry.runtime_data.backend = edge.backend
+    entry.runtime_data.enabled_components = list(edge.components.values())
+    return entry

@@ -25,6 +25,7 @@ from custom_components.openems.const import (
 )
 from custom_components.openems.const import DOMAIN
 from openems_client.connection import OpenEMSConfigReader
+from openems_client.openems import CONFIG
 from custom_components.openems.helpers_ha import RuntimeData
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
@@ -350,6 +351,8 @@ def _make_component(name: str) -> MagicMock:
     component.name = name
     component.alias = name
     component.edge.hostname = "host"
+    component.unique_id = "host " + name
+    component.has_primary_channels = CONFIG.has_primary_channels(name)
     return component
 
 
@@ -609,6 +612,8 @@ def _make_remove_device_entry(hostname: str, components: dict) -> MagicMock:
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = hostname
     mock_backend.the_edge.components = components
+    for name, component in components.items():
+        component.unique_id = hostname + " " + name
     entry = MagicMock()
     entry.runtime_data.backend = mock_backend
     return entry

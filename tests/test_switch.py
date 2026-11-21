@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
@@ -11,6 +12,8 @@ from custom_components.openems.switch import (
     OpenEMSSwitchDescription,
     OpenEMSSwitchEntity,
 )
+
+from .helpers_component import make_channel, make_edge, make_entry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -101,34 +104,21 @@ async def test_async_added_adds_listener_removed_with_entity() -> None:
 
 
 async def test_async_setup_entry_creates_switch_entities(hass: HomeAssistant) -> None:
-    mock_channel = MagicMock()
-    mock_channel.name = "_PropertyEnabledCharging"
-    mock_channel.unique_id.return_value = "host/edge-1/comp/_PropertyEnabledCharging"
-
-    mock_component = MagicMock()
-    mock_component.name = "ctrlEvcs0"
-    mock_component.alias = "EV Charger"
-    mock_component.edge.hostname = "host"
-    mock_component.boolean_properties = [mock_channel]
-    mock_channel.component = mock_component
-
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "host"
-    mock_backend.the_edge.components = {"ctrlEvcs0": mock_component}
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.enabled_components = [mock_component]
+    """Boolean properties become config switch entities."""
+    edge = make_edge(
+        {"ctrlEvcs0": [make_channel("_PropertyEnabledCharging", "BOOLEAN")]}
+    )
 
     created: list[OpenEMSSwitchEntity] = []
     with patch(
         "custom_components.openems.switch.dr.async_get", return_value=MagicMock()
     ):
-        await switch.async_setup_entry(hass, mock_entry, created.extend)
+        await switch.async_setup_entry(hass, make_entry(edge), created.extend)
 
     assert len(created) == 1
-    assert isinstance(created[0], OpenEMSSwitchEntity)
+    description = created[0].entity_description
+    assert description.translation_key == "enabled_charging"
+    assert description.entity_category == EntityCategory.CONFIG
 
 
 async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -> None:

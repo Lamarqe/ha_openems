@@ -5,7 +5,7 @@ import logging
 from openems_client.connection import OpenEMSConfigReader, OpenEMSWebSocketConnection
 from openems_client.const import CONN_TYPE_DIRECT_EDGE
 from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
-from openems_client.openems import OpenEMSBackend, OpenEMSComponent
+from openems_client.openems import CONFIG, OpenEMSBackend, OpenEMSComponent
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import Event, HomeAssistant, callback
@@ -26,7 +26,6 @@ from .helpers_ha import (
     component_device,
     component_identifier,
     component_store,
-    is_component_enabled,
     map_user_input,
 )
 from .services import async_setup_services
@@ -158,7 +157,7 @@ async def async_setup_entry(
             **component_device(edge_device_entry, component),
         )
         # disabled_by must not be passed for existing devices, it would overwrite the user's choice
-        if is_new_device and not is_component_enabled(component.name):
+        if is_new_device and not component.has_primary_channels:
             component_device_entry = device_registry.async_update_device(
                 component_device_entry.id,
                 disabled_by=dr.DeviceEntryDisabler.INTEGRATION,
@@ -241,7 +240,7 @@ async def async_migrate_entry(
                 # initialize options with default settings
                 options = {}
                 for component in components:
-                    options[component] = is_component_enabled(component)
+                    options[component] = CONFIG.has_primary_channels(component)
 
             hass.config_entries.async_update_entry(
                 config_entry, data=new_data, options=options, version=2, minor_version=1
@@ -393,21 +392,12 @@ async def async_remove_config_entry_device(
     hass: HomeAssistant, entry: OpenEMSConfigEntry, device_entry: dr.DeviceEntry
 ) -> bool:
     """Handle user request to remove a (stale) device."""
-    backend: OpenEMSBackend = entry.runtime_data.backend
-    device_identifiers = next(iter(device_entry.identifiers))
-    if len(device_identifiers) != 2 or device_identifiers[0] != c.DOMAIN:
-        return True  # not our device, allow removal
-    identifier: str = device_identifiers[1]
-    # The hostname may contain spaces itself (multi edge setups: "<hostname> <edge id>"),
-    # so the identifier must not be split at the first space.
-    hostname = backend.the_edge.hostname
-    if identifier == hostname:
-        # main device of the edge, don't allow removal
+    edge = entry.runtime_data.backend.the_edge
+    if (c.DOMAIN, edge.hostname) in device_entry.identifiers:
+        # main device of the edge
         return False
-    if identifier.startswith(hostname + " "):
-        # component device. allow removal if the component is not part of the edge anymore
-        return (
-            identifier.removeprefix(hostname + " ") not in backend.the_edge.components
-        )
-    # device of another hostname or edge, allow removal
-    return True
+    # allow removal of components, which are not part of the edge anymore
+    return not any(
+        component_identifier(component) in device_entry.identifiers
+        for component in edge.components.values()
+    )

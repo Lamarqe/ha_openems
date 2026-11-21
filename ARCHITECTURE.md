@@ -7,8 +7,8 @@ This document describes how the OpenEMS integration (`custom_components/openems`
 | Module | Responsibility |
 | --- | --- |
 | `__init__.py` | Config entry setup/unload/migration, device removal. Holds the `_PLATFORMS` list. Option changes reload the entry (`OptionsFlowWithReload`). |
-| `helpers_ha.py` | Helpers that use HA classes: `RuntimeData`, `OpenEMSConfigEntry`, `component_device`, `unit_description`, `translation_key`, ... |
-| `const.py` | HA-only constants (`DOMAIN`, `ATTR_*`, config flow keys) and `DEFAULT_CHANNELS`, the channels and components enabled by default (lookups `is_channel_enabled` / `is_component_enabled` in `helpers_ha.py`). |
+| `helpers_ha.py` | Helpers that use HA classes: `RuntimeData`, `OpenEMSConfigEntry`, `component_device`, `component_from_device`, `property_selector`, ... |
+| `const.py` | HA-only constants (`DOMAIN`, `ATTR_*`, config flow keys). |
 | `<platform>.py` | One module per HA platform (`sensor`, `binary_sensor`, `number`, `select`, `switch`, `time`, `update`, `button`). |
 | `config_flow.py`, `services.py`, `device_action.py`, `diagnostics.py` | Remaining HA integration surfaces. |
 
@@ -27,18 +27,18 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 - `async_setup_entry` creates one `OpenEMSBackend` per config entry; it owns exactly one edge: `backend.the_edge`.
 - Connections get HA's shared session (`OpenEMSWebSocketConnection(..., async_get_clientsession(hass))`), in setup and in the config flow. Constructing library objects starts no background tasks: `backend.start()` at the end of `async_setup_entry` starts them, `await backend.stop()` in `async_unload_entry` closes the connection and waits until they have finished.
 - The edge configuration (component JSON with channels) is cached in a `Store` per config entry (`helpers_ha.component_store`, key `openems.<entry_id>`). Setup reads it from the edge only when the cache is empty; the **Refresh configuration** button (`button.py`) reads it again, saves it and reloads the entry. Reconfiguring the entry and removing it (`async_remove_entry`) delete the cache. The config entry data only holds the connection data (`host`, `username`, `password`, `type`, `url`, `edge`).
-- The edge parses the component JSON into `OpenEMSComponent`s. Each component sorts its channels into typed lists: `sensors`, `boolean_sensors`, `number_properties`, `enum_properties`, `boolean_properties`, `time_properties`.
-- Combined sensors are defined in `sensor.COMBINED_SENSORS` as `DerivedChannelDefinition`s (source channel patterns and a Python `value_fn`). `sensor.py` creates their channels with `component.create_derived_channels(...)`.
+- The edge parses the component JSON into `OpenEMSComponent`s. The library classifies every channel: `kind` (`openems_client.model.ChannelKind`: `SENSOR`, `ENUM_SENSOR`, `BINARY_SENSOR`, `NUMBER`, `SELECT`, `SWITCH`, `TIME`), `key`, normalised `unit`, `quantity`, `cumulative`, `primary`, `severity` and `option_keys`. Platforms get their channels with `component.channels_of(ChannelKind.<KIND>[, <channel class>])` and only map these attributes to HA concepts (device class, state class, ...). OpenEMS knowledge (units, default channels, enum options) belongs in the library, not in the integration.
+- Primary channels, the channels enabled by default, are defined in the library (`config/primary_channels.json`). Derived channels, eg the battery cell voltage differences, are created by the library (`openems.DERIVED_CHANNELS`) and are `SENSOR` channels of their component.
 - Runtime data lives in `entry.runtime_data` (`RuntimeData`): `backend`, `edge_device` (`info`: `DeviceInfo`, `entry`: `DeviceEntry`) and `enabled_components`.
 - Value updates are push-based: the websocket calls `OpenEMSBackend.edgeRpc` → `OpenEMSEdge.currentData` → registered `OpenEMSDataHandler`s → their listeners (the entity's `async_schedule_update_ha_state`). Channel entities therefore never poll.
 
 ### Devices
 
 - One **edge device**, identifier `(DOMAIN, edge.hostname)`, created in `__init__.async_setup_entry`. Its `DeviceInfo` is available as `entry.runtime_data.edge_device.info`.
-- One **component device** per component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`. `__init__.async_setup_entry` creates them for all components. New devices of components without default channels (`is_component_enabled`) are created with `disabled_by=DeviceEntryDisabler.INTEGRATION`; existing devices keep their state.
+- One **component device** per component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`. `__init__.async_setup_entry` creates them for all components. New devices of components without primary channels (`component.has_primary_channels`) are created with `disabled_by=DeviceEntryDisabler.INTEGRATION`; existing devices keep their state.
 - `entry.runtime_data.enabled_components` holds the components with an enabled device. Platforms create entities only for those, so disabled components have no entities at all.
 - Enabling or disabling a component device reloads the config entry (`async_track_device_registry_updated_event` in `async_setup_entry`), which creates or removes the entities of the component.
-- In multi-edge setups the hostname is `"<hostname> <edge id>"`, so identifiers must never be split at the first space.
+- The component device identifier is `(DOMAIN, component.unique_id)` (`"<hostname> <component>"`, see `component_identifier`). In multi-edge setups the hostname is `"<hostname> <edge id>"`, so identifiers are compared as a whole and never split.
 
 ### Unique IDs
 
@@ -65,7 +65,7 @@ Further rules:
 - Entity constructor signature: `(<backend object>, entity_description, device_info)`. It stores the backend object in a typed private attribute (`self._channel` / `self._edge`), and sets `self.entity_description`, `self._attr_unique_id` and `self._attr_device_info`.
 - Errors: the library raises only `openems_client.exceptions` (`OpenEMSError`, `OpenEMSConnectionError`, `OpenEMSAuthError`) and handles the timeouts itself; HA code never catches `jsonrpc_base` errors and adds no timeouts. Raised HA exceptions are translated (`translation_key` and placeholders, no stringified exception). Write methods of channel entities use the `@handle_write_errors` decorator from `helpers_ha.py`.
 - Use `translation_key` for names. Add new keys to `strings.json`, `translations/en.json` and `translations/de.json` (see `script/update_german_translations.py`).
-- Channel translation keys come from `helpers_ha.translation_key(channel)`: the snake_case channel name without the `_Property` prefix (e.g. `ChargeMode` → `charge_mode`). They are shared by all components, so state translations of one key cover the options of every component with that channel. Every channel in `DEFAULT_CHANNELS` that creates an entity has a `name` under its key (checked by `test_default_channels_have_translated_names`); platforms pass `name=UNDEFINED` for them, so HA uses the translation. All other channels pass the channel id as `name`.
+- Channel translation keys are `channel.key`: the snake_case channel name without the `_Property` prefix (e.g. `ChargeMode` → `charge_mode`). They are shared by all components, so state translations of one key cover the options of every component with that channel; the state keys are the `channel.option_keys`. Every primary channel that creates an entity has a `name` under its key (checked by `test_primary_channels_have_translated_names`); platforms pass `name=UNDEFINED` for them, so HA uses the translation. All other channels pass the channel id as `name`.
 
 ### Variant A: channel based platforms
 
@@ -81,14 +81,13 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
         dr.async_get(hass).async_get_or_create(**device, config_entry_id=entry.entry_id)
 
         entities: list[OpenEMS<Platform>Entity] = []
-        for channel in component.<typed channel list>:
-            entity_enabled = is_channel_enabled(component.name, channel.name)
+        for channel in component.channels_of(ChannelKind.<KIND>, <channel class>):
             entity_description = OpenEMS<Platform>Description(
-                key=channel.unique_id(),
-                entity_registry_enabled_default=entity_enabled,
-                # translated name for default channels; properties: strip "_Property" prefix
-                name=UNDEFINED if entity_enabled else channel.name[9:],
-                translation_key=translation_key(channel),
+                key=channel.unique_id,
+                entity_registry_enabled_default=channel.primary,
+                # translated name for primary channels; properties: strip "_Property" prefix
+                name=UNDEFINED if channel.primary else channel.name.removeprefix(PROPERTY_PREFIX),
+                translation_key=channel.key,
                 ...
             )
             entities.append(OpenEMS<Platform>Entity(channel, entity_description, device))

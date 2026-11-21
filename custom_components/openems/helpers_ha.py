@@ -1,26 +1,21 @@
 """Helper methods using HA classes, eg for Entity creation."""
 
-from collections.abc import Awaitable, Callable, Coroutine, Iterable
+from collections.abc import Awaitable, Callable, Coroutine
 from dataclasses import dataclass
 import functools
-import re
 from typing import Any, Concatenate
 
 from openems_client.connection import ConnectionProperties
 from openems_client.exceptions import OpenEMSError
-from openems_client.helpers import to_snake_case
 from openems_client.openems import (
     OpenEMSBackend,
     OpenEMSComponent,
-    OpenEMSDataHandler,
     OpenEMSEnumProperty,
     OpenEMSNumberProperty,
     OpenEMSProperty,
     OpenEMSTimeProperty,
 )
 
-from homeassistant.components.number import NumberDeviceClass
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import (
     CONF_HOST,
@@ -35,10 +30,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.storage import Store
 
-from .const import DEFAULT_CHANNELS, DOMAIN
-
-CAMEL_CASE_PATTERN = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
-
+from .const import DOMAIN
 
 STORAGE_VERSION = 1
 
@@ -69,75 +61,9 @@ class RuntimeData:
 type OpenEMSConfigEntry = ConfigEntry[RuntimeData]
 
 
-@dataclass
-class OpenEMSUnitClass:
-    """Describe the Unit and its Nature."""
-
-    unit: str
-    sensor_device_class: SensorDeviceClass | None = None
-    number_device_class: NumberDeviceClass | None = None
-    state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT
-
-
-def unit_description(unit: str) -> OpenEMSUnitClass:
-    """Correct unit and derive SensorDeviceClass and SensorStateClass."""
-    # reference:  openems/io.openems.common/src/io/openems/common/channel/Unit.java
-    sensor_type: OpenEMSUnitClass = OpenEMSUnitClass(unit=unit)
-    match unit:
-        case "kWh" | "Wh":
-            sensor_type.sensor_device_class = SensorDeviceClass.ENERGY
-            sensor_type.number_device_class = NumberDeviceClass.ENERGY
-            sensor_type.state_class = SensorStateClass.TOTAL
-        case "Wh_Σ":
-            sensor_type.unit = "Wh"
-            sensor_type.sensor_device_class = SensorDeviceClass.ENERGY
-            sensor_type.number_device_class = NumberDeviceClass.ENERGY
-            sensor_type.state_class = SensorStateClass.TOTAL_INCREASING
-        case "W" | "mW" | "kW":
-            sensor_type.sensor_device_class = SensorDeviceClass.POWER
-            sensor_type.number_device_class = NumberDeviceClass.POWER
-        case "A" | "mA":
-            sensor_type.sensor_device_class = SensorDeviceClass.CURRENT
-            sensor_type.number_device_class = NumberDeviceClass.CURRENT
-        case "Hz" | "mHz":
-            sensor_type.sensor_device_class = SensorDeviceClass.FREQUENCY
-            sensor_type.number_device_class = NumberDeviceClass.FREQUENCY
-        case "sec_Σ":
-            sensor_type.unit = "s"
-            sensor_type.sensor_device_class = SensorDeviceClass.DURATION
-            sensor_type.number_device_class = NumberDeviceClass.DURATION
-        case "h" | "min" | "s" | "ms":
-            sensor_type.sensor_device_class = SensorDeviceClass.DURATION
-            sensor_type.number_device_class = NumberDeviceClass.DURATION
-        case "sec":
-            sensor_type.unit = "s"
-            sensor_type.sensor_device_class = SensorDeviceClass.DURATION
-            sensor_type.number_device_class = NumberDeviceClass.DURATION
-        case "%":
-            sensor_type.sensor_device_class = SensorDeviceClass.BATTERY
-            sensor_type.number_device_class = NumberDeviceClass.BATTERY
-        case "V" | "mV":
-            sensor_type.sensor_device_class = SensorDeviceClass.VOLTAGE
-            sensor_type.number_device_class = NumberDeviceClass.VOLTAGE
-        case "bar" | "mbar":
-            sensor_type.sensor_device_class = SensorDeviceClass.PRESSURE
-            sensor_type.number_device_class = NumberDeviceClass.PRESSURE
-        case "var":
-            sensor_type.sensor_device_class = SensorDeviceClass.REACTIVE_POWER
-            sensor_type.number_device_class = NumberDeviceClass.REACTIVE_POWER
-        case "VA":
-            sensor_type.sensor_device_class = SensorDeviceClass.APPARENT_POWER
-            sensor_type.number_device_class = NumberDeviceClass.APPARENT_POWER
-        case "C":
-            sensor_type.unit = "°C"
-            sensor_type.sensor_device_class = SensorDeviceClass.TEMPERATURE
-            sensor_type.number_device_class = NumberDeviceClass.TEMPERATURE
-    return sensor_type
-
-
 def component_identifier(component: OpenEMSComponent) -> tuple[str, str]:
     """Provide the device registry identifier of an OpenEMSComponent."""
-    return (DOMAIN, component.edge.hostname + " " + component.name)
+    return (DOMAIN, component.unique_id)
 
 
 def component_device(
@@ -150,20 +76,6 @@ def component_device(
         identifiers={component_identifier(component)},
         via_device_id=edge_device.id,
         entry_type=dr.DeviceEntryType.SERVICE,
-    )
-
-
-def is_component_enabled(component_name: str) -> bool:
-    """Return True if the component has at least one channel enabled by default."""
-    return any(re.fullmatch(regexp, component_name) for regexp in DEFAULT_CHANNELS)
-
-
-def is_channel_enabled(component_name: str, channel_name: str) -> bool:
-    """Return True if the channel is enabled by default."""
-    return any(
-        channel_name in channels
-        for regexp, channels in DEFAULT_CHANNELS.items()
-        if re.fullmatch(regexp, component_name)
     )
 
 
@@ -182,20 +94,8 @@ def component_from_device(hass: HomeAssistant, device_id: str) -> OpenEMSCompone
             and entry.domain == DOMAIN
             and entry.state is ConfigEntryState.LOADED
         ):
-            edge = entry.runtime_data.backend.the_edge
-            # identifier structure: "<hostname> <component name>", see component_identifier.
-            # The hostname may contain spaces itself (multi edge setups).
-            prefix = edge.hostname + " "
-            for domain, identifier in device.identifiers:
-                if (
-                    domain == DOMAIN
-                    and identifier.startswith(prefix)
-                    and (
-                        component := edge.components.get(
-                            identifier.removeprefix(prefix)
-                        )
-                    )
-                ):
+            for component in entry.runtime_data.backend.the_edge.components.values():
+                if component_identifier(component) in device.identifiers:
                     return component
     raise ServiceValidationError(
         translation_domain=DOMAIN,
@@ -204,20 +104,15 @@ def component_from_device(hass: HomeAssistant, device_id: str) -> OpenEMSCompone
     )
 
 
-def ha_options(raw_options: Iterable[str]) -> list[str]:
-    """Return the deduplicated snake_case options, as used for HA states and translation keys."""
-    return list(dict.fromkeys(to_snake_case(o) for o in raw_options))
-
-
 def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
     """Return the selector config matching the type of the property."""
     if isinstance(prop, OpenEMSEnumProperty):
         return {
             "select": {
-                "options": ha_options(prop.property_options),
+                "options": prop.option_keys,
                 "mode": "dropdown",
                 # option translations in section "selector" of strings.json
-                "translation_key": translation_key(prop),
+                "translation_key": prop.key,
             }
         }
     if isinstance(prop, OpenEMSNumberProperty):
@@ -228,20 +123,11 @@ def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:
             "mode": "box",
         }
         if prop.unit:
-            number_config["unit_of_measurement"] = unit_description(prop.unit).unit
+            number_config["unit_of_measurement"] = prop.unit
         return {"number": number_config}
     if isinstance(prop, OpenEMSTimeProperty):
         return {"time": {}}
     return {"boolean": {}}
-
-
-def translation_key(channel: OpenEMSDataHandler) -> str:
-    """Generate translation key for given channel, shared by all components."""
-    if isinstance(channel, OpenEMSProperty):
-        channel_name = channel.name[9:]
-    else:
-        channel_name = channel.name
-    return to_snake_case(CAMEL_CASE_PATTERN.sub("_", channel_name))
 
 
 def map_user_input(user_input: dict[str, str]) -> ConnectionProperties:

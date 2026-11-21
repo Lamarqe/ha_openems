@@ -3,9 +3,11 @@
 from dataclasses import dataclass
 import logging
 
+from openems_client.model import PROPERTY_PREFIX, ChannelKind, Quantity
 from openems_client.openems import OpenEMSComponent, OpenEMSNumberProperty
 
 from homeassistant.components.number import (
+    NumberDeviceClass,
     NumberEntity,
     NumberEntityDescription,
     NumberMode,
@@ -16,17 +18,23 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
-from .helpers_ha import (
-    OpenEMSConfigEntry,
-    OpenEMSUnitClass,
-    component_device,
-    handle_write_errors,
-    is_channel_enabled,
-    translation_key,
-    unit_description,
-)
+from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
+
+DEVICE_CLASSES: dict[Quantity, NumberDeviceClass] = {
+    Quantity.APPARENT_POWER: NumberDeviceClass.APPARENT_POWER,
+    Quantity.CURRENT: NumberDeviceClass.CURRENT,
+    Quantity.DURATION: NumberDeviceClass.DURATION,
+    Quantity.ENERGY: NumberDeviceClass.ENERGY,
+    Quantity.FREQUENCY: NumberDeviceClass.FREQUENCY,
+    Quantity.POWER: NumberDeviceClass.POWER,
+    Quantity.PRESSURE: NumberDeviceClass.PRESSURE,
+    Quantity.REACTIVE_POWER: NumberDeviceClass.REACTIVE_POWER,
+    Quantity.STATE_OF_CHARGE: NumberDeviceClass.BATTERY,
+    Quantity.TEMPERATURE: NumberDeviceClass.TEMPERATURE,
+    Quantity.VOLTAGE: NumberDeviceClass.VOLTAGE,
+}
 
 
 async def async_setup_entry(
@@ -45,25 +53,30 @@ async def async_setup_entry(
 
         entities: list[OpenEMSNumberEntity] = []
         channel: OpenEMSNumberProperty
-        channel_list: list[OpenEMSNumberProperty] = component.number_properties
+        channel_list: list[OpenEMSNumberProperty] = component.channels_of(
+            ChannelKind.NUMBER, OpenEMSNumberProperty
+        )
         for channel in channel_list:
-            entity_enabled = is_channel_enabled(component.name, channel.name)
-            unit_desc: OpenEMSUnitClass = unit_description(channel.unit)
+            entity_enabled = channel.primary
             # a fixed step is configured for precise values, which a slider cannot handle
             number_mode = (
                 NumberMode.BOX if channel.fixed_step is not None else NumberMode.AUTO
             )
             entity_description = OpenEMSNumberDescription(
-                key=channel.unique_id(),
+                key=channel.unique_id,
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
                 mode=number_mode,
-                # channels enabled by default have a translated name, others
+                # primary channels have a translated name, others
                 # use the channel name without "_Property" prefix
-                name=UNDEFINED if entity_enabled else channel.name[9:],
-                device_class=unit_desc.number_device_class,
-                native_unit_of_measurement=unit_desc.unit,
-                translation_key=translation_key(channel),
+                name=UNDEFINED
+                if entity_enabled
+                else channel.name.removeprefix(PROPERTY_PREFIX),
+                device_class=DEVICE_CLASSES.get(channel.quantity)
+                if channel.quantity
+                else None,
+                native_unit_of_measurement=channel.unit,
+                translation_key=channel.key,
             )
             entities.append(
                 OpenEMSNumberEntity(
@@ -102,7 +115,7 @@ class OpenEMSNumberEntity(NumberEntity):
         """Initialize OpenEMS number entity."""
         self._channel: OpenEMSNumberProperty = channel
         self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id()
+        self._attr_unique_id = channel.unique_id
         self._attr_device_info = device_info
         self._attr_should_poll = False
 

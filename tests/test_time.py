@@ -4,11 +4,14 @@ from datetime import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.time import TimeEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.openems import time as time_module
 from custom_components.openems.time import OpenEMSTimeDescription, OpenEMSTimeEntity
+
+from .helpers_component import make_channel, make_edge, make_entry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -87,32 +90,23 @@ async def test_async_added_adds_listener_removed_with_entity() -> None:
 
 
 async def test_async_setup_entry_creates_time_entities(hass: HomeAssistant) -> None:
-    mock_channel = MagicMock()
-    mock_channel.name = "_PropertyManualTargetTime"
-    mock_channel.unique_id.return_value = "host/edge-1/comp/_PropertyManualTargetTime"
-
-    mock_component = MagicMock()
-    mock_component.name = "ctrlEvcs0"
-    mock_component.alias = "EV Charger"
-    mock_component.edge.hostname = "host"
-    mock_component.time_properties = [mock_channel]
-    mock_channel.component = mock_component
-
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "host"
-    mock_backend.the_edge.components = {"ctrlEvcs0": mock_component}
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.enabled_components = [mock_component]
+    """Time properties become config time entities."""
+    edge = make_edge(
+        {
+            "ctrlGridOptimizedCharge0": [
+                make_channel("_PropertyManualTargetTime", "STRING")
+            ]
+        }
+    )
 
     created: list[OpenEMSTimeEntity] = []
     with patch("custom_components.openems.time.dr.async_get", return_value=MagicMock()):
-        await time_module.async_setup_entry(hass, mock_entry, created.extend)
+        await time_module.async_setup_entry(hass, make_entry(edge), created.extend)
 
     assert len(created) == 1
-    assert isinstance(created[0], OpenEMSTimeEntity)
+    description = created[0].entity_description
+    assert description.translation_key == "manual_target_time"
+    assert description.entity_category == EntityCategory.CONFIG
 
 
 async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -> None:

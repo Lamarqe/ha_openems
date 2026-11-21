@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 import logging
 
+from openems_client.model import PROPERTY_PREFIX, ChannelKind
 from openems_client.openems import OpenEMSComponent, OpenEMSEnumProperty
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
@@ -12,15 +13,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
-from .helpers_ha import (
-    OpenEMSConfigEntry,
-    component_device,
-    ha_options,
-    handle_write_errors,
-    is_channel_enabled,
-    to_snake_case,
-    translation_key,
-)
+from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,18 +34,22 @@ async def async_setup_entry(
 
         entities: list[OpenEMSSelectEntity] = []
         channel: OpenEMSEnumProperty
-        channel_list: list[OpenEMSEnumProperty] = component.enum_properties
+        channel_list: list[OpenEMSEnumProperty] = component.channels_of(
+            ChannelKind.SELECT, OpenEMSEnumProperty
+        )
         for channel in channel_list:
-            entity_enabled = is_channel_enabled(component.name, channel.name)
+            entity_enabled = channel.primary
             entity_description = OpenEMSSelectDescription(
-                key=channel.unique_id(),
+                key=channel.unique_id,
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                options=ha_options(channel.property_options),
-                # channels enabled by default have a translated name, others
+                options=channel.option_keys,
+                # primary channels have a translated name, others
                 # use the channel name without "_Property" prefix
-                name=UNDEFINED if entity_enabled else channel.name[9:],
-                translation_key=translation_key(channel),
+                name=UNDEFINED
+                if entity_enabled
+                else channel.name.removeprefix(PROPERTY_PREFIX),
+                translation_key=channel.key,
             )
             entities.append(
                 OpenEMSSelectEntity(
@@ -91,24 +88,20 @@ class OpenEMSSelectEntity(SelectEntity):
         """Initialize OpenEMS switch entity."""
         self._channel: OpenEMSEnumProperty = channel
         self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id()
+        self._attr_unique_id = channel.unique_id
         self._attr_device_info = device_info
         self._attr_should_poll = False
 
     @property
     def current_option(self) -> str | None:
         """Return the current option."""
-        val = self._channel.current_option
-        return to_snake_case(val) if val is not None else None
+        return self._channel.value
 
     @handle_write_errors
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        for property_option in self._channel.property_options:
-            if option == to_snake_case(property_option):
-                await self._channel.update_value(property_option)
-                self.async_write_ha_state()
-                return
+        await self._channel.update_value(option)
+        self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
         """Entity created."""

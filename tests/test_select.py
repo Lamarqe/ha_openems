@@ -5,6 +5,7 @@ import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.select import SelectEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import EntityPlatform
@@ -16,29 +17,35 @@ from custom_components.openems.select import (
     OpenEMSSelectEntity,
 )
 
-from .helpers_component import setup_evcs_component
+from openems_client.model import ChannelKind
+from openems_client.openems import OpenEMSEnumProperty
+import pytest
+
+from .helpers_component import (
+    make_channel,
+    make_edge,
+    make_entry,
+    setup_evcs_component,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-_OPTIONS = ["EXCESS_POWER", "MANUAL", "OFF"]
+
+def _make_channel() -> OpenEMSEnumProperty:
+    """Build the real charge mode select channel of an EVCS controller."""
+    edge = make_edge({"ctrlEvcs0": [make_channel("_PropertyChargeMode", "STRING")]})
+    return edge.components["ctrlEvcs0"].channels_of(
+        ChannelKind.SELECT, OpenEMSEnumProperty
+    )[0]
 
 
-def _make_channel(current_option=None):
-    ch = MagicMock()
-    ch.current_option = current_option
-    ch.property_options = _OPTIONS
-    return ch
-
-
-def _make_entity(channel=None) -> OpenEMSSelectEntity:
-    if channel is None:
-        channel = _make_channel()
+def _make_entity(channel: MagicMock | OpenEMSEnumProperty) -> OpenEMSSelectEntity:
     desc = OpenEMSSelectDescription(
         key="test/key",
         name="ChargeMode",
-        options=["excess_power", "manual", "off"],
+        options=["force_charge", "excess_power"],
     )
     device_info = DeviceInfo(name="dev", identifiers={("openems", "dev")})
     return OpenEMSSelectEntity(channel, desc, device_info)
@@ -49,23 +56,18 @@ def _make_entity(channel=None) -> OpenEMSSelectEntity:
 # ---------------------------------------------------------------------------
 
 
-def test_current_option_none_when_channel_has_no_value() -> None:
-    """Returns None when the channel has no active option."""
-    assert _make_entity(_make_channel(current_option=None)).current_option is None
-
-
-def test_current_option_converted_to_snake_case() -> None:
-    """The raw option string is lowercased / snake_cased."""
-    assert (
-        _make_entity(_make_channel(current_option="EXCESS_POWER")).current_option
-        == "excess_power"
-    )
-
-
-def test_current_option_already_lowercase_unchanged() -> None:
-    assert (
-        _make_entity(_make_channel(current_option="MANUAL")).current_option == "manual"
-    )
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(None, None, id="no_value"),
+        pytest.param("EXCESS_POWER", "excess_power", id="option_key"),
+    ],
+)
+def test_current_option(value: str | None, expected: str | None) -> None:
+    """The current option is the option key of the backend value."""
+    channel = _make_channel()
+    channel.handle_data_update("ctrlEvcs0/_PropertyChargeMode", value)
+    assert _make_entity(channel).current_option == expected
 
 
 # ---------------------------------------------------------------------------
@@ -73,27 +75,17 @@ def test_current_option_already_lowercase_unchanged() -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_async_select_option_calls_channel_update_with_original_value() -> None:
-    """Selecting a snake_case option translates back to the original option string."""
-    channel = _make_channel()
+async def test_async_select_option_writes_option_key() -> None:
+    """The selected option key is written, the channel converts it for the backend."""
+    channel = MagicMock()
     channel.update_value = AsyncMock()
     entity = _make_entity(channel)
     entity.async_write_ha_state = MagicMock()
 
     await entity.async_select_option("excess_power")
 
-    channel.update_value.assert_awaited_once_with("EXCESS_POWER")
-
-
-async def test_async_select_option_unknown_option_does_nothing() -> None:
-    """Selecting an option not in the list must not call update_value."""
-    channel = _make_channel()
-    channel.update_value = AsyncMock()
-    entity = _make_entity(channel)
-
-    await entity.async_select_option("unknown_option")
-
-    channel.update_value.assert_not_awaited()
+    channel.update_value.assert_awaited_once_with("excess_power")
+    entity.async_write_ha_state.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -122,35 +114,20 @@ async def test_async_added_adds_listener_removed_with_entity() -> None:
 
 
 async def test_async_setup_entry_creates_select_entities(hass: HomeAssistant) -> None:
-    mock_channel = MagicMock()
-    mock_channel.name = "_PropertyChargeMode"
-    mock_channel.property_options = _OPTIONS
-    mock_channel.unique_id.return_value = "host/edge-1/comp/_PropertyChargeMode"
-
-    mock_component = MagicMock()
-    mock_component.name = "ctrlEvcs0"
-    mock_component.alias = "EV Charger"
-    mock_component.edge.hostname = "host"
-    mock_component.enum_properties = [mock_channel]
-    mock_channel.component = mock_component
-
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "host"
-    mock_backend.the_edge.components = {"ctrlEvcs0": mock_component}
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.enabled_components = [mock_component]
+    """Enum properties become config select entities with their option keys."""
+    edge = make_edge({"ctrlEvcs0": [make_channel("_PropertyChargeMode", "STRING")]})
 
     created: list[OpenEMSSelectEntity] = []
     with patch(
         "custom_components.openems.select.dr.async_get", return_value=MagicMock()
     ):
-        await select_module.async_setup_entry(hass, mock_entry, created.extend)
+        await select_module.async_setup_entry(hass, make_entry(edge), created.extend)
 
     assert len(created) == 1
-    assert isinstance(created[0], OpenEMSSelectEntity)
+    description = created[0].entity_description
+    assert description.options == ["force_charge", "excess_power"]
+    assert description.translation_key == "charge_mode"
+    assert description.entity_category == EntityCategory.CONFIG
 
 
 async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -> None:

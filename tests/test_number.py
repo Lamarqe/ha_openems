@@ -2,15 +2,23 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.components.number import (
+    NumberDeviceClass,
+    NumberEntity,
+    NumberMode,
+)
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.typing import UNDEFINED
 
 from custom_components.openems import number
 from custom_components.openems.number import (
     OpenEMSNumberDescription,
     OpenEMSNumberEntity,
 )
+
+from .helpers_component import HOSTNAME, make_channel, make_edge, make_entry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -103,35 +111,27 @@ async def test_async_added_adds_listener_removed_with_entity() -> None:
 
 
 async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) -> None:
-    mock_channel = MagicMock()
-    mock_channel.name = "_PropertyEnergyLimit"
-    mock_channel.unit = "W"
-    mock_channel.unique_id.return_value = "host/edge-1/comp/EnergyLimit"
-
-    mock_component = MagicMock()
-    mock_component.name = "ctrlEvcs0"
-    mock_component.alias = "EV Charger"
-    mock_component.edge.hostname = "host"
-    mock_component.number_properties = [mock_channel]
-    mock_channel.component = mock_component
-
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "host"
-    mock_backend.the_edge.components = {"ctrlEvcs0": mock_component}
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.enabled_components = [mock_component]
+    """Number properties become config entities with unit and device class."""
+    edge = make_edge(
+        {"ctrlEvcs0": [make_channel("_PropertyEnergySessionLimit", unit="Wh")]}
+    )
 
     created: list[OpenEMSNumberEntity] = []
     with patch(
         "custom_components.openems.number.dr.async_get", return_value=MagicMock()
     ):
-        await number.async_setup_entry(hass, mock_entry, created.extend)
+        await number.async_setup_entry(hass, make_entry(edge), created.extend)
 
     assert len(created) == 1
-    assert isinstance(created[0], OpenEMSNumberEntity)
+    description = created[0].entity_description
+    assert description.key == f"{HOSTNAME}/0/ctrlEvcs0/_PropertyEnergySessionLimit"
+    assert description.entity_category == EntityCategory.CONFIG
+    assert description.device_class == NumberDeviceClass.ENERGY
+    assert description.native_unit_of_measurement == "Wh"
+    assert description.translation_key == "energy_session_limit"
+    # primary channel: translated name
+    assert description.name is UNDEFINED
+    assert description.entity_registry_enabled_default is True
 
 
 async def test_async_setup_entry_number_mode_from_fixed_step(
@@ -150,11 +150,12 @@ async def test_async_setup_entry_number_mode_from_fixed_step(
         channel = MagicMock()
         channel.name = name
         channel.fixed_step = fixed_step
-        channel.unit = ""
-        channel.unique_id.return_value = f"host/edge-1/ctrlIoHeatPump0/{name}"
+        channel.unit = None
+        channel.quantity = None
+        channel.unique_id = f"host/edge-1/ctrlIoHeatPump0/{name}"
         channel.component = mock_component
         channels.append(channel)
-    mock_component.number_properties = channels
+    mock_component.channels_of.return_value = channels
 
     mock_entry = MagicMock()
     mock_entry.entry_id = "test-entry-id"

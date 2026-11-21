@@ -5,14 +5,10 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from openems_client import openems
-from openems_client.helpers import to_snake_case
+from openems_client.openems import CONFIG
 from yarl import URL
 
-from custom_components.openems.helpers_ha import (
-    is_channel_enabled,
-    is_component_enabled,
-    translation_key,
-)
+from openems_client.model import ChannelKind
 
 
 def _make_backend():
@@ -64,8 +60,13 @@ async def test_heat_pump_sg_ready_translations() -> None:
     edge = openems.OpenEMSEdge(_make_backend(), "edge-1", component_config)
     try:
         comp = edge.components["ctrlIoHeatPump0"]
-        selects = {p.name: p for p in comp.enum_properties}
-        status = next(c for c in comp.sensors if c.name == "Status")
+        selects = {
+            p.name: p
+            for p in comp.channels_of(ChannelKind.SELECT, openems.OpenEMSEnumProperty)
+        }
+        status = next(
+            c for c in comp.channels_of(ChannelKind.ENUM_SENSOR) if c.name == "Status"
+        )
 
         strings = json.loads(
             (
@@ -73,17 +74,17 @@ async def test_heat_pump_sg_ready_translations() -> None:
             ).read_text(encoding="utf-8")
         )
         for prop in selects.values():
-            states = strings["entity"]["select"][translation_key(prop)]["state"]
+            states = strings["entity"]["select"][prop.key]["state"]
             # keys are shared by all components, so they may contain further states
-            assert {o.lower() for o in prop.property_options} <= set(states)
-        status_states = strings["entity"]["sensor"][translation_key(status)]["state"]
-        assert {to_snake_case(o) for o in status.options.values()} <= set(status_states)
+            assert set(prop.option_keys) <= set(states)
+        status_states = strings["entity"]["sensor"][status.key]["state"]
+        assert set(status.option_keys) <= set(status_states)
     finally:
         await edge.stop()
 
 
 def test_heat_pump_sg_ready_defaults() -> None:
-    """SG-Ready heat pump component and entities are enabled by default."""
+    """SG-Ready heat pump component and entities are primary, so enabled by default."""
     for name in (
         "_PropertyMode",
         "_PropertyManualState",
@@ -94,6 +95,6 @@ def test_heat_pump_sg_ready_defaults() -> None:
         "_PropertyMinimumSwitchingTime",
         "Status",
     ):
-        assert is_channel_enabled("ctrlIoHeatPump0", name), name
-    assert is_component_enabled("ctrlIoHeatPump0")
-    assert not is_component_enabled("ctrlDebugLog0")
+        assert CONFIG.is_primary_channel("ctrlIoHeatPump0", name), name
+    assert CONFIG.has_primary_channels("ctrlIoHeatPump0")
+    assert not CONFIG.has_primary_channels("ctrlDebugLog0")

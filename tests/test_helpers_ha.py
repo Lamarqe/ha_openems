@@ -14,7 +14,7 @@ from pytest_homeassistant.common import MockConfigEntry
 
 from openems_client import openems
 from openems_client.exceptions import OpenEMSError
-from custom_components.openems.const import DEFAULT_CHANNELS, DOMAIN
+from custom_components.openems.const import DOMAIN
 from custom_components.openems.number import (
     OpenEMSNumberDescription,
     OpenEMSNumberEntity,
@@ -28,44 +28,14 @@ from custom_components.openems.switch import (
     OpenEMSSwitchEntity,
 )
 from custom_components.openems.time import OpenEMSTimeDescription, OpenEMSTimeEntity
-from custom_components.openems.helpers_ha import (
-    CAMEL_CASE_PATTERN,
-    component_from_device,
-    ha_options,
-    to_snake_case,
-    translation_key,
-    unit_description,
-)
+from custom_components.openems.helpers_ha import component_from_device
+from openems_client.helpers import to_snake_case
+from openems_client.model import channel_key
+from openems_client.openems import CONFIG
 
 
-def test_unit_description_various() -> None:
-    """Unit description returns expected units and device classes."""
-    # energy
-    ud = unit_description("kWh")
-    assert ud.sensor_device_class is not None
-    # special Wh_Σ
-    ud = unit_description("Wh_Σ")
-    assert ud.unit == "Wh"
-    # temperature
-    ud = unit_description("C")
-    assert ud.unit == "°C"
-
-
-def test_translation_key(dummy_backend) -> None:
-    """Create a component/channel and ensure the helper returns its translation key."""
-    component_json = {
-        "_PropertyAlias": "a",
-        "properties": {},
-        "channels": [{"id": "StateMachine", "type": "INTEGER", "unit": "u"}],
-    }
-    component_config = {"_host": {"Hostname": "h1"}, "comp1": component_json}
-    edge = openems.OpenEMSEdge(dummy_backend, "e1", component_config)
-    channel = next(iter(edge.components["comp1"].sensors))
-    assert translation_key(channel) == "state_machine"
-
-
-def test_default_channels_have_translated_names() -> None:
-    """Every channel enabled by default has a name in strings.json."""
+def test_primary_channels_have_translated_names() -> None:
+    """Every primary channel of the client library has a name in strings.json."""
     entity_strings = json.loads(
         (
             Path(__file__).parents[1] / "custom_components/openems/strings.json"
@@ -78,13 +48,10 @@ def test_default_channels_have_translated_names() -> None:
         if "name" in value
     }
     # string property without enum or time options, no entity is created for it
-    channel_names = set().union(*DEFAULT_CHANNELS.values()) - {"_PropertyTargetTime"}
-    missing = {
-        name
-        for name in channel_names
-        if to_snake_case(CAMEL_CASE_PATTERN.sub("_", name.removeprefix("_Property")))
-        not in named_keys
-    }
+    channel_names = {
+        name for entry in CONFIG.primary_channels for name in entry["channels"]
+    } - {"_PropertyTargetTime"}
+    missing = {name for name in channel_names if channel_key(name) not in named_keys}
     assert not missing
 
 
@@ -100,17 +67,10 @@ def test_to_snake_case_matches_translation_key_format() -> None:
     )
 
 
-def test_ha_options_snake_case_deduplicated_in_order() -> None:
-    """Options are converted to snake_case, keeping the first of colliding names."""
-    assert ha_options(["Force Charge", "EXCESS_POWER", "FORCE_CHARGE"]) == [
-        "force_charge",
-        "excess_power",
-    ]
-
-
 async def test_component_from_device_multi_edge(hass: HomeAssistant) -> None:
     """Hostnames containing the edge id (multi edge setups) are resolved correctly."""
     component = MagicMock()
+    component.unique_id = "h1 edge0 ctrlEvcs0"
     backend = MagicMock()
     backend.the_edge.hostname = "h1 edge0"
     backend.the_edge.components = {"ctrlEvcs0": component}

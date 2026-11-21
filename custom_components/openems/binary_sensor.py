@@ -4,9 +4,11 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
+from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
 
 from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
@@ -16,12 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
-from .helpers_ha import (
-    OpenEMSConfigEntry,
-    component_device,
-    is_channel_enabled,
-    translation_key,
-)
+from .helpers_ha import OpenEMSConfigEntry, component_device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,17 +40,21 @@ async def async_setup_entry(
 
         entities: list[OpenEMSBinarySensorEntity] = []
         channel: OpenEMSChannel
-        channel_list: list[OpenEMSChannel] = component.boolean_sensors
+        channel_list: list[OpenEMSChannel] = component.channels_of(
+            ChannelKind.BINARY_SENSOR, OpenEMSChannel
+        )
 
         for channel in channel_list:
-            # device_class = BinarySensorDeviceClass.WE_DONT_KNOW
-            enable_by_default = is_channel_enabled(component.name, channel.name)
             entity_description = OpenEMSBinarySensorDescription(
-                key=channel.unique_id(),
-                entity_registry_enabled_default=enable_by_default,
-                # channels enabled by default have a translated name
-                name=UNDEFINED if enable_by_default else channel.name,
-                translation_key=translation_key(channel),
+                key=channel.unique_id,
+                entity_registry_enabled_default=channel.primary,
+                # primary channels have a translated name
+                name=UNDEFINED if channel.primary else channel.name,
+                # state channels with a level signal a problem of the component
+                device_class=BinarySensorDeviceClass.PROBLEM
+                if channel.severity
+                else None,
+                translation_key=channel.key,
             )
             entities.append(
                 OpenEMSBinarySensorEntity(
@@ -100,17 +101,14 @@ class OpenEMSBinarySensorEntity(BinarySensorEntity):
         """Initialize the binary sensor."""
         self._channel: OpenEMSChannel = channel
         self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id()
+        self._attr_unique_id = channel.unique_id
         self._attr_device_info = device_info
         self._attr_should_poll = False
 
     @property
-    def is_on(self) -> int | None:
+    def is_on(self) -> bool | None:
         """Return the binary state of the sensor."""
-        if isinstance(self._channel.value, int):
-            return self._channel.value
-
-        return None
+        return self._channel.is_on
 
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""

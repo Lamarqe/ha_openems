@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
+from openems_client.model import PROPERTY_PREFIX, ChannelKind
 from openems_client.openems import OpenEMSBooleanProperty, OpenEMSComponent
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
@@ -13,13 +14,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
-from .helpers_ha import (
-    OpenEMSConfigEntry,
-    component_device,
-    handle_write_errors,
-    is_channel_enabled,
-    translation_key,
-)
+from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,17 +35,21 @@ async def async_setup_entry(
 
         entities: list[OpenEMSSwitchEntity] = []
         channel: OpenEMSBooleanProperty
-        channel_list: list[OpenEMSBooleanProperty] = component.boolean_properties
+        channel_list: list[OpenEMSBooleanProperty] = component.channels_of(
+            ChannelKind.SWITCH, OpenEMSBooleanProperty
+        )
         for channel in channel_list:
-            entity_enabled = is_channel_enabled(component.name, channel.name)
+            entity_enabled = channel.primary
             entity_description = OpenEMSSwitchDescription(
-                key=channel.unique_id(),
+                key=channel.unique_id,
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                # channels enabled by default have a translated name, others
+                # primary channels have a translated name, others
                 # use the channel name without "_Property" prefix
-                name=UNDEFINED if entity_enabled else channel.name[9:],
-                translation_key=translation_key(channel),
+                name=UNDEFINED
+                if entity_enabled
+                else channel.name.removeprefix(PROPERTY_PREFIX),
+                translation_key=channel.key,
             )
             entities.append(
                 OpenEMSSwitchEntity(
@@ -89,7 +88,7 @@ class OpenEMSSwitchEntity(SwitchEntity):
         """Initialize OpenEMS switch entity."""
         self._channel: OpenEMSBooleanProperty = channel
         self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id()
+        self._attr_unique_id = channel.unique_id
         self._attr_device_info = device_info
         self._attr_should_poll = False
 

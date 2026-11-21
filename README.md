@@ -298,7 +298,7 @@ Afterwards, a dialog will appear which allows to change advanced options. The fo
 
 #### Selection of components and channels to be integrated
 
-Each component of the configured system is represented by a device. After setting up the config entry, a [default list](https://github.com/Lamarqe/ha_openems/blob/main/custom_components/openems/const.py) (`DEFAULT_CHANNELS`) defines which components and entities are enabled. Devices of components outside of this list are disabled, and no entities are created for them. Entities of enabled components which are not in the list are disabled by default.
+Each component of the configured system is represented by a device. After setting up the config entry, a [default list](https://github.com/Lamarqe/openems-client/blob/main/src/openems_client/config/primary_channels.json) of the openems-client library defines which components and entities are enabled. Devices of components outside of this list are disabled, and no entities are created for them. Entities of enabled components which are not in the list are disabled by default.
 
 In order to add or remove the entities of a component, enable or disable its device: open the devices of the config entry (depending on your system configuration, there can be 20 to 50 of them), select a device and enable or disable it in the device settings. Home Assistant then reloads the integration, which creates or removes the entities of the component.
 

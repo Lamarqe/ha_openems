@@ -2,16 +2,14 @@
 
 from dataclasses import dataclass
 import logging
-import re
 from typing import Any
 
+from openems_client.model import ChannelKind, Quantity
 from openems_client.openems import (
-    DerivedChannelDefinition,
     OpenEMSBackend,
     OpenEMSChannel,
     OpenEMSComponent,
     OpenEMSDataHandler,
-    OpenEMSDerivedChannel,
 )
 
 from homeassistant.components.sensor import (
@@ -33,46 +31,31 @@ from .const import (
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
     DOMAIN,
 )
-from .helpers_ha import (
-    OpenEMSConfigEntry,
-    OpenEMSUnitClass,
-    component_device,
-    ha_options,
-    is_channel_enabled,
-    to_snake_case,
-    translation_key,
-    unit_description,
-)
+from .helpers_ha import OpenEMSConfigEntry, component_device
 
 _LOGGER = logging.getLogger(__name__)
 
-# key: component regexp
-COMBINED_SENSORS: dict[str, tuple[DerivedChannelDefinition, ...]] = {
-    r"battery\d+": (
-        DerivedChannelDefinition(
-            id="VoltageDifference",
-            sources={"max": "MaxCellVoltage", "min": "MinCellVoltage"},
-            value_fn=lambda v: v["max"] - v["min"],
-            unit="mV",
-        ),
-        DerivedChannelDefinition(
-            id="Tower{tId}Module{mId}CellVoltageDifference",
-            sources={"cells": "Tower{tId}Module{mId}Cell{cId}Voltage"},
-            value_fn=lambda v: max(v["cells"]) - min(v["cells"]),
-            unit="mV",
-        ),
-    ),
+DEVICE_CLASSES: dict[Quantity, SensorDeviceClass] = {
+    Quantity.APPARENT_POWER: SensorDeviceClass.APPARENT_POWER,
+    Quantity.CURRENT: SensorDeviceClass.CURRENT,
+    Quantity.DURATION: SensorDeviceClass.DURATION,
+    Quantity.ENERGY: SensorDeviceClass.ENERGY,
+    Quantity.FREQUENCY: SensorDeviceClass.FREQUENCY,
+    Quantity.POWER: SensorDeviceClass.POWER,
+    Quantity.PRESSURE: SensorDeviceClass.PRESSURE,
+    Quantity.REACTIVE_POWER: SensorDeviceClass.REACTIVE_POWER,
+    Quantity.STATE_OF_CHARGE: SensorDeviceClass.BATTERY,
+    Quantity.TEMPERATURE: SensorDeviceClass.TEMPERATURE,
+    Quantity.VOLTAGE: SensorDeviceClass.VOLTAGE,
 }
 
 
-def combined_sensor_definitions(
-    component_name: str,
-) -> tuple[DerivedChannelDefinition, ...]:
-    """Return the combined sensor definitions for the given component."""
-    for component_regexp, definitions in COMBINED_SENSORS.items():
-        if re.fullmatch(component_regexp, component_name):
-            return definitions
-    return ()
+def _state_class(channel: OpenEMSDataHandler) -> SensorStateClass:
+    if channel.cumulative:
+        return SensorStateClass.TOTAL_INCREASING
+    if channel.quantity is Quantity.ENERGY:
+        return SensorStateClass.TOTAL
+    return SensorStateClass.MEASUREMENT
 
 
 async def async_setup_entry(
@@ -89,74 +72,42 @@ async def async_setup_entry(
         device_registry = dr.async_get(hass)
         device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
 
-        entities: list[OpenEMSSensorEntity] = []
-        channel: OpenEMSChannel
-        channel_list: list[OpenEMSChannel] = component.sensors
-        for channel in channel_list:
-            options: list[str] | None = None
-            if channel.options:
-                device_class = SensorDeviceClass.ENUM
-                state_class = None
-                uom = None
-                options = ha_options(channel.options.values())
-            else:
-                unit_desc: OpenEMSUnitClass = unit_description(channel.unit)
-                device_class = unit_desc.sensor_device_class
-                state_class = unit_desc.state_class
-                uom = unit_desc.unit
-
-            enable_by_default = is_channel_enabled(component.name, channel.name)
-            entity_description = OpenEMSSensorDescription(
-                key=channel.unique_id(),
-                entity_registry_enabled_default=enable_by_default,
-                # channels enabled by default have a translated name
-                name=UNDEFINED if enable_by_default else channel.name,
-                device_class=device_class,
-                state_class=state_class,
-                native_unit_of_measurement=uom,
-                options=options,
-                translation_key=translation_key(channel),
-                ignore_decreasing=ignore_decreasing,
+        entities: list[OpenEMSSensorEntity] = [
+            OpenEMSSensorEntity(
+                channel,
+                OpenEMSSensorDescription(
+                    key=channel.unique_id,
+                    entity_registry_enabled_default=channel.primary,
+                    # primary channels have a translated name
+                    name=UNDEFINED if channel.primary else channel.name,
+                    device_class=SensorDeviceClass.ENUM,
+                    options=channel.option_keys,
+                    translation_key=channel.key,
+                ),
+                device,
             )
-            entities.append(
-                OpenEMSSensorEntity(
-                    channel,
-                    entity_description,
-                    device,
-                )
+            for channel in component.channels_of(ChannelKind.ENUM_SENSOR)
+        ]
+        entities.extend(
+            OpenEMSSensorEntity(
+                channel,
+                OpenEMSSensorDescription(
+                    key=channel.unique_id,
+                    entity_registry_enabled_default=channel.primary,
+                    # primary channels have a translated name
+                    name=UNDEFINED if channel.primary else channel.name,
+                    device_class=DEVICE_CLASSES.get(channel.quantity)
+                    if channel.quantity
+                    else None,
+                    state_class=_state_class(channel),
+                    native_unit_of_measurement=channel.unit,
+                    translation_key=channel.key,
+                    ignore_decreasing=ignore_decreasing,
+                ),
+                device,
             )
-
-        derived_channel: OpenEMSDerivedChannel
-        derived_channel_list: list[OpenEMSDerivedChannel] = (
-            component.create_derived_channels(
-                combined_sensor_definitions(component.name)
-            )
+            for channel in component.channels_of(ChannelKind.SENSOR)
         )
-        for derived_channel in derived_channel_list:
-            unit_desc: OpenEMSUnitClass = unit_description(derived_channel.unit)
-            device_class = unit_desc.sensor_device_class
-            state_class = unit_desc.state_class
-            uom = unit_desc.unit
-
-            enable_by_default = is_channel_enabled(component.name, derived_channel.name)
-            entity_description = OpenEMSSensorDescription(
-                key=derived_channel.unique_id(),
-                entity_registry_enabled_default=enable_by_default,
-                # channels enabled by default have a translated name
-                name=UNDEFINED if enable_by_default else derived_channel.name,
-                device_class=device_class,
-                state_class=state_class,
-                native_unit_of_measurement=uom,
-                translation_key=translation_key(derived_channel),
-                ignore_decreasing=ignore_decreasing,
-            )
-            entities.append(
-                OpenEMSSensorEntity(
-                    derived_channel,
-                    entity_description,
-                    device,
-                )
-            )
         async_add_entities(entities)
 
     ############ END MARKER _create_sensor_entities ##############
@@ -200,7 +151,7 @@ class OpenEMSSensorEntity(SensorEntity):
         """Initialize the sensor."""
         self._channel: OpenEMSDataHandler = channel
         self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id()
+        self._attr_unique_id = channel.unique_id
         self._attr_device_info = device_info
         self._attr_should_poll = False
         self.previous_increasing_value_not_null: float | None = None
@@ -209,11 +160,8 @@ class OpenEMSSensorEntity(SensorEntity):
     def native_value(self) -> str | float | int | None:
         """Return the value of the sensor."""
         val = self._channel.value
-        if val is None:
-            return None
-        if isinstance(val, str):
-            # self.entity_description.device_class == SensorDeviceClass.ENUM
-            return to_snake_case(val)
+        if val is None or isinstance(val, str):
+            return val
         if self._ignore_decrease(val):
             return self.previous_increasing_value_not_null
         return val

@@ -2,7 +2,10 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 
@@ -11,7 +14,11 @@ from custom_components.openems.binary_sensor import (
     OpenEMSBinarySensorDescription,
     OpenEMSBinarySensorEntity,
 )
+from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSChannel
+import pytest
+
+from .helpers_component import make_channel, make_edge, make_entry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -28,18 +35,13 @@ def _make_entity(channel=None) -> OpenEMSBinarySensorEntity:
     return OpenEMSBinarySensorEntity(channel, desc, device_info)
 
 
-def _make_real_channel(value=None) -> OpenEMSChannel:
-    """Build a real OpenEMSChannel wired to a mock component/edge."""
-    comp = MagicMock()
-    comp.name = "ctrlEvcs0"
-    comp.edge.hostname = "host"
-    comp.edge.id = "edge-1"
-    comp.edge.register_channel = MagicMock()
-    comp.edge.unregister_channel = MagicMock()
-    channel_json = {"id": "IsChargingEnabled", "type": "BOOLEAN", "unit": ""}
-    channel = OpenEMSChannel(component=comp, channel_json=channel_json)
-    if value is not None:
-        channel.handle_data_update("ctrlEvcs0/IsChargingEnabled", value)
+def _make_real_channel(value: int | None = None) -> OpenEMSChannel:
+    """Build a real binary sensor channel of the edge."""
+    edge = make_edge({"ctrlEvcs0": [make_channel("IsChargingEnabled", "BOOLEAN")]})
+    channel = edge.components["ctrlEvcs0"].channels_of(
+        ChannelKind.BINARY_SENSOR, OpenEMSChannel
+    )[0]
+    channel.handle_data_update("ctrlEvcs0/IsChargingEnabled", value)
     return channel
 
 
@@ -48,32 +50,17 @@ def _make_real_channel(value=None) -> OpenEMSChannel:
 # ---------------------------------------------------------------------------
 
 
-def test_is_on_none_when_channel_has_no_value() -> None:
-    """Entity returns None when the channel carries no value yet."""
-    channel = MagicMock()
-    channel.value = None
-    assert _make_entity(channel).is_on is None
-
-
-def test_is_on_truthy_for_nonzero_int() -> None:
-    """is_on is truthy when the channel value is 1."""
-    channel = _make_real_channel(value=1)
-    entity = _make_entity(channel)
-    assert entity.is_on == 1
-
-
-def test_is_on_falsy_for_zero() -> None:
-    """is_on is falsy (0) when the channel reports 0."""
-    channel = _make_real_channel(value=0)
-    entity = _make_entity(channel)
-    assert entity.is_on == 0
-
-
-def test_is_on_none_for_string_value() -> None:
-    """is_on returns None when native_value is not an int (e.g. unavailable)."""
-    channel = MagicMock()
-    channel.value = "unavailable"
-    assert _make_entity(channel).is_on is None
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(None, None, id="no_value"),
+        pytest.param(1, True, id="on"),
+        pytest.param(0, False, id="off"),
+    ],
+)
+def test_is_on(value: int | None, expected: bool | None) -> None:
+    """is_on reflects the boolean value of the channel."""
+    assert _make_entity(_make_real_channel(value)).is_on is expected
 
 
 # ---------------------------------------------------------------------------
@@ -104,35 +91,32 @@ async def test_async_added_adds_listener_removed_with_entity() -> None:
 async def test_async_setup_entry_creates_binary_sensor_entities(
     hass: HomeAssistant,
 ) -> None:
-    """async_setup_entry creates one entity per boolean_sensor in the component."""
-    mock_channel = MagicMock()
-    mock_channel.name = "IsChargingEnabled"
-    mock_channel.unique_id.return_value = "host/edge-1/ctrlEvcs0/IsChargingEnabled"
-
-    mock_component = MagicMock()
-    mock_component.name = "ctrlEvcs0"
-    mock_component.alias = "EV Charger"
-    mock_component.edge.hostname = "host"
-    mock_component.boolean_sensors = [mock_channel]
-    mock_channel.component = mock_component
-
-    mock_backend = MagicMock()
-    mock_backend.the_edge.hostname = "host"
-    mock_backend.the_edge.components = {"ctrlEvcs0": mock_component}
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "test-entry-id"
-    mock_entry.runtime_data.backend = mock_backend
-    mock_entry.runtime_data.enabled_components = [mock_component]
+    """Binary sensors are created, state channels with a level signal a problem."""
+    edge = make_edge(
+        {
+            "ctrlEvcs0": [
+                make_channel("IsChargingEnabled", "BOOLEAN"),
+                make_channel(
+                    "ConfigNotActivated", "BOOLEAN", category="STATE", level="FAULT"
+                ),
+            ]
+        }
+    )
 
     created: list[OpenEMSBinarySensorEntity] = []
     with patch(
         "custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()
     ):
-        await binary_sensor.async_setup_entry(hass, mock_entry, created.extend)
+        await binary_sensor.async_setup_entry(hass, make_entry(edge), created.extend)
 
-    assert len(created) == 1
-    assert isinstance(created[0], OpenEMSBinarySensorEntity)
+    descriptions = {e._channel.name: e.entity_description for e in created}
+    assert descriptions["IsChargingEnabled"].device_class is None
+    assert descriptions["IsChargingEnabled"].name == "IsChargingEnabled"
+    assert descriptions["IsChargingEnabled"].translation_key == "is_charging_enabled"
+    assert (
+        descriptions["ConfigNotActivated"].device_class
+        == BinarySensorDeviceClass.PROBLEM
+    )
 
 
 async def test_async_setup_entry_skips_disabled_component(

@@ -5,13 +5,17 @@ from collections.abc import Generator
 import pytest
 from custom_components.openems import device_action
 from custom_components.openems.const import DOMAIN
-from openems_client.openems import OpenEMSBooleanProperty
 from custom_components.openems.services import async_setup_services
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import selector
 
-from .helpers_component import LoadedComponent, setup_evcs_component
+from .helpers_component import (
+    LoadedComponent,
+    make_channel,
+    make_edge,
+    setup_evcs_component,
+)
 
 
 @pytest.fixture(name="loaded")
@@ -108,9 +112,7 @@ async def test_call_action_with_stale_field_raises(
 
 def test_field_name_avoids_reserved_keys() -> None:
     """A property named like a script action key falls back to its channel name."""
-    prop = OpenEMSBooleanProperty(
-        component=None,
-        channel_json={"id": "_PropertyEnabled", "type": "BOOLEAN", "unit": ""},
-    )
+    edge = make_edge({"ctrlEvcs0": [make_channel("_PropertyEnabled", "BOOLEAN")]})
+    prop = edge.components["ctrlEvcs0"].properties[0]
 
     assert device_action.field_name(prop) == "_PropertyEnabled"
