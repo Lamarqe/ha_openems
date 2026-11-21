@@ -15,6 +15,7 @@ from homeassistant.helpers.typing import UNDEFINED
 from .helpers_ha import (
     OpenEMSConfigEntry,
     component_device,
+    ha_options,
     handle_write_errors,
     is_channel_enabled,
     to_snake_case,
@@ -47,8 +48,7 @@ async def async_setup_entry(
                 key=channel.unique_id(),
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                # convert option strings to snake_case to comply with HA translation keys
-                options=[to_snake_case(v) for v in channel.property_options],
+                options=ha_options(channel.property_options),
                 # channels enabled by default have a translated name, others
                 # use the channel name without "_Property" prefix
                 name=UNDEFINED if entity_enabled else channel.name[9:],
