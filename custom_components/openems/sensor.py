@@ -109,6 +109,20 @@ async def async_setup_entry(
             )
             for channel in component.channels_of(ChannelKind.SENSOR)
         )
+        entities.extend(
+            OpenEMSSensorEntity(
+                channel,
+                OpenEMSSensorDescription(
+                    key=channel.unique_id,
+                    entity_registry_enabled_default=channel.primary,
+                    # primary channels have a translated name
+                    name=UNDEFINED if channel.primary else channel.name,
+                    translation_key=channel.key,
+                ),
+                device,
+            )
+            for channel in component.channels_of(ChannelKind.TEXT_SENSOR)
+        )
         async_add_entities(entities)
 
     ############ END MARKER _create_sensor_entities ##############

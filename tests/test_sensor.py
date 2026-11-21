@@ -285,6 +285,36 @@ async def test_async_setup_entry_sensor_classes(
     assert description.native_unit_of_measurement == native_unit
 
 
+async def test_async_setup_entry_text_and_float_sensors(
+    hass: HomeAssistant,
+) -> None:
+    """Text channels become sensors without classes, floats are numeric values."""
+    edge = make_edge(
+        {
+            "battery0": [
+                make_channel("Tower0BmsSerialNumber", "STRING"),
+                make_channel("CellTemperature", "FLOAT", "°C"),
+            ]
+        }
+    )
+
+    entities = await _setup_sensors(hass, edge)
+
+    serial = entities["Tower0BmsSerialNumber"]
+    description = serial.entity_description
+    assert description.device_class is None
+    assert description.state_class is None
+    assert description.native_unit_of_measurement is None
+    assert description.translation_key == "tower0_bms_serial_number"
+    serial._channel.handle_data_update("battery0/Tower0BmsSerialNumber", "SN-0815")
+    assert serial.native_value == "SN-0815"
+
+    temperature = entities["CellTemperature"]
+    assert temperature.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+    temperature._channel.handle_data_update("battery0/CellTemperature", 21.5)
+    assert temperature.native_value == 21.5
+
+
 async def test_async_setup_entry_enum_sensor_sets_options(
     hass: HomeAssistant,
 ) -> None:
