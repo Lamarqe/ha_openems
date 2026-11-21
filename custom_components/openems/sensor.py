@@ -31,7 +31,8 @@ from .const import (
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
     DOMAIN,
 )
-from .helpers_ha import OpenEMSConfigEntry, component_device
+from .entity import OpenEMSChannelEntity
+from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -137,7 +138,7 @@ class OpenEMSSensorDescription(SensorEntityDescription):
     ignore_decreasing: bool = False
 
 
-class OpenEMSSensorEntity(SensorEntity):
+class OpenEMSSensorEntity(OpenEMSChannelEntity[OpenEMSDataHandler], SensorEntity):
     """Representation of a sensor."""
 
     entity_description: OpenEMSSensorDescription
@@ -145,15 +146,11 @@ class OpenEMSSensorEntity(SensorEntity):
     def __init__(
         self,
         channel: OpenEMSDataHandler,
-        entity_description,
+        entity_description: OpenEMSSensorDescription,
         device_info: dr.DeviceInfo,
     ) -> None:
         """Initialize the sensor."""
-        self._channel: OpenEMSDataHandler = channel
-        self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id
-        self._attr_device_info = device_info
-        self._attr_should_poll = False
+        super().__init__(channel, entity_description, device_info)
         self.previous_increasing_value_not_null: float | None = None
 
     @property
@@ -195,16 +192,12 @@ class OpenEMSSensorEntity(SensorEntity):
                 self.previous_increasing_value_not_null = val
         self.async_schedule_update_ha_state()
 
+    @handle_write_errors
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""
         if isinstance(self._channel, OpenEMSChannel):
             await self._channel.write_via_rest(
                 float(kwargs[ATTR_VALUE]),
-                kwargs.get(ATTR_UPDATE_CYCLE),  # pyright: ignore[reportArgumentType]
-                kwargs.get(ATTR_TIMEOUT),  # pyright: ignore[reportArgumentType]
+                kwargs[ATTR_UPDATE_CYCLE],
+                kwargs[ATTR_TIMEOUT],
             )
-
-    async def async_added_to_hass(self) -> None:
-        """Entity created."""
-        self.async_on_remove(self._channel.add_listener(self._handle_channel_update))
-        await super().async_added_to_hass()

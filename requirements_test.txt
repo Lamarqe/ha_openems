@@ -1,4 +1,4 @@
-openems-client==0.7.1
+openems-client==0.8.0
 pytest
 pytest-asyncio
 pytest-cov

@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
-    BinarySensorEntity,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -61,26 +60,6 @@ def _make_real_channel(value: int | None = None) -> OpenEMSChannel:
 def test_is_on(value: int | None, expected: bool | None) -> None:
     """is_on reflects the boolean value of the channel."""
     assert _make_entity(_make_real_channel(value)).is_on is expected
-
-
-# ---------------------------------------------------------------------------
-# Callback wiring
-# ---------------------------------------------------------------------------
-
-
-async def test_async_added_adds_listener_removed_with_entity() -> None:
-    """The entity listens to the channel until it is removed."""
-    channel = MagicMock()
-    entity = _make_entity(channel)
-
-    with patch.object(BinarySensorEntity, "async_added_to_hass", new=AsyncMock()):
-        await entity.async_added_to_hass()
-
-    channel.add_listener.assert_called_once_with(entity.async_schedule_update_ha_state)
-    remove_listener = channel.add_listener.return_value
-    remove_listener.assert_not_called()
-    entity._call_on_remove_callbacks()
-    remove_listener.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

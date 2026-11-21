@@ -14,6 +14,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
+from .entity import OpenEMSChannelEntity
 from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,23 +75,10 @@ class OpenEMSTimeDescription(TimeEntityDescription):
     has_entity_name = True
 
 
-class OpenEMSTimeEntity(TimeEntity):
+class OpenEMSTimeEntity(OpenEMSChannelEntity[OpenEMSTimeProperty], TimeEntity):
     """Time entity class for OpenEMS channels."""
 
     entity_description: OpenEMSTimeDescription
-
-    def __init__(
-        self,
-        channel: OpenEMSTimeProperty,
-        entity_description,
-        device_info: dr.DeviceInfo,
-    ) -> None:
-        """Initialize OpenEMS time entity."""
-        self._channel: OpenEMSTimeProperty = channel
-        self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id
-        self._attr_device_info = device_info
-        self._attr_should_poll = False
 
     @property
     def native_value(self) -> time | None:
@@ -102,10 +90,3 @@ class OpenEMSTimeEntity(TimeEntity):
         """Update the selected time."""
         await self._channel.update_value(value)
         self.async_write_ha_state()
-
-    async def async_added_to_hass(self) -> None:
-        """Entity created."""
-        self.async_on_remove(
-            self._channel.add_listener(self.async_schedule_update_ha_state)
-        )
-        await super().async_added_to_hass()

@@ -13,6 +13,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
+from .entity import OpenEMSChannelEntity
 from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,23 +75,10 @@ class OpenEMSSelectDescription(SelectEntityDescription):
     has_entity_name = True
 
 
-class OpenEMSSelectEntity(SelectEntity):
+class OpenEMSSelectEntity(OpenEMSChannelEntity[OpenEMSEnumProperty], SelectEntity):
     """Select entity class for OpenEMS channels."""
 
     entity_description: OpenEMSSelectDescription
-
-    def __init__(
-        self,
-        channel: OpenEMSEnumProperty,
-        entity_description,
-        device_info: dr.DeviceInfo,
-    ) -> None:
-        """Initialize OpenEMS switch entity."""
-        self._channel: OpenEMSEnumProperty = channel
-        self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id
-        self._attr_device_info = device_info
-        self._attr_should_poll = False
 
     @property
     def current_option(self) -> str | None:
@@ -102,10 +90,3 @@ class OpenEMSSelectEntity(SelectEntity):
         """Change the selected option."""
         await self._channel.update_value(option)
         self.async_write_ha_state()
-
-    async def async_added_to_hass(self) -> None:
-        """Entity created."""
-        self.async_on_remove(
-            self._channel.add_listener(self.async_schedule_update_ha_state)
-        )
-        await super().async_added_to_hass()

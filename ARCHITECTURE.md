@@ -10,6 +10,7 @@ This document describes how the OpenEMS integration (`custom_components/openems`
 | `helpers_ha.py` | Helpers that use HA classes: `RuntimeData`, `OpenEMSConfigEntry`, `component_device`, `component_from_device`, `property_selector`, ... |
 | `const.py` | HA-only constants (`DOMAIN`, `ATTR_*`, config flow keys). |
 | `<platform>.py` | One module per HA platform (`sensor`, `binary_sensor`, `number`, `select`, `switch`, `time`, `update`, `button`). |
+| `entity.py` | `OpenEMSChannelEntity`, the base class of the channel based entities: unique ID, device, availability, channel listener. |
 | `config_flow.py`, `services.py`, `device_action.py`, `diagnostics.py` | Remaining HA integration surfaces. |
 
 The protocol implementation lives in the [`openems-client`](https://github.com/Lamarqe/openems-client) library (`openems_client`), which has no HA dependencies:
@@ -54,7 +55,7 @@ All platform modules follow the same layout, in this order:
 1. Module docstring, imports, `_LOGGER = logging.getLogger(__name__)`.
 2. `async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)`.
 3. A frozen, kw-only description dataclass `OpenEMS<Platform>Description(<Platform>EntityDescription)`.
-4. The entity class `OpenEMS<Platform>Entity(<Platform>Entity)`.
+4. The entity class: `OpenEMS<Platform>Entity(OpenEMSChannelEntity[<channel class>], <Platform>Entity)` for channel based platforms, `OpenEMS<Name>Entity(<Platform>Entity)` for edge level platforms.
 
 Further rules:
 
@@ -62,7 +63,7 @@ Further rules:
 - Entity descriptions are **built inside `async_setup_entry`**, with `key` set to the entity's unique id. There are no module-level description tuples and no callables (`press_fn`, `value_fn`, ...) inside descriptions.
 - The description dataclass only holds static class-level defaults (at least `has_entity_name = True`). Per-entity values (`key`, `name`, `translation_key`, `entity_registry_enabled_default`, `entity_category`, units, ...) are passed when it is instantiated.
 - Entity behaviour is implemented as **methods of the entity class**, not as module-level functions.
-- Entity constructor signature: `(<backend object>, entity_description, device_info)`. It stores the backend object in a typed private attribute (`self._channel` / `self._edge`), and sets `self.entity_description`, `self._attr_unique_id` and `self._attr_device_info`.
+- Entity constructor signature: `(<backend object>, entity_description, device_info)`. It stores the backend object in a typed private attribute (`self._channel` / `self._edge`), and sets `self.entity_description`, `self._attr_unique_id` and `self._attr_device_info`. For channel based entities, the base class `OpenEMSChannelEntity` (`entity.py`) does this.
 - Errors: the library raises only `openems_client.exceptions` (`OpenEMSError`, `OpenEMSConnectionError`, `OpenEMSAuthError`) and handles the timeouts itself; HA code never catches `jsonrpc_base` errors and adds no timeouts. Raised HA exceptions are translated (`translation_key` and placeholders, no stringified exception). Write methods of channel entities use the `@handle_write_errors` decorator from `helpers_ha.py`.
 - Use `translation_key` for names. Add new keys to `strings.json`, `translations/en.json` and `translations/de.json` (see `script/update_german_translations.py`).
 - Channel translation keys are `channel.key`: the snake_case channel name without the `_Property` prefix (e.g. `ChargeMode` → `charge_mode`). They are shared by all components, so state translations of one key cover the options of every component with that channel; the state keys are the `channel.option_keys`. Every primary channel that creates an entity has a `name` under its key (checked by `test_primary_channels_have_translated_names`); platforms pass `name=UNDEFINED` for them, so HA uses the translation. All other channels pass the channel id as `name`.
@@ -100,9 +101,9 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
 ```
 
 - Properties (writable `_Property*` channels) use `entity_category=EntityCategory.CONFIG`.
-- The entity sets `self._attr_should_poll = False`. It has no extra state attributes; the channel metadata is part of the diagnostics.
+- `OpenEMSChannelEntity` sets `_attr_should_poll = False` and combines `available` with `channel.available`, so entities are unavailable while the edge is disconnected. Entities have no extra state attributes; the channel metadata is part of the diagnostics.
 - State is read from the channel in properties (`channel.value`, `is_on`, ...). Writes go through the channel (`await self._channel.update_value(...)`) followed by `self.async_write_ha_state()`.
-- `async_added_to_hass` calls `self.async_on_remove(self._channel.add_listener(self.async_schedule_update_ha_state))`, followed by the `super()` call. The channel is subscribed at the edge while it has listeners.
+- `OpenEMSChannelEntity.async_added_to_hass` registers `_handle_channel_update` as listener of the channel, which is called on value and availability changes. The channel is subscribed at the edge while it has listeners. Platforms override `_handle_channel_update` only for extra logic (e.g. `sensor.py`), not `async_added_to_hass`.
 
 ### Variant B: edge level platforms
 

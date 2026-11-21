@@ -4,7 +4,6 @@ from datetime import timedelta
 import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.select import SelectEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -86,26 +85,6 @@ async def test_async_select_option_writes_option_key() -> None:
 
     channel.update_value.assert_awaited_once_with("excess_power")
     entity.async_write_ha_state.assert_called_once()
-
-
-# ---------------------------------------------------------------------------
-# Callback wiring
-# ---------------------------------------------------------------------------
-
-
-async def test_async_added_adds_listener_removed_with_entity() -> None:
-    """The entity listens to the channel until it is removed."""
-    channel = MagicMock()
-    entity = _make_entity(channel)
-
-    with patch.object(SelectEntity, "async_added_to_hass", new=AsyncMock()):
-        await entity.async_added_to_hass()
-
-    channel.add_listener.assert_called_once_with(entity.async_schedule_update_ha_state)
-    remove_listener = channel.add_listener.return_value
-    remove_listener.assert_not_called()
-    entity._call_on_remove_callbacks()
-    remove_listener.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

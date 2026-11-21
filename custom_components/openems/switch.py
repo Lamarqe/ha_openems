@@ -14,6 +14,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
+from .entity import OpenEMSChannelEntity
 from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,23 +75,10 @@ class OpenEMSSwitchDescription(SwitchEntityDescription):
     has_entity_name = True
 
 
-class OpenEMSSwitchEntity(SwitchEntity):
+class OpenEMSSwitchEntity(OpenEMSChannelEntity[OpenEMSBooleanProperty], SwitchEntity):
     """Number entity class for OpenEMS channels."""
 
     entity_description: OpenEMSSwitchDescription
-
-    def __init__(
-        self,
-        channel: OpenEMSBooleanProperty,
-        entity_description,
-        device_info: dr.DeviceInfo,
-    ) -> None:
-        """Initialize OpenEMS switch entity."""
-        self._channel: OpenEMSBooleanProperty = channel
-        self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id
-        self._attr_device_info = device_info
-        self._attr_should_poll = False
 
     @property
     def is_on(self) -> bool | None:
@@ -108,10 +96,3 @@ class OpenEMSSwitchEntity(SwitchEntity):
         """Turn the entity off."""
         await self._channel.update_value(False)
         self.async_write_ha_state()
-
-    async def async_added_to_hass(self) -> None:
-        """Entity created."""
-        self.async_on_remove(
-            self._channel.add_listener(self.async_schedule_update_ha_state)
-        )
-        await super().async_added_to_hass()

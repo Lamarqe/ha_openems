@@ -3,7 +3,6 @@
 from datetime import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.time import TimeEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -62,26 +61,6 @@ async def test_async_set_value_calls_channel() -> None:
     await entity.async_set_value(t)
 
     channel.update_value.assert_awaited_once_with(t)
-
-
-# ---------------------------------------------------------------------------
-# Callback wiring
-# ---------------------------------------------------------------------------
-
-
-async def test_async_added_adds_listener_removed_with_entity() -> None:
-    """The entity listens to the channel until it is removed."""
-    channel = MagicMock()
-    entity = _make_entity(channel)
-
-    with patch.object(TimeEntity, "async_added_to_hass", new=AsyncMock()):
-        await entity.async_added_to_hass()
-
-    channel.add_listener.assert_called_once_with(entity.async_schedule_update_ha_state)
-    remove_listener = channel.add_listener.return_value
-    remove_listener.assert_not_called()
-    entity._call_on_remove_callbacks()
-    remove_listener.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

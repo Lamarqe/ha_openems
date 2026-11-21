@@ -18,7 +18,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
 from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
-from .helpers_ha import OpenEMSConfigEntry, component_device
+from .entity import OpenEMSChannelEntity
+from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,40 +88,23 @@ class OpenEMSBinarySensorDescription(BinarySensorEntityDescription):
     has_entity_name = True
 
 
-class OpenEMSBinarySensorEntity(BinarySensorEntity):
+class OpenEMSBinarySensorEntity(
+    OpenEMSChannelEntity[OpenEMSChannel], BinarySensorEntity
+):
     """Representation of a binary sensor."""
 
     entity_description: OpenEMSBinarySensorDescription
-
-    def __init__(
-        self,
-        channel: OpenEMSChannel,
-        entity_description,
-        device_info: dr.DeviceInfo,
-    ) -> None:
-        """Initialize the binary sensor."""
-        self._channel: OpenEMSChannel = channel
-        self.entity_description = entity_description
-        self._attr_unique_id = channel.unique_id
-        self._attr_device_info = device_info
-        self._attr_should_poll = False
 
     @property
     def is_on(self) -> bool | None:
         """Return the binary state of the sensor."""
         return self._channel.is_on
 
+    @handle_write_errors
     async def update_value(self, **kwargs: Any) -> None:
         """Service callback to change value via REST call."""
         await self._channel.write_via_rest(
             float(kwargs[ATTR_VALUE]),
-            kwargs.get(ATTR_UPDATE_CYCLE),  # pyright: ignore[reportArgumentType]
-            kwargs.get(ATTR_TIMEOUT),  # pyright: ignore[reportArgumentType]
+            kwargs[ATTR_UPDATE_CYCLE],
+            kwargs[ATTR_TIMEOUT],
         )
-
-    async def async_added_to_hass(self) -> None:
-        """Entity created."""
-        self.async_on_remove(
-            self._channel.add_listener(self.async_schedule_update_ha_state)
-        )
-        await super().async_added_to_hass()
