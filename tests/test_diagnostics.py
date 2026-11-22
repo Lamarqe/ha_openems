@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from homeassistant.components.diagnostics import REDACTED
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.openems.const import DOMAIN
 from custom_components.openems.diagnostics import async_get_config_entry_diagnostics

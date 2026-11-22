@@ -38,7 +38,7 @@ from homeassistant.exceptions import (
 )
 from homeassistant.const import Platform
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from .helpers_flow import make_mock_connection
 
