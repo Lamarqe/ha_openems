@@ -649,6 +649,59 @@ async def test_component_device_enable_schedules_reload(hass: HomeAssistant) -> 
 # ---------------------------------------------------------------------------
 
 
+async def test_migrate_v1_continues_to_latest_version(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    """Version 1 entries are migrated through all versions."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=1,
+        data={"host": "192.0.2.1", "username": "user", "password": "password"},
+    )
+    entry.add_to_hass(hass)
+    hass_storage["openems_config"] = {
+        "version": 1,
+        "minor_version": 1,
+        "key": "openems_config",
+        "data": {"0": {"components": {"ess0": {"channels": []}}}},
+    }
+    entity_registry = er.async_get(hass)
+    entity_registry.async_get_or_create(
+        Platform.SENSOR, DOMAIN, "fems1/edge0/ess0/Soc", config_entry=entry
+    )
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert (entry.version, entry.minor_version) == (6, 5)
+    assert entry.data == {
+        "host": "192.0.2.1",
+        "username": "user",
+        "password": "password",
+        "edge": "0",
+        "type": "direct_edge",
+    }
+    assert entry.options == {
+        CONF_ADVANCED_OPTIONS: {
+            CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: False,
+            CONF_FORWARD_INTERVAL: 0,
+        }
+    }
+    assert hass_storage[_storage_key(entry)]["data"] == {"ess0": {"channels": []}}
+    assert "openems_config" not in hass_storage
+    assert entity_registry.async_get_entity_id(
+        Platform.SENSOR, DOMAIN, "fems1/0/ess0/Soc"
+    )
+
+
+async def test_migrate_v1_without_configuration_fails(hass: HomeAssistant) -> None:
+    """Version 1 entries cannot be migrated without their stored configuration."""
+    entry = MockConfigEntry(domain=DOMAIN, version=1, data=_USER_INPUT)
+    entry.add_to_hass(hass)
+
+    assert not await async_migrate_entry(hass, entry)
+    assert entry.version == 1
+
+
 async def test_migrate_v5_moves_components_to_store(
     hass: HomeAssistant, hass_storage: dict[str, Any]
 ) -> None:

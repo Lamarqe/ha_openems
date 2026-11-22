@@ -109,8 +109,6 @@ async def async_setup_entry(
         )
         async_add_entities(entities)
 
-    ############ END MARKER _create_sensor_entities ##############
-
     ignore_decreasing: bool = entry.options[CONF_ADVANCED_OPTIONS][
         CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
     ]

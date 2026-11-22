@@ -72,7 +72,7 @@ async def async_setup_entry(
     edge_id = config_entry.data[c.CONF_EDGE]
     placeholders = {"host": str(client.host)}
 
-    # 1. Connect and log in, the client closes the connection on failure
+    # the client closes the connection on failure
     try:
         await client.connect()
     except OpenEMSAuthError as ex:
@@ -94,8 +94,8 @@ async def async_setup_entry(
             translation_placeholders=placeholders,
         ) from ex
 
-    # 2. Load the cached edge configuration. Read it from the edge if there is none yet,
-    # otherwise check it in the background after the setup.
+    # Read the edge configuration only if there is no cached one yet,
+    # a cached one is checked in the background after the setup.
     store = component_store(hass, config_entry.entry_id)
     components = await store.async_load()
     cached = components is not None
@@ -111,22 +111,13 @@ async def async_setup_entry(
             ) from ex
         await store.async_save(components)
 
-    # 3. Prepare HA entity structures from the edge configuration
     backend = client.create_backend(edge_id, components)
 
-    # 4. Read and set config options
-    # ==================== TODO REMOVE_LATER_START ============================
-    advanced = dict(config_entry.options.get(c.CONF_ADVANCED_OPTIONS, {}))
-    if c.CONF_FORWARD_INTERVAL not in advanced:
-        advanced[c.CONF_FORWARD_INTERVAL] = 0
-        options = {**config_entry.options, c.CONF_ADVANCED_OPTIONS: advanced}
-        hass.config_entries.async_update_entry(config_entry, options=options)
-    # ==================== TODO REMOVE_LATER_END ============================
     backend.the_edge.set_forward_interval(
         config_entry.options[c.CONF_ADVANCED_OPTIONS][c.CONF_FORWARD_INTERVAL]
     )
 
-    # 5. Create central edge device in HA device registry, so that all component devices can be linked to it
+    # the component devices are linked to the edge device
     device_registry = dr.async_get(hass)
     edge_device_info = dr.DeviceInfo(
         identifiers={(c.DOMAIN, backend.the_edge.hostname)},
@@ -149,7 +140,7 @@ async def async_setup_entry(
         backend.the_edge.add_version_listener(_update_sw_version)
     )
 
-    # 6. Create component devices. Components without default channels start disabled.
+    # Components without primary channels start with a disabled device.
     # Entities are only created for components with an enabled device.
     component_device_ids: list[str] = []
     enabled_components: list[OpenEMSComponent] = []
@@ -174,17 +165,15 @@ async def async_setup_entry(
             enabled_components.append(component)
         component_device_ids.append(component_device_entry.id)
 
-    # 7. Prepare runtime data for later access
     config_entry.runtime_data = RuntimeData(
         backend=backend,
         edge_device=DeviceRuntimeData(info=edge_device_info, entry=edge_device_entry),
         enabled_components=enabled_components,
     )
 
-    # 8. Forward setup to platforms
     await hass.config_entries.async_forward_entry_setups(config_entry, _PLATFORMS)
 
-    # 9. Reload to create or remove entities when a component device gets enabled or disabled
+    # enabling or disabling a component device creates or removes its entities
     @callback
     def _handle_component_device_update(
         event: Event[dr.EventDeviceRegistryUpdatedData],
@@ -198,7 +187,6 @@ async def async_setup_entry(
         )
     )
 
-    # 10. Start backend
     backend.start()
 
     if cached:
@@ -264,54 +252,53 @@ async def async_migrate_entry(
     """Migrate old entry."""
     if config_entry.version == 1:
         store_conf: Store = Store(hass, 1, "openems_config")
-        if config_data := await store_conf.async_load():
-            # migrate config into entry
-            edge_id = next(iter(config_data))
-            components = config_data[edge_id]["components"]
-            new_data = {
-                "user_input": config_entry.data.copy(),
-                "components": components,
-            }
-            new_data["user_input"][c.CONF_EDGE] = edge_id
-            new_data["user_input"][CONF_TYPE] = CONN_TYPE_DIRECT_EDGE
-            # delete config store data
-            await store_conf.async_remove()
+        if not (config_data := await store_conf.async_load()):
+            return False
+        # migrate config into entry
+        edge_id = next(iter(config_data))
+        components = config_data[edge_id]["components"]
+        new_data = {
+            "user_input": config_entry.data.copy(),
+            "components": components,
+        }
+        new_data["user_input"][c.CONF_EDGE] = edge_id
+        new_data["user_input"][CONF_TYPE] = CONN_TYPE_DIRECT_EDGE
+        # delete config store data
+        await store_conf.async_remove()
 
-            host = config_entry.data[CONF_HOST]
-            options_key = "openems_options_" + host
-            store_options: Store = Store[dict[str, bool]](hass, 1, options_key)
-            options: dict[str, bool] | None = await store_options.async_load()
-            if options:
-                # delete options store data
-                await store_options.async_remove()
-            else:
-                # initialize options with default settings
-                options = {}
-                for component in components:
-                    options[component] = CONFIG.has_primary_channels(component)
+        host = config_entry.data[CONF_HOST]
+        options_key = "openems_options_" + host
+        store_options: Store = Store[dict[str, bool]](hass, 1, options_key)
+        options: dict[str, bool] | None = await store_options.async_load()
+        if options:
+            # delete options store data
+            await store_options.async_remove()
+        else:
+            # initialize options with default settings
+            options = {}
+            for component in components:
+                options[component] = CONFIG.has_primary_channels(component)
 
-            hass.config_entries.async_update_entry(
-                config_entry, data=new_data, options=options, version=2, minor_version=1
-            )
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, options=options, version=2, minor_version=1
+        )
 
-            # update entities unique ids
-            def update_unique_id(entity_entry):
-                """Update unique ID of entity entry."""
-                unique_id_parts = entity_entry.unique_id.split("/")
-                if len(unique_id_parts) != 4:
-                    return None
-                unique_id_parts[1] = unique_id_parts[1].removeprefix("edge")
-                return {"new_unique_id": "/".join(unique_id_parts)}
+        # update entities unique ids
+        def update_unique_id(entity_entry):
+            """Update unique ID of entity entry."""
+            unique_id_parts = entity_entry.unique_id.split("/")
+            if len(unique_id_parts) != 4:
+                return None
+            unique_id_parts[1] = unique_id_parts[1].removeprefix("edge")
+            return {"new_unique_id": "/".join(unique_id_parts)}
 
-            await async_migrate_entries(hass, config_entry.entry_id, update_unique_id)
+        await async_migrate_entries(hass, config_entry.entry_id, update_unique_id)
 
-            _LOGGER.debug(
-                "Migration to configuration version %s.%s successful",
-                config_entry.version,
-                config_entry.minor_version,
-            )
-            return True
-        return False
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
 
     if config_entry.version == 2:
         # update device identifiers, as they got corrected with v1.1.0.

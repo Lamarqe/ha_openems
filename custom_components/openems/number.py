@@ -84,8 +84,6 @@ async def async_setup_entry(
             )
         async_add_entities(entities)
 
-    ############ END MARKER _create_number_entities ##############
-
     component: OpenEMSComponent
     for component in entry.runtime_data.enabled_components:
         _create_number_entities(component)

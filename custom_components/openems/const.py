@@ -30,5 +30,3 @@ CONF_FORWARD_INTERVAL: str = "forward_interval"
 CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING: str = (
     "ignore_decreasing_if_total_increasing"
 )
-
-QUERY_CONFIG_VIA_REST: bool = False

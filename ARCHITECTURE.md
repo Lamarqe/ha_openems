@@ -93,8 +93,6 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
             entities.append(OpenEMS<Platform>Entity(channel, entity_description, device))
         async_add_entities(entities)
 
-    ############ END MARKER _create_<platform>_entities ##############
-
     for component in entry.runtime_data.enabled_components:
         _create_<platform>_entities(component)
 ```
