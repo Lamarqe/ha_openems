@@ -7,17 +7,6 @@ import pytest
 from yarl import URL
 
 
-# pytest-homeassistant-custom-component pre-populates DATA_CUSTOM_COMPONENTS={}
-# to block custom integrations by default. This autouse fixture requests the
-# plugin's own enable_custom_integrations fixture so every test can find
-# custom_components/openems without having to declare it individually.
-@pytest.fixture(autouse=True)
-def _auto_enable_custom_integrations(
-    enable_custom_integrations: None,
-) -> None:
-    """Enable custom integrations for all tests."""
-
-
 @pytest.fixture
 def mock_setup_entry() -> Generator[AsyncMock]:
     """Override async_setup_entry and async_unload_entry."""
