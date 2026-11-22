@@ -588,7 +588,7 @@ async def test_migrate_v5_moves_components_to_store(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 3)
+    assert (entry.version, entry.minor_version) == (6, 4)
     assert entry.data == _USER_INPUT
     assert hass_storage[_storage_key(entry)]["data"] == {"comp1": {}}
 
@@ -618,7 +618,7 @@ async def test_migrate_v6_1_sets_unique_id_from_edge_device(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 3)
+    assert (entry.version, entry.minor_version) == (6, 4)
     assert entry.unique_id == edge_identifier
 
 
@@ -636,7 +636,7 @@ async def test_migrate_v6_2_removes_refresh_configuration_button(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 3)
+    assert (entry.version, entry.minor_version) == (6, 4)
     assert not entity_registry.async_get_entity_id(
         Platform.BUTTON, DOMAIN, "fems1/0/refresh_configuration"
     )
@@ -671,7 +671,7 @@ async def test_migrate_v4_moves_component_selection_to_devices(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 3)
+    assert (entry.version, entry.minor_version) == (6, 4)
     assert entry.unique_id == "host"
     assert entry.options == _DEFAULT_OPTIONS
     disabled_by = {

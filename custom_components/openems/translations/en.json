@@ -61,7 +61,14 @@
     },
     "device_automation": {
         "action_type": {
-            "update_component_config": "Update component configuration"
+            "update_component_config": "Update component configuration",
+            "write_channel": "Write channel"
+        },
+        "extra_fields": {
+            "channel": "Channel",
+            "timeout": "Timeout",
+            "update_cycle": "Update cycle",
+            "value": "Value"
         }
     },
     "entity": {
@@ -1772,6 +1779,18 @@
         },
         "update_not_finished": {
             "message": "The update of edge {edge} did not finish within 15 minutes."
+        },
+        "invalid_channel_value": {
+            "message": "The value {value} is invalid for channel {component}/{channel}."
+        },
+        "rest_write_not_available": {
+            "message": "Edge {edge} has no REST app with write access (Controller.Api.Rest.ReadWrite)."
+        },
+        "unknown_write_only_channel": {
+            "message": "Component {component} has no write-only channel {channel}. Write-only channels: {valid_channels}"
+        },
+        "write_channel_failed": {
+            "message": "Failed to write channel {component}/{channel}."
         }
     },
     "options": {
@@ -1861,42 +1880,6 @@
         }
     },
     "services": {
-        "rest_write_binary_sensor": {
-            "description": "Cyclically sends a value for the channel of a binary sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
-            "fields": {
-                "timeout": {
-                    "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity.",
-                    "name": "Timeout"
-                },
-                "update_cycle": {
-                    "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only.",
-                    "name": "Update cycle"
-                },
-                "value": {
-                    "description": "The new target value.",
-                    "name": "Value"
-                }
-            },
-            "name": "REST write binary sensor"
-        },
-        "rest_write_sensor": {
-            "description": "Cyclically sends a value for the channel of a sensor entity to the backend via REST. Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant.",
-            "fields": {
-                "timeout": {
-                    "description": "Duration until when cyclic updates will be sent. Use 0 for sending values until the next action call for the same entity.",
-                    "name": "Timeout"
-                },
-                "update_cycle": {
-                    "description": "Cycle in which a new request will be sent. This is necessary because FEMS resets REST values after 60 seconds by default. Use 0 for a single REST call only.",
-                    "name": "Update cycle"
-                },
-                "value": {
-                    "description": "The new target value.",
-                    "name": "Value"
-                }
-            },
-            "name": "REST write sensor"
-        },
         "update_component_config": {
             "description": "Changes properties of OpenEMS components. All properties of a component are sent in a single updateComponentConfig request. Number limits are not checked.",
             "fields": {
@@ -1910,6 +1893,32 @@
                 }
             },
             "name": "Update component configuration"
+        },
+        "write_channel": {
+            "description": "Writes a value to a write-only channel of an OpenEMS component via the REST API of the edge. Requires a REST app with write access (Controller.Api.Rest.ReadWrite). Written values are not reported back by the edge.",
+            "fields": {
+                "channel": {
+                    "description": "Name of the write-only channel, e.g. SetActivePowerEquals.",
+                    "name": "Channel"
+                },
+                "device_id": {
+                    "description": "OpenEMS component device whose channel is written.",
+                    "name": "Component device"
+                },
+                "timeout": {
+                    "description": "Stops the repeated writes after the given number of seconds. Use 0 to write until the same channel is written again or the integration is reloaded.",
+                    "name": "Timeout"
+                },
+                "update_cycle": {
+                    "description": "Writes the value again every given number of seconds, as OpenEMS resets values written via REST after the timeout of the REST app (60 seconds by default). Use 0 for a single write.",
+                    "name": "Update cycle"
+                },
+                "value": {
+                    "description": "The value to write. Numbers are given in the unit of the channel, e.g. watts.",
+                    "name": "Value"
+                }
+            },
+            "name": "Write channel"
         }
     }
 }

@@ -1826,7 +1826,14 @@
   },
   "device_automation": {
     "action_type": {
-      "update_component_config": "Komponentenkonfiguration ändern"
+      "update_component_config": "Komponentenkonfiguration ändern",
+      "write_channel": "Kanal schreiben"
+    },
+    "extra_fields": {
+      "channel": "Kanal",
+      "value": "Wert",
+      "update_cycle": "Wiederholintervall",
+      "timeout": "Timeout"
     }
   },
   "exceptions": {
@@ -1865,6 +1872,18 @@
     },
     "update_not_finished": {
       "message": "Das Update der Edge {edge} wurde nicht innerhalb von 15 Minuten abgeschlossen."
+    },
+    "invalid_channel_value": {
+      "message": "Der Wert {value} ist für den Kanal {component}/{channel} ungültig."
+    },
+    "rest_write_not_available": {
+      "message": "Die Edge {edge} hat keine REST-App mit Schreibzugriff (Controller.Api.Rest.ReadWrite)."
+    },
+    "unknown_write_only_channel": {
+      "message": "Komponente {component} hat keinen nur beschreibbaren Kanal {channel}. Nur beschreibbare Kanäle: {valid_channels}"
+    },
+    "write_channel_failed": {
+      "message": "Der Kanal {component}/{channel} konnte nicht geschrieben werden."
     }
   },
   "services": {
@@ -1882,39 +1901,29 @@
         }
       }
     },
-    "rest_write_sensor": {
-      "name": "REST-Schreiben Sensor",
-      "description": "Sendet zyklisch einen Wert für den Kanal einer Sensor-Entität per REST an das Backend. Per REST geschriebene Werte werden vom Backend nicht zurückgemeldet und sind daher in Home Assistant nicht sichtbar.",
+    "write_channel": {
+      "name": "Kanal schreiben",
+      "description": "Schreibt einen Wert über die REST-Schnittstelle der Edge in einen nur beschreibbaren Kanal einer OpenEMS-Komponente. Erfordert eine REST-App mit Schreibzugriff (Controller.Api.Rest.ReadWrite). Geschriebene Werte werden von der Edge nicht zurückgemeldet.",
       "fields": {
+        "device_id": {
+          "name": "Komponenten-Gerät",
+          "description": "OpenEMS-Komponenten-Gerät, dessen Kanal geschrieben wird."
+        },
+        "channel": {
+          "name": "Kanal",
+          "description": "Name des nur beschreibbaren Kanals, z. B. SetActivePowerEquals."
+        },
         "value": {
           "name": "Wert",
-          "description": "Der neue Zielwert."
-        },
-        "timeout": {
-          "name": "Zeitlimit",
-          "description": "Dauer, bis zu der zyklische Aktualisierungen gesendet werden. 0 sendet Werte bis zum nächsten Aktionsaufruf für dieselbe Entität."
+          "description": "Der zu schreibende Wert. Zahlen werden in der Einheit des Kanals angegeben, z. B. Watt."
         },
         "update_cycle": {
-          "name": "Aktualisierungszyklus",
-          "description": "Zyklus, in dem eine neue Anfrage gesendet wird. Notwendig, da FEMS per REST geschriebene Werte standardmäßig nach 60 Sekunden zurücksetzt. 0 sendet nur einen einzelnen REST-Aufruf."
-        }
-      }
-    },
-    "rest_write_binary_sensor": {
-      "name": "REST-Schreiben Binärsensor",
-      "description": "Sendet zyklisch einen Wert für den Kanal einer Binärsensor-Entität per REST an das Backend. Per REST geschriebene Werte werden vom Backend nicht zurückgemeldet und sind daher in Home Assistant nicht sichtbar.",
-      "fields": {
-        "value": {
-          "name": "Wert",
-          "description": "Der neue Zielwert."
+          "name": "Wiederholintervall",
+          "description": "Schreibt den Wert alle angegebenen Sekunden erneut, da OpenEMS über REST geschriebene Werte nach dem Timeout der REST-App zurücksetzt (standardmäßig 60 Sekunden). 0 schreibt den Wert einmalig."
         },
         "timeout": {
-          "name": "Zeitlimit",
-          "description": "Dauer, bis zu der zyklische Aktualisierungen gesendet werden. 0 sendet Werte bis zum nächsten Aktionsaufruf für dieselbe Entität."
-        },
-        "update_cycle": {
-          "name": "Aktualisierungszyklus",
-          "description": "Zyklus, in dem eine neue Anfrage gesendet wird. Notwendig, da FEMS per REST geschriebene Werte standardmäßig nach 60 Sekunden zurücksetzt. 0 sendet nur einen einzelnen REST-Aufruf."
+          "name": "Timeout",
+          "description": "Beendet das wiederholte Schreiben nach den angegebenen Sekunden. 0 schreibt, bis derselbe Kanal erneut geschrieben oder die Integration neu geladen wird."
         }
       }
     }

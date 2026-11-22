@@ -4,11 +4,8 @@ from collections.abc import Generator
 
 import probatio
 import pytest
-from custom_components.openems.const import DOMAIN
-from custom_components.openems.services import (
-    SERVICE_UPDATE_COMPONENT_CONFIG,
-    async_setup_services,
-)
+from custom_components.openems.const import DOMAIN, OpenEMSService
+from custom_components.openems.services import async_setup_services
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from openems_client.exceptions import OpenEMSError
@@ -27,7 +24,7 @@ def loaded_fixture(hass: HomeAssistant) -> Generator[LoadedComponent]:
 
 async def _call(hass: HomeAssistant, data: dict) -> None:
     await hass.services.async_call(
-        DOMAIN, SERVICE_UPDATE_COMPONENT_CONFIG, data, blocking=True
+        DOMAIN, OpenEMSService.UPDATE_COMPONENT_CONFIG, data, blocking=True
     )
 
 

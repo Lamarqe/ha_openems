@@ -2,15 +2,9 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any
 
 from openems_client.model import ChannelKind, Quantity
-from openems_client.openems import (
-    OpenEMSBackend,
-    OpenEMSChannel,
-    OpenEMSComponent,
-    OpenEMSDataHandler,
-)
+from openems_client.openems import OpenEMSBackend, OpenEMSComponent, OpenEMSDataHandler
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -24,15 +18,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
 from .const import (
-    ATTR_TIMEOUT,
-    ATTR_UPDATE_CYCLE,
-    ATTR_VALUE,
     CONF_ADVANCED_OPTIONS,
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
     DOMAIN,
 )
 from .entity import OpenEMSChannelEntity
-from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
+from .helpers_ha import OpenEMSConfigEntry, component_device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -205,13 +196,3 @@ class OpenEMSSensorEntity(OpenEMSChannelEntity[OpenEMSDataHandler], SensorEntity
             else:
                 self.previous_increasing_value_not_null = val
         self.async_schedule_update_ha_state()
-
-    @handle_write_errors
-    async def update_value(self, **kwargs: Any) -> None:
-        """Service callback to change value via REST call."""
-        if isinstance(self._channel, OpenEMSChannel):
-            await self._channel.write_via_rest(
-                float(kwargs[ATTR_VALUE]),
-                kwargs[ATTR_UPDATE_CYCLE],
-                kwargs[ATTR_TIMEOUT],
-            )

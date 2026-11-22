@@ -7,22 +7,32 @@ from openems_client.exceptions import OpenEMSError
 from openems_client.openems import OpenEMSComponent, OpenEMSProperty
 import probatio
 
-from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import ATTR_DEVICE_ID
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-from homeassistant.helpers import config_validation as cv, service
+from homeassistant.helpers import config_validation as cv
 
-from .const import ATTR_PROPERTIES, ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
-from .helpers_ha import component_from_device
-
-SERVICE_UPDATE_COMPONENT_CONFIG = "update_component_config"
+from .const import DOMAIN, OpenEMSService, OpenEMSServiceArgument
+from .helpers_ha import component_from_device, write_only_channels
 
 UPDATE_COMPONENT_CONFIG_SCHEMA = probatio.Schema(
     {
         probatio.Required(ATTR_DEVICE_ID): probatio.All(cv.ensure_list, [cv.string]),
-        probatio.Required(ATTR_PROPERTIES): probatio.Schema({cv.string: object}),
+        probatio.Required(OpenEMSServiceArgument.PROPERTIES): probatio.Schema(
+            {cv.string: object}
+        ),
+    }
+)
+
+_SECONDS = probatio.All(probatio.Coerce(float), probatio.Range(min=0))
+
+WRITE_CHANNEL_SCHEMA = probatio.Schema(
+    {
+        probatio.Required(ATTR_DEVICE_ID): cv.string,
+        probatio.Required(OpenEMSServiceArgument.CHANNEL): cv.string,
+        probatio.Required(OpenEMSServiceArgument.VALUE): probatio.Any(str, int, float),
+        probatio.Optional(OpenEMSServiceArgument.UPDATE_CYCLE, default=0): _SECONDS,
+        probatio.Optional(OpenEMSServiceArgument.TIMEOUT, default=0): _SECONDS,
     }
 )
 
@@ -50,7 +60,7 @@ async def async_update_component_config(call: ServiceCall) -> None:
     # validate and convert everything first, so that nothing is sent on errors
     for device_id in call.data[ATTR_DEVICE_ID]:
         component = component_from_device(call.hass, device_id)
-        for name, value in call.data[ATTR_PROPERTIES].items():
+        for name, value in call.data[OpenEMSServiceArgument.PROPERTIES].items():
             if (prop := component.get_property(name)) is None:
                 raise ServiceValidationError(
                     translation_domain=DOMAIN,
@@ -76,35 +86,61 @@ async def async_update_component_config(call: ServiceCall) -> None:
             ) from ex
 
 
+async def async_write_channel(call: ServiceCall) -> None:
+    """Write the value of a write-only channel via the REST API of the edge."""
+    component = component_from_device(call.hass, call.data[ATTR_DEVICE_ID])
+    name: str = call.data[OpenEMSServiceArgument.CHANNEL]
+    value = call.data[OpenEMSServiceArgument.VALUE]
+    channels = write_only_channels(component)
+    if (channel := channels.get(name)) is None:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="unknown_write_only_channel",
+            translation_placeholders={
+                "component": component.name,
+                "channel": name,
+                "valid_channels": ", ".join(sorted(channels)) or "-",
+            },
+        )
+    if not component.edge.rest_writable:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="rest_write_not_available",
+            translation_placeholders={"edge": component.edge.hostname},
+        )
+    placeholders = {"component": component.name, "channel": name}
+    try:
+        await channel.write_via_rest(
+            value,
+            call.data[OpenEMSServiceArgument.UPDATE_CYCLE],
+            call.data[OpenEMSServiceArgument.TIMEOUT],
+        )
+    except ValueError as err:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="invalid_channel_value",
+            translation_placeholders={**placeholders, "value": str(value)},
+        ) from err
+    except OpenEMSError as err:
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="write_channel_failed",
+            translation_placeholders=placeholders,
+        ) from err
+
+
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register the OpenEMS services."""
-
     hass.services.async_register(
         DOMAIN,
-        SERVICE_UPDATE_COMPONENT_CONFIG,
+        OpenEMSService.UPDATE_COMPONENT_CONFIG,
         async_update_component_config,
         schema=UPDATE_COMPONENT_CONFIG_SCHEMA,
     )
-
-    rest_schema = {
-        probatio.Required(ATTR_VALUE): probatio.Coerce(float),
-        probatio.Optional(ATTR_UPDATE_CYCLE, default=30): probatio.Coerce(int),
-        probatio.Optional(ATTR_TIMEOUT, default=0): probatio.Coerce(int),
-    }
-    service.async_register_platform_entity_service(
-        hass,
+    hass.services.async_register(
         DOMAIN,
-        "rest_write_sensor",
-        entity_domain=SENSOR_DOMAIN,
-        schema=rest_schema,
-        func="update_value",
-    )
-    service.async_register_platform_entity_service(
-        hass,
-        DOMAIN,
-        "rest_write_binary_sensor",
-        entity_domain=BINARY_SENSOR_DOMAIN,
-        schema=rest_schema,
-        func="update_value",
+        OpenEMSService.WRITE_CHANNEL,
+        async_write_channel,
+        schema=WRITE_CHANNEL_SCHEMA,
     )

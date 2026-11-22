@@ -7,8 +7,10 @@ from typing import Any, Concatenate
 
 from openems_client.connection import ConnectionProperties
 from openems_client.exceptions import OpenEMSError
+from openems_client.model import ChannelKind
 from openems_client.openems import (
     OpenEMSBackend,
+    OpenEMSChannel,
     OpenEMSComponent,
     OpenEMSEnumProperty,
     OpenEMSNumberProperty,
@@ -102,6 +104,14 @@ def component_from_device(hass: HomeAssistant, device_id: str) -> OpenEMSCompone
         translation_key="no_component_device",
         translation_placeholders={"device_id": device_id},
     )
+
+
+def write_only_channels(component: OpenEMSComponent) -> dict[str, OpenEMSChannel]:
+    """Return the write-only channels of a component by name."""
+    return {
+        channel.name: channel
+        for channel in component.channels_of(ChannelKind.WRITE_ONLY, OpenEMSChannel)
+    }
 
 
 def property_selector(prop: OpenEMSProperty) -> dict[str, Any]:

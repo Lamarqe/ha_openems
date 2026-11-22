@@ -11,11 +11,22 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv, selector
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
-from .const import ATTR_PROPERTIES, DOMAIN
-from .helpers_ha import component_from_device, property_selector
-from .services import SERVICE_UPDATE_COMPONENT_CONFIG
+from .const import DOMAIN, OpenEMSService, OpenEMSServiceArgument
+from .helpers_ha import component_from_device, property_selector, write_only_channels
 
 ACTION_TYPE_UPDATE_COMPONENT_CONFIG = "update_component_config"
+ACTION_TYPE_WRITE_CHANNEL = "write_channel"
+
+WRITE_CHANNEL_FIELDS = (
+    OpenEMSServiceArgument.CHANNEL,
+    OpenEMSServiceArgument.VALUE,
+    OpenEMSServiceArgument.UPDATE_CYCLE,
+    OpenEMSServiceArgument.TIMEOUT,
+)
+
+_SECONDS_SELECTOR = selector.selector(
+    {"number": {"min": 0, "mode": "box", "unit_of_measurement": "s"}}
+)
 
 # The property fields are stored flat in the action config, next to these keys.
 RESERVED_KEYS = {
@@ -24,7 +35,11 @@ RESERVED_KEYS = {
 }
 
 ACTION_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
-    {probatio.Required(CONF_TYPE): ACTION_TYPE_UPDATE_COMPONENT_CONFIG},
+    {
+        probatio.Required(CONF_TYPE): probatio.In(
+            [ACTION_TYPE_UPDATE_COMPONENT_CONFIG, ACTION_TYPE_WRITE_CHANNEL]
+        )
+    },
     extra=probatio.ALLOW_EXTRA,
 )
 
@@ -47,25 +62,55 @@ async def async_get_actions(
     except ServiceValidationError:
         # eg the main device of an edge
         return []
-    if not component.properties:
-        return []
+    action_types: list[str] = []
+    if component.properties:
+        action_types.append(ACTION_TYPE_UPDATE_COMPONENT_CONFIG)
+    if component.edge.rest_writable and write_only_channels(component):
+        action_types.append(ACTION_TYPE_WRITE_CHANNEL)
     return [
-        {
-            CONF_DOMAIN: DOMAIN,
-            CONF_DEVICE_ID: device_id,
-            CONF_TYPE: ACTION_TYPE_UPDATE_COMPONENT_CONFIG,
-        }
+        {CONF_DOMAIN: DOMAIN, CONF_DEVICE_ID: device_id, CONF_TYPE: action_type}
+        for action_type in action_types
     ]
 
 
 async def async_get_action_capabilities(
     hass: HomeAssistant, config: ConfigType
 ) -> dict[str, probatio.Schema]:
-    """List one optional field per property of the component."""
+    """List the fields of the action.
+
+    Updating the configuration has one optional field per property of the component,
+    writing a channel offers the write-only channels of the component.
+    """
     try:
         component = component_from_device(hass, config[CONF_DEVICE_ID])
     except ServiceValidationError:
         return {}
+    if config[CONF_TYPE] == ACTION_TYPE_WRITE_CHANNEL:
+        return {
+            "extra_fields": probatio.Schema(
+                {
+                    probatio.Required(
+                        OpenEMSServiceArgument.CHANNEL
+                    ): selector.selector(
+                        {
+                            "select": {
+                                "options": sorted(write_only_channels(component)),
+                                "mode": "dropdown",
+                            }
+                        }
+                    ),
+                    probatio.Required(OpenEMSServiceArgument.VALUE): selector.selector(
+                        {"text": {}}
+                    ),
+                    probatio.Optional(
+                        OpenEMSServiceArgument.UPDATE_CYCLE, default=0
+                    ): _SECONDS_SELECTOR,
+                    probatio.Optional(
+                        OpenEMSServiceArgument.TIMEOUT, default=0
+                    ): _SECONDS_SELECTOR,
+                }
+            )
+        }
     return {
         "extra_fields": probatio.Schema(
             {
@@ -84,15 +129,30 @@ async def async_call_action_from_config(
     variables: TemplateVarsType,
     context: Context | None,
 ) -> None:
-    """Send all filled in fields with the update_component_config service."""
+    """Call the action of the device action with the filled in fields."""
+    if config[CONF_TYPE] == ACTION_TYPE_WRITE_CHANNEL:
+        await hass.services.async_call(
+            DOMAIN,
+            OpenEMSService.WRITE_CHANNEL,
+            {
+                ATTR_DEVICE_ID: config[CONF_DEVICE_ID],
+                **{key: config[key] for key in WRITE_CHANNEL_FIELDS if key in config},
+            },
+            blocking=True,
+            context=context,
+        )
+        return
     # all non-reserved keys are passed on, so that the service rejects stale fields
     properties = {
         key: value for key, value in config.items() if key not in RESERVED_KEYS
     }
     await hass.services.async_call(
         DOMAIN,
-        SERVICE_UPDATE_COMPONENT_CONFIG,
-        {ATTR_DEVICE_ID: config[CONF_DEVICE_ID], ATTR_PROPERTIES: properties},
+        OpenEMSService.UPDATE_COMPONENT_CONFIG,
+        {
+            ATTR_DEVICE_ID: config[CONF_DEVICE_ID],
+            OpenEMSServiceArgument.PROPERTIES: properties,
+        },
         blocking=True,
         context=context,
     )

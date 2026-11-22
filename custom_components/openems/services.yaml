@@ -12,48 +12,36 @@ update_component_config:
       selector:
         object:
 
-rest_write_sensor:
-  target:
-    entity:
-      integration: openems
-      domain: sensor
+write_channel:
   fields:
-    value:
+    device_id:
       required: true
       selector:
-        number:
-    timeout:
+        device:
+          integration: openems
+    channel:
       required: true
+      example: SetActivePowerEquals
+      selector:
+        text:
+    value:
+      required: true
+      example: "-2000"
+      selector:
+        text:
+    update_cycle:
       default: 0
       selector:
         number:
+          min: 0
+          max: 3600
+          mode: box
           unit_of_measurement: seconds
-    update_cycle:
-      required: true
-      default: 30
-      selector:
-        number:
-          unit_of_measurement: seconds
-
-rest_write_binary_sensor:
-  target:
-    entity:
-      integration: openems
-      domain: binary_sensor
-  fields:
-    value:
-      required: true
-      selector:
-        number:
     timeout:
-      required: true
       default: 0
       selector:
         number:
-          unit_of_measurement: seconds
-    update_cycle:
-      required: true
-      default: 30
-      selector:
-        number:
+          min: 0
+          max: 86400
+          mode: box
           unit_of_measurement: seconds

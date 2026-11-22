@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any
 
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
@@ -17,9 +16,9 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
-from .const import ATTR_TIMEOUT, ATTR_UPDATE_CYCLE, ATTR_VALUE, DOMAIN
+from .const import DOMAIN
 from .entity import OpenEMSChannelEntity
-from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
+from .helpers_ha import OpenEMSConfigEntry, component_device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,12 +98,3 @@ class OpenEMSBinarySensorEntity(
     def is_on(self) -> bool | None:
         """Return the binary state of the sensor."""
         return self._channel.is_on
-
-    @handle_write_errors
-    async def update_value(self, **kwargs: Any) -> None:
-        """Service callback to change value via REST call."""
-        await self._channel.write_via_rest(
-            float(kwargs[ATTR_VALUE]),
-            kwargs[ATTR_UPDATE_CYCLE],
-            kwargs[ATTR_TIMEOUT],
-        )

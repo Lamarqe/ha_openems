@@ -1,11 +1,26 @@
 """Constants for the HA OpenEMS integration."""
 
+from enum import StrEnum
+
 DOMAIN: str = "openems"
 
-ATTR_VALUE: str = "value"
-ATTR_PROPERTIES: str = "properties"
-ATTR_TIMEOUT: str = "timeout"
-ATTR_UPDATE_CYCLE: str = "update_cycle"
+
+class OpenEMSService(StrEnum):
+    """Actions of the OpenEMS integration."""
+
+    UPDATE_COMPONENT_CONFIG = "update_component_config"
+    WRITE_CHANNEL = "write_channel"
+
+
+class OpenEMSServiceArgument(StrEnum):
+    """Fields of the OpenEMS actions."""
+
+    PROPERTIES = "properties"
+    CHANNEL = "channel"
+    VALUE = "value"
+    UPDATE_CYCLE = "update_cycle"
+    TIMEOUT = "timeout"
+
 
 CONF_EDGES: str = "edges"
 CONF_EDGE: str = "edge"

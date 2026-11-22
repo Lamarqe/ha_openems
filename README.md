@@ -233,17 +233,32 @@ Here you find the grids frequency.\
 
 ### REST Write App
 
-Use the service **rest_write_sensor** to cyclically send REST commands to the backend:
+Channels that can only be written (`"accessMode": "WO"`), e.g. the power setpoints of `ess0` like `SetActivePowerEquals`, are written via the REST API of the edge. This requires the REST app with write access (`Controller.Api.Rest.ReadWrite`). These channels have no entities, as the edge does not report their values.
+
+Use the action **openems.write_channel** with the component device and the channel name:
+
+```yaml
+action: openems.write_channel
+data:
+  device_id: <device id of the component, e.g. ess0>
+  channel: SetActivePowerEquals
+  value: -2000
+  update_cycle: 30
+  timeout: 600
+```
 
 <table>
   <tr><th>Parameter</th><th>Meaning</th><th>Default value</th></tr>
-  <tr><td>entity</td><td>The channel to update</td><td></td></tr>
-  <tr><td>value</td><td>The new target value</td><td></td></tr>
-  <tr><td>timeout</td><td>Duration until when cyclic updates will be sent.<br> Use 0 for sending values until the next service call for the same entity.</td><td>0</td></tr>
-  <tr><td>update cycle</td><td>Cycle in which a new request will be sent.<br> This is necessary because by default, FEMS will reset REST value requests after 60 seconds by default. Setting update cycle to 0 will trigger a single REST call only.<br> </td><td>30</td></tr>
+  <tr><td>device_id</td><td>The component device</td><td></td></tr>
+  <tr><td>channel</td><td>The name of the write-only channel</td><td></td></tr>
+  <tr><td>value</td><td>The value to write, numbers in the unit of the channel</td><td></td></tr>
+  <tr><td>update_cycle</td><td>Writes the value again every given number of seconds. This is necessary because FEMS resets values written via REST after 60 seconds by default. 0 writes the value once.</td><td>0</td></tr>
+  <tr><td>timeout</td><td>Stops the repeated writes after the given number of seconds. 0 writes until the same channel is written again or the integration is reloaded.</td><td>0</td></tr>
 </table>
 
-_Note: Values sent via REST write are not reflected by the backend and thus not visible in Home Assistant._
+In automations, the device action **Write channel** of the component device offers the write-only channels in a list.
+
+_Note: Values written via REST are not reported back by the edge and thus not visible in Home Assistant._
 
 ### Update multiple component properties at once
 

@@ -438,6 +438,33 @@ async def async_migrate_entry(
             config_entry.version,
             config_entry.minor_version,
         )
+
+    if config_entry.version == 6 and config_entry.minor_version == 3:
+        # write-only channels are written with the write_channel action, not sensors
+        components = await component_store(hass, config_entry.entry_id).async_load()
+        write_only_suffixes = tuple(
+            f"/{component_name}/{channel['id']}"
+            for component_name, component in (components or {}).items()
+            for channel in component.get("channels", [])
+            if channel.get("accessMode") == "WO"
+            and not channel["id"].startswith("_Property")
+        )
+        entity_registry = er.async_get(hass)
+        for entity in er.async_entries_for_config_entry(
+            entity_registry, config_entry.entry_id
+        ):
+            if (
+                entity.domain in (Platform.SENSOR, Platform.BINARY_SENSOR)
+                and write_only_suffixes
+                and entity.unique_id.endswith(write_only_suffixes)
+            ):
+                entity_registry.async_remove(entity.entity_id)
+        hass.config_entries.async_update_entry(config_entry, minor_version=4)
+        _LOGGER.debug(
+            "Migration to configuration version %s.%s successful",
+            config_entry.version,
+            config_entry.minor_version,
+        )
         return True
 
     return False

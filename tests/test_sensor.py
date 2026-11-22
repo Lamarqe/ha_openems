@@ -18,7 +18,7 @@ from custom_components.openems.const import (
     CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING,
 )
 from openems_client.model import ChannelKind
-from openems_client.openems import OpenEMSChannel, OpenEMSEdge
+from openems_client.openems import OpenEMSEdge
 from custom_components.openems.sensor import (
     OpenEMSSensorDescription,
     OpenEMSSensorEntity,
@@ -385,14 +385,3 @@ async def test_async_setup_entry_skips_disabled_component(
         await sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
-
-
-async def test_rest_write_action_writes_via_rest() -> None:
-    """The REST write action passes value, update cycle and timeout to the channel."""
-    channel = MagicMock(spec=OpenEMSChannel)
-    channel.write_via_rest = AsyncMock()
-    entity = _make_entity(channel)
-
-    await entity.update_value(value="12.5", update_cycle=30, timeout=600)
-
-    channel.write_via_rest.assert_awaited_once_with(12.5, 30, 600)

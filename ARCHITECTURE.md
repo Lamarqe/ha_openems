@@ -104,6 +104,7 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
 - Properties (writable `_Property*` channels) use `entity_category=EntityCategory.CONFIG`.
 - `OpenEMSChannelEntity` sets `_attr_should_poll = False` and combines `available` with `channel.available`, so entities are unavailable while the edge is disconnected. Entities have no extra state attributes; the channel metadata is part of the diagnostics.
 - State is read from the channel in properties (`channel.value`, `is_on`, ...). Writes go through the channel (`await self._channel.update_value(...)`) followed by `self.async_write_ha_state()`.
+- Write-only channels (`ChannelKind.WRITE_ONLY`) have no entities. They are written with the `write_channel` action and the device action of the same name (`channel.write_via_rest`).
 - `OpenEMSChannelEntity.async_added_to_hass` registers `_handle_channel_update` as listener of the channel, which is called on value and availability changes. The channel is subscribed at the edge while it has listeners. Platforms override `_handle_channel_update` only for extra logic (e.g. `sensor.py`), not `async_added_to_hass`.
 
 ### Variant B: edge level platforms

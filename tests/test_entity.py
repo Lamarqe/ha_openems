@@ -4,16 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
-from homeassistant.exceptions import HomeAssistantError
-from openems_client.exceptions import OpenEMSError
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSChannel
-import pytest
 
-from custom_components.openems.binary_sensor import (
-    OpenEMSBinarySensorDescription,
-    OpenEMSBinarySensorEntity,
-)
 from custom_components.openems.sensor import (
     OpenEMSSensorDescription,
     OpenEMSSensorEntity,
@@ -60,31 +53,3 @@ async def test_listener_writes_state_on_availability_change() -> None:
     entity._call_on_remove_callbacks()
     channel.component.edge.set_unavailable()
     entity.async_schedule_update_ha_state.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    ("entity_class", "description_class"),
-    [
-        pytest.param(OpenEMSSensorEntity, OpenEMSSensorDescription, id="sensor"),
-        pytest.param(
-            OpenEMSBinarySensorEntity,
-            OpenEMSBinarySensorDescription,
-            id="binary_sensor",
-        ),
-    ],
-)
-async def test_rest_write_errors_raise_translated_error(
-    entity_class: type[OpenEMSSensorEntity | OpenEMSBinarySensorEntity],
-    description_class: type[OpenEMSSensorDescription | OpenEMSBinarySensorDescription],
-) -> None:
-    """Errors of the REST write action raise a translated HomeAssistantError."""
-    channel = MagicMock(spec=OpenEMSChannel)
-    channel.write_via_rest = AsyncMock(side_effect=OpenEMSError("HTTP 401"))
-    entity = entity_class(channel, description_class(key="h1/0/meter0/X"), DEVICE_INFO)
-    entity.entity_id = "sensor.meter0_x"
-
-    with pytest.raises(HomeAssistantError) as exc_info:
-        await entity.update_value(value=1, update_cycle=0, timeout=0)
-
-    assert exc_info.value.translation_key == "write_failed"
-    assert exc_info.value.translation_placeholders == {"entity_id": "sensor.meter0_x"}
