@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import logging
 
 from openems_client.model import ChannelKind
-from openems_client.openems import OpenEMSBackend, OpenEMSChannel, OpenEMSComponent
+from openems_client.openems import OpenEMSChannel, OpenEMSComponent
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -12,11 +12,9 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
-from .const import DOMAIN
 from .entity import OpenEMSChannelEntity
 from .helpers_ha import OpenEMSConfigEntry, component_device
 
@@ -33,10 +31,6 @@ async def async_setup_entry(
     def _create_sensor_entities(component: OpenEMSComponent) -> None:
         """Create binary sensor entities from channel list."""
         device = component_device(entry.runtime_data.edge_device.entry, component)
-        # create empty device explicitly, in case their are no entities
-        device_registry = dr.async_get(hass)
-
-        device_registry.async_get_or_create(**device, config_entry_id=entry.entry_id)
 
         entities: list[OpenEMSBinarySensorEntity] = []
         channel: OpenEMSChannel
@@ -67,14 +61,6 @@ async def async_setup_entry(
 
     ############ END MARKER _create_sensor_entities ##############
 
-    backend: OpenEMSBackend = entry.runtime_data.backend
-    device_registry = dr.async_get(hass)
-    # Create the edge device
-    device_registry.async_get_or_create(
-        config_entry_id=entry.entry_id,
-        name=backend.the_edge.hostname,
-        identifiers={(DOMAIN, backend.the_edge.hostname)},
-    )
     component: OpenEMSComponent
     for component in entry.runtime_data.enabled_components:
         _create_sensor_entities(component)

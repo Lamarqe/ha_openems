@@ -4,7 +4,11 @@ import logging
 from typing import Any
 
 from openems_client.client import OpenEMSClient
-from openems_client.const import CONN_TYPE_DIRECT_EDGE
+from openems_client.const import (
+    CONN_TYPE_DIRECT_EDGE,
+    CONN_TYPE_LOCAL_FEMS,
+    CONN_TYPE_WEB_FENECON,
+)
 from openems_client.exceptions import (
     OpenEMSAuthError,
     OpenEMSConnectionError,
@@ -41,6 +45,8 @@ CONFIG_SCHEMA = cv.empty_config_schema(c.DOMAIN)
 CONF_COMPONENTS = "components"
 
 _LOGGER = logging.getLogger(__name__)
+
+_FEMS_CONNECTION_TYPES = (CONN_TYPE_LOCAL_FEMS, CONN_TYPE_WEB_FENECON)
 
 _PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -126,16 +132,29 @@ async def async_setup_entry(
     )
 
     # 5. Create central edge device in HA device registry, so that all component devices can be linked to it
-    edge_device_identifiers = {(c.DOMAIN, backend.the_edge.hostname)}
     device_registry = dr.async_get(hass)
     edge_device_info = dr.DeviceInfo(
-        identifiers=edge_device_identifiers,
+        identifiers={(c.DOMAIN, backend.the_edge.hostname)},
         name=backend.the_edge.hostname,
-        entry_type=dr.DeviceEntryType.SERVICE,
+        # OpenEMS edges do not report a manufacturer, FEMS are made by FENECON
+        manufacturer="FENECON"
+        if config_entry.data[CONF_TYPE] in _FEMS_CONNECTION_TYPES
+        else None,
     )
     edge_device_entry: dr.DeviceEntry = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         **edge_device_info,
+    )
+
+    @callback
+    def _update_sw_version() -> None:
+        if (version := backend.the_edge.version) is not None:
+            device_registry.async_update_device(
+                edge_device_entry.id, sw_version=version
+            )
+
+    config_entry.async_on_unload(
+        backend.the_edge.add_version_listener(_update_sw_version)
     )
 
     # 6. Create component devices. Components without default channels start disabled.
@@ -236,9 +255,8 @@ async def async_unload_entry(
     hass: HomeAssistant, config_entry: OpenEMSConfigEntry
 ) -> None:
     """Unload a config entry."""
-    backend: OpenEMSBackend = config_entry.runtime_data.backend
-    await backend.stop()
-    await hass.config_entries.async_unload_platforms(config_entry, _PLATFORMS)
+    await hass.config_entries.async_unload_platforms_or_raise(config_entry, _PLATFORMS)
+    await config_entry.runtime_data.backend.stop()
 
 
 async def async_remove_entry(
@@ -422,52 +440,77 @@ async def async_migrate_entry(
             config_entry.minor_version,
         )
 
-    if config_entry.version == 6 and config_entry.minor_version == 2:
-        # the refresh configuration button was replaced by a check during the setup
-        entity_registry = er.async_get(hass)
-        for entity in er.async_entries_for_config_entry(
-            entity_registry, config_entry.entry_id
-        ):
-            if entity.domain == Platform.BUTTON and entity.unique_id.endswith(
-                "/refresh_configuration"
-            ):
-                entity_registry.async_remove(entity.entity_id)
-        hass.config_entries.async_update_entry(config_entry, minor_version=3)
-        _LOGGER.debug(
-            "Migration to configuration version %s.%s successful",
-            config_entry.version,
-            config_entry.minor_version,
-        )
-
-    if config_entry.version == 6 and config_entry.minor_version == 3:
-        # write-only channels are written with the write_channel action, not sensors
-        components = await component_store(hass, config_entry.entry_id).async_load()
-        write_only_suffixes = tuple(
-            f"/{component_name}/{channel['id']}"
-            for component_name, component in (components or {}).items()
-            for channel in component.get("channels", [])
-            if channel.get("accessMode") == "WO"
-            and not channel["id"].startswith("_Property")
-        )
-        entity_registry = er.async_get(hass)
-        for entity in er.async_entries_for_config_entry(
-            entity_registry, config_entry.entry_id
-        ):
-            if (
-                entity.domain in (Platform.SENSOR, Platform.BINARY_SENSOR)
-                and write_only_suffixes
-                and entity.unique_id.endswith(write_only_suffixes)
-            ):
-                entity_registry.async_remove(entity.entity_id)
-        hass.config_entries.async_update_entry(config_entry, minor_version=4)
-        _LOGGER.debug(
-            "Migration to configuration version %s.%s successful",
-            config_entry.version,
-            config_entry.minor_version,
-        )
+    # minor versions of version 6, each step migrates to the next minor version
+    steps = {
+        2: _async_remove_refresh_configuration_button,
+        3: _async_remove_write_only_sensors,
+        4: _async_reset_device_entry_type,
+    }
+    if config_entry.version == 6 and config_entry.minor_version in steps:
+        for minor_version in range(config_entry.minor_version, max(steps) + 1):
+            await steps[minor_version](hass, config_entry)
+            hass.config_entries.async_update_entry(
+                config_entry, minor_version=minor_version + 1
+            )
+            _LOGGER.debug(
+                "Migration to configuration version %s.%s successful",
+                config_entry.version,
+                config_entry.minor_version,
+            )
         return True
 
     return False
+
+
+async def _async_remove_refresh_configuration_button(
+    hass: HomeAssistant, config_entry: OpenEMSConfigEntry
+) -> None:
+    """Remove the button replaced by the configuration check during the setup."""
+    entity_registry = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(
+        entity_registry, config_entry.entry_id
+    ):
+        if entity.domain == Platform.BUTTON and entity.unique_id.endswith(
+            "/refresh_configuration"
+        ):
+            entity_registry.async_remove(entity.entity_id)
+
+
+async def _async_remove_write_only_sensors(
+    hass: HomeAssistant, config_entry: OpenEMSConfigEntry
+) -> None:
+    """Remove the sensors of write-only channels, written by the write_channel action."""
+    components = await component_store(hass, config_entry.entry_id).async_load()
+    write_only_suffixes = tuple(
+        f"/{component_name}/{channel['id']}"
+        for component_name, component in (components or {}).items()
+        for channel in component.get("channels", [])
+        if channel.get("accessMode") == "WO"
+        and not channel["id"].startswith("_Property")
+    )
+    if not write_only_suffixes:
+        return
+    entity_registry = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(
+        entity_registry, config_entry.entry_id
+    ):
+        if entity.domain in (
+            Platform.SENSOR,
+            Platform.BINARY_SENSOR,
+        ) and entity.unique_id.endswith(write_only_suffixes):
+            entity_registry.async_remove(entity.entity_id)
+
+
+async def _async_reset_device_entry_type(
+    hass: HomeAssistant, config_entry: OpenEMSConfigEntry
+) -> None:
+    """Reset the service entry type, the edge and its components are no web services."""
+    device_registry = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(
+        device_registry, config_entry.entry_id
+    ):
+        if device.entry_type is not None:
+            device_registry.async_update_device(device.id, entry_type=None)
 
 
 async def async_remove_config_entry_device(

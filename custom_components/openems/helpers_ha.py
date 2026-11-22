@@ -75,9 +75,9 @@ def component_device(
     return dr.DeviceInfo(
         name=component.edge.hostname + " " + component.name,
         model=component.alias,
+        model_id=component.factory_id,
         identifiers={component_identifier(component)},
         via_device_id=edge_device.id,
-        entry_type=dr.DeviceEntryType.SERVICE,
     )
 
 

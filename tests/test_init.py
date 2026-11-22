@@ -33,6 +33,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
+    ConfigEntryError,
     ConfigEntryNotReady,
     HomeAssistantError,
 )
@@ -428,24 +429,47 @@ async def test_setup_entry_connection_errors(
 # ---------------------------------------------------------------------------
 
 
-async def test_unload_entry_stops_backend(hass: HomeAssistant) -> None:
-    """async_unload_entry must stop the backend and unload all platforms."""
+async def _prepare_unload(
+    hass: HomeAssistant, unload_ok: bool
+) -> tuple[config_entries.ConfigEntry, MagicMock]:
+    """Return a set up entry and a mock recording the platform and backend calls."""
     entry = await _create_real_entry(hass)
-
-    mock_backend = MagicMock()
-    mock_backend.stop = AsyncMock()
+    calls = MagicMock()
+    calls.unload_platforms = AsyncMock(return_value=unload_ok)
+    calls.stop = AsyncMock()
     entry.runtime_data = RuntimeData(
-        backend=mock_backend, edge_device=MagicMock(), enabled_components=[]
+        backend=MagicMock(stop=calls.stop),
+        edge_device=MagicMock(),
+        enabled_components=[],
     )
+    return entry, calls
+
+
+async def test_unload_entry_stops_backend_after_platforms(hass: HomeAssistant) -> None:
+    """The backend is stopped after all platforms are unloaded."""
+    entry, calls = await _prepare_unload(hass, unload_ok=True)
 
     with patch.object(
-        hass.config_entries,
-        "async_unload_platforms",
-        new=AsyncMock(return_value=True),
+        hass.config_entries, "async_unload_platforms", new=calls.unload_platforms
     ):
-        result = await async_unload_entry(hass, entry)
+        await async_unload_entry(hass, entry)
 
-    mock_backend.stop.assert_awaited_once()
+    assert [name for name, _, _ in calls.mock_calls] == ["unload_platforms", "stop"]
+
+
+async def test_unload_entry_failure_keeps_backend_running(hass: HomeAssistant) -> None:
+    """If a platform cannot be unloaded, the backend keeps running."""
+    entry, calls = await _prepare_unload(hass, unload_ok=False)
+
+    with (
+        patch.object(
+            hass.config_entries, "async_unload_platforms", new=calls.unload_platforms
+        ),
+        pytest.raises(ConfigEntryError),
+    ):
+        await async_unload_entry(hass, entry)
+
+    calls.stop.assert_not_awaited()
 
 
 # ---------------------------------------------------------------------------
@@ -460,6 +484,7 @@ def _make_component(name: str) -> MagicMock:
     component.alias = name
     component.edge.hostname = "host"
     component.unique_id = "host " + name
+    component.factory_id = "Factory." + name
     component.has_primary_channels = CONFIG.has_primary_channels(name)
     return component
 
@@ -468,7 +493,7 @@ async def _setup_with_components(
     hass: HomeAssistant,
     entry: config_entries.ConfigEntry,
     components: dict[str, MagicMock],
-) -> None:
+) -> MagicMock:
     """Run async_setup_entry with a mock backend containing the given components."""
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
@@ -486,6 +511,60 @@ async def _setup_with_components(
         ),
     ):
         await async_setup_entry(hass, entry)
+    return mock_backend
+
+
+@pytest.mark.parametrize(
+    ("connection_type", "manufacturer"),
+    [
+        pytest.param("direct_edge", None, id="openems"),
+        pytest.param("local_fems", "FENECON", id="local_fems"),
+        pytest.param("web_fenecon", "FENECON", id="fenecon_portal"),
+    ],
+)
+async def test_setup_entry_device_info(
+    hass: HomeAssistant, connection_type: str, manufacturer: str | None
+) -> None:
+    """FEMS edges are made by FENECON, components show their implementation."""
+    entry = await _create_real_entry(hass)
+    hass.config_entries.async_update_entry(
+        entry, data={**entry.data, "type": connection_type}
+    )
+
+    await _setup_with_components(hass, entry, {"ess0": _make_component("ess0")})
+
+    device_registry = dr.async_get(hass)
+    edge_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "host"), entry.entry_id
+    )
+    ess_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "host ess0"), entry.entry_id
+    )
+    assert edge_device.manufacturer == manufacturer
+    assert edge_device.entry_type is None
+    assert ess_device.manufacturer is None
+    assert ess_device.entry_type is None
+    assert ess_device.model == "ess0"
+    assert ess_device.model_id == "Factory.ess0"
+
+
+async def test_setup_entry_updates_software_version(hass: HomeAssistant) -> None:
+    """The edge device shows the software version reported by the edge."""
+    entry = await _create_real_entry(hass)
+    mock_backend = await _setup_with_components(hass, entry, {})
+    version_listener = mock_backend.the_edge.add_version_listener.call_args.args[0]
+    device_registry = dr.async_get(hass)
+
+    mock_backend.the_edge.version = "2026.8.1"
+    version_listener()
+    # an unknown version does not replace the known one
+    mock_backend.the_edge.version = None
+    version_listener()
+
+    edge_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "host"), entry.entry_id
+    )
+    assert edge_device.sw_version == "2026.8.1"
 
 
 async def test_setup_entry_creates_component_devices(hass: HomeAssistant) -> None:
@@ -588,7 +667,7 @@ async def test_migrate_v5_moves_components_to_store(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 4)
+    assert (entry.version, entry.minor_version) == (6, 5)
     assert entry.data == _USER_INPUT
     assert hass_storage[_storage_key(entry)]["data"] == {"comp1": {}}
 
@@ -618,7 +697,7 @@ async def test_migrate_v6_1_sets_unique_id_from_edge_device(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 4)
+    assert (entry.version, entry.minor_version) == (6, 5)
     assert entry.unique_id == edge_identifier
 
 
@@ -636,11 +715,28 @@ async def test_migrate_v6_2_removes_refresh_configuration_button(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 4)
+    assert (entry.version, entry.minor_version) == (6, 5)
     assert not entity_registry.async_get_entity_id(
         Platform.BUTTON, DOMAIN, "fems1/0/refresh_configuration"
     )
     assert entity_registry.async_get_entity_id(Platform.BUTTON, DOMAIN, "fems1/0/restart")
+
+
+async def test_migrate_v6_4_resets_device_entry_type(hass: HomeAssistant) -> None:
+    """The edge and its components are no web services."""
+    entry = MockConfigEntry(domain=DOMAIN, version=6, minor_version=4, data=_USER_INPUT)
+    entry.add_to_hass(hass)
+    device_registry = dr.async_get(hass)
+    device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, "fems1")},
+        entry_type=dr.DeviceEntryType.SERVICE,
+    )
+
+    assert await async_migrate_entry(hass, entry)
+
+    assert (entry.version, entry.minor_version) == (6, 5)
+    assert device_registry.async_get(device.id).entry_type is None
 
 
 async def test_migrate_v4_moves_component_selection_to_devices(
@@ -671,7 +767,7 @@ async def test_migrate_v4_moves_component_selection_to_devices(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 4)
+    assert (entry.version, entry.minor_version) == (6, 5)
     assert entry.unique_id == "host"
     assert entry.options == _DEFAULT_OPTIONS
     disabled_by = {

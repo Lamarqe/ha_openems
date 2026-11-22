@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 import logging
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
@@ -97,10 +97,7 @@ async def test_async_setup_entry_creates_select_entities(hass: HomeAssistant) ->
     edge = make_edge({"ctrlEvcs0": [make_channel("_PropertyChargeMode", "STRING")]})
 
     created: list[OpenEMSSelectEntity] = []
-    with patch(
-        "custom_components.openems.select.dr.async_get", return_value=MagicMock()
-    ):
-        await select_module.async_setup_entry(hass, make_entry(edge), created.extend)
+    await select_module.async_setup_entry(hass, make_entry(edge), created.extend)
 
     assert len(created) == 1
     description = created[0].entity_description
@@ -123,10 +120,7 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry.runtime_data.enabled_components = []
 
     created: list = []
-    with patch(
-        "custom_components.openems.select.dr.async_get", return_value=MagicMock()
-    ):
-        await select_module.async_setup_entry(hass, mock_entry, created.extend)
+    await select_module.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
 

@@ -1,6 +1,6 @@
 """Tests for the OpenEMS number platform."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.components.number import (
     NumberDeviceClass,
@@ -96,10 +96,7 @@ async def test_async_setup_entry_creates_number_entities(hass: HomeAssistant) ->
     )
 
     created: list[OpenEMSNumberEntity] = []
-    with patch(
-        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
-    ):
-        await number.async_setup_entry(hass, make_entry(edge), created.extend)
+    await number.async_setup_entry(hass, make_entry(edge), created.extend)
 
     assert len(created) == 1
     description = created[0].entity_description
@@ -141,10 +138,7 @@ async def test_async_setup_entry_number_mode_from_fixed_step(
     mock_entry.runtime_data.enabled_components = [mock_component]
 
     created: list[OpenEMSNumberEntity] = []
-    with patch(
-        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
-    ):
-        await number.async_setup_entry(hass, mock_entry, created.extend)
+    await number.async_setup_entry(hass, mock_entry, created.extend)
 
     modes = [entity.entity_description.mode for entity in created]
     assert modes == [NumberMode.BOX, NumberMode.AUTO]
@@ -164,9 +158,6 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry.runtime_data.enabled_components = []
 
     created: list = []
-    with patch(
-        "custom_components.openems.number.dr.async_get", return_value=MagicMock()
-    ):
-        await number.async_setup_entry(hass, mock_entry, created.extend)
+    await number.async_setup_entry(hass, mock_entry, created.extend)
 
     assert not created

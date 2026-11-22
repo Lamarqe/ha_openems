@@ -1,7 +1,7 @@
 """Tests for the OpenEMS time platform."""
 
 from datetime import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
@@ -79,8 +79,7 @@ async def test_async_setup_entry_creates_time_entities(hass: HomeAssistant) -> N
     )
 
     created: list[OpenEMSTimeEntity] = []
-    with patch("custom_components.openems.time.dr.async_get", return_value=MagicMock()):
-        await time_module.async_setup_entry(hass, make_entry(edge), created.extend)
+    await time_module.async_setup_entry(hass, make_entry(edge), created.extend)
 
     assert len(created) == 1
     description = created[0].entity_description
@@ -102,7 +101,6 @@ async def test_async_setup_entry_skips_disabled_component(hass: HomeAssistant) -
     mock_entry.runtime_data.enabled_components = []
 
     created: list = []
-    with patch("custom_components.openems.time.dr.async_get", return_value=MagicMock()):
-        await time_module.async_setup_entry(hass, mock_entry, created.extend)
+    await time_module.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []

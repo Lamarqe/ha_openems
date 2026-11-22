@@ -370,7 +370,7 @@ async def test_migrate_v6_3_removes_write_only_sensors(
 
     assert await async_migrate_entry(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 4)
+    assert (entry.version, entry.minor_version) == (6, 5)
     assert not entity_registry.async_get_entity_id(
         Platform.SENSOR, DOMAIN, "fems1/0/ess0/SetActivePowerEquals"
     )

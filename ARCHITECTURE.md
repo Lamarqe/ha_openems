@@ -36,8 +36,8 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 
 ### Devices
 
-- One **edge device**, identifier `(DOMAIN, edge.hostname)`, created in `__init__.async_setup_entry`. Its `DeviceInfo` is available as `entry.runtime_data.edge_device.info`.
-- One **component device** per component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`. `__init__.async_setup_entry` creates them for all components. New devices of components without primary channels (`component.has_primary_channels`) are created with `disabled_by=DeviceEntryDisabler.INTEGRATION`; existing devices keep their state.
+- One **edge device**, identifier `(DOMAIN, edge.hostname)`, created in `__init__.async_setup_entry`. Its `DeviceInfo` is available as `entry.runtime_data.edge_device.info`. Its `manufacturer` is FENECON for the FEMS connection types (local FEMS, FENECON portal), none otherwise. A version listener (`edge.add_version_listener`) keeps its `sw_version` up to date.
+- One **component device** per component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`. `__init__.async_setup_entry` creates them for all components, the platforms do not create devices. Component devices show the alias as `model` and the implementation (`component.factory_id`, e.g. `Evcs.HardyBarth`) as `model_id`; devices have no entry type. New devices of components without primary channels (`component.has_primary_channels`) are created with `disabled_by=DeviceEntryDisabler.INTEGRATION`; existing devices keep their state.
 - `entry.runtime_data.enabled_components` holds the components with an enabled device. Platforms create entities only for those, so disabled components have no entities at all.
 - Enabling or disabling a component device reloads the config entry (`async_track_device_registry_updated_event` in `async_setup_entry`), which creates or removes the entities of the component.
 - The component device identifier is `(DOMAIN, component.unique_id)` (`"<hostname> <component>"`, see `component_identifier`). In multi-edge setups the hostname is `"<hostname> <edge id>"`, so identifiers are compared as a whole and never split.
@@ -79,8 +79,6 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
 
     def _create_<platform>_entities(component: OpenEMSComponent) -> None:
         device = component_device(entry.runtime_data.edge_device.entry, component)
-        # create empty device explicitly, in case there are no entities
-        dr.async_get(hass).async_get_or_create(**device, config_entry_id=entry.entry_id)
 
         entities: list[OpenEMS<Platform>Entity] = []
         for channel in component.channels_of(ChannelKind.<KIND>, <channel class>):

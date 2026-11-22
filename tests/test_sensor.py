@@ -168,12 +168,9 @@ async def _setup_sensors(
 ) -> dict[str, OpenEMSSensorEntity]:
     """Set up the sensor platform, return the entities by channel name."""
     created: list[OpenEMSSensorEntity] = []
-    with patch(
-        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
-    ):
-        await sensor.async_setup_entry(
-            hass, make_entry(edge, ignore_decreasing), created.extend
-        )
+    await sensor.async_setup_entry(
+        hass, make_entry(edge, ignore_decreasing), created.extend
+    )
     return {entity._channel.name: entity for entity in created}
 
 
@@ -379,9 +376,6 @@ async def test_async_setup_entry_skips_disabled_component(
     mock_entry.runtime_data.enabled_components = []
 
     created: list = []
-    with patch(
-        "custom_components.openems.sensor.dr.async_get", return_value=MagicMock()
-    ):
-        await sensor.async_setup_entry(hass, mock_entry, created.extend)
+    await sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []

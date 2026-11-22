@@ -1,6 +1,6 @@
 """Tests for the OpenEMS binary sensor platform."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -83,10 +83,7 @@ async def test_async_setup_entry_creates_binary_sensor_entities(
     )
 
     created: list[OpenEMSBinarySensorEntity] = []
-    with patch(
-        "custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()
-    ):
-        await binary_sensor.async_setup_entry(hass, make_entry(edge), created.extend)
+    await binary_sensor.async_setup_entry(hass, make_entry(edge), created.extend)
 
     descriptions = {e._channel.name: e.entity_description for e in created}
     assert descriptions["IsChargingEnabled"].device_class is None
@@ -115,9 +112,6 @@ async def test_async_setup_entry_skips_disabled_component(
     mock_entry.runtime_data.enabled_components = []
 
     created: list = []
-    with patch(
-        "custom_components.openems.binary_sensor.dr.async_get", return_value=MagicMock()
-    ):
-        await binary_sensor.async_setup_entry(hass, mock_entry, created.extend)
+    await binary_sensor.async_setup_entry(hass, mock_entry, created.extend)
 
     assert created == []
