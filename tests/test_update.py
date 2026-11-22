@@ -16,6 +16,7 @@ from custom_components.openems.update import (
     OpenEMSUpdateDescription,
     OpenEMSUpdateEntity,
 )
+from homeassistant.components.update import UpdateDeviceClass, UpdateEntityFeature
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -30,10 +31,12 @@ RUNNING = SystemUpdateState(status=UpdateStatus.RUNNING, percent_completed=75)
 UNKNOWN = SystemUpdateState(status=UpdateStatus.UNKNOWN)
 
 
-def _make_entity() -> OpenEMSUpdateEntity:
+def _make_entity(has_release_notes: bool = True) -> OpenEMSUpdateEntity:
     edge = MagicMock()
     edge.hostname = "host"
     edge.id = "edge-1"
+    edge.has_release_notes = has_release_notes
+    edge.release_url = "http://192.0.2.1/_/changelog"
     desc = OpenEMSUpdateDescription(key="host/edge-1/update")
     device_info = DeviceInfo(name="host", identifiers={("openems", "host")})
     entity = OpenEMSUpdateEntity(edge, desc, device_info)
@@ -173,3 +176,42 @@ async def test_install_errors_raise_translated_error(
 
     assert exc_info.value.translation_key == translation_key
     assert exc_info.value.translation_placeholders == {"edge": "host"}
+
+
+@pytest.mark.parametrize(
+    ("has_release_notes", "features"),
+    [
+        pytest.param(
+            True,
+            UpdateEntityFeature.INSTALL
+            | UpdateEntityFeature.PROGRESS
+            | UpdateEntityFeature.RELEASE_NOTES,
+            id="fems",
+        ),
+        pytest.param(
+            False,
+            UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS,
+            id="openems",
+        ),
+    ],
+)
+def test_release_information(
+    has_release_notes: bool, features: UpdateEntityFeature
+) -> None:
+    """The entity is a firmware update with the release information of the edge."""
+    entity = _make_entity(has_release_notes)
+
+    assert entity.device_class == UpdateDeviceClass.FIRMWARE
+    assert entity.release_url == "http://192.0.2.1/_/changelog"
+    assert entity.supported_features == features
+
+
+async def test_release_notes(hass: HomeAssistant) -> None:
+    """The release notes of the edge are requested in the language of Home Assistant."""
+    entity = _make_entity()
+    entity.hass = hass
+    hass.config.language = "de"
+    entity._edge.get_release_notes = AsyncMock(return_value="## 2.0.0\n\n- Neu")
+
+    assert await entity.async_release_notes() == "## 2.0.0\n\n- Neu"
+    entity._edge.get_release_notes.assert_awaited_once_with("de")

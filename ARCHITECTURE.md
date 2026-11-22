@@ -36,7 +36,7 @@ The protocol implementation lives in the [`openems-client`](https://github.com/L
 
 ### Devices
 
-- One **edge device**, identifier `(DOMAIN, edge.hostname)`, created in `__init__.async_setup_entry`. Its `DeviceInfo` is available as `entry.runtime_data.edge_device.info`. Its `manufacturer` is FENECON for the FEMS connection types (local FEMS, FENECON portal), none otherwise. A version listener (`edge.add_version_listener`) keeps its `sw_version` up to date.
+- One **edge device**, identifier `(DOMAIN, edge.hostname)`, created in `__init__.async_setup_entry`. Its `DeviceInfo` is available as `entry.runtime_data.edge_device.info`. Its `manufacturer` comes from the library (`edge.manufacturer`: FENECON for FEMS, none otherwise). A version listener (`edge.add_version_listener`) keeps its `sw_version` up to date.
 - One **component device** per component, built with `component_device(entry.runtime_data.edge_device.entry, component)` and linked to the edge device via `via_device_id`. `__init__.async_setup_entry` creates them for all components, the platforms do not create devices. Component devices show the alias as `model` and the implementation (`component.factory_id`, e.g. `Evcs.HardyBarth`) as `model_id`; devices have no entry type. New devices of components without primary channels (`component.has_primary_channels`) are created with `disabled_by=DeviceEntryDisabler.INTEGRATION`; existing devices keep their state.
 - `entry.runtime_data.enabled_components` holds the components with an enabled device. Platforms create entities only for those, so disabled components have no entities at all.
 - Enabling or disabling a component device reloads the config entry (`async_track_device_registry_updated_event` in `async_setup_entry`), which creates or removes the entities of the component.
@@ -139,6 +139,7 @@ class OpenEMS<Name>Entity(<Platform>Entity):
 ```
 
 - If another module needs an edge level unique id, expose it as a module-level function next to its platform (e.g. `update.update_unique_id(edge)`). Do not duplicate the string format.
+- The update entity is a firmware update (`UpdateDeviceClass.FIRMWARE`). Release URL and release notes come from the library (`edge.release_url`, `edge.get_release_notes(language)`, only for FEMS); the integration does not know FEMS specifics.
 - Polling edge requests (`edge.get_system_update_state()`) catch `OpenEMSError` and set the entity unavailable instead of raising. Requests triggered by the user (buttons) raise a translated `HomeAssistantError`.
 - Long running edge operations are implemented in the library, not in the entity: `edge.install_system_update(on_progress)` installs the update and reports each state to the callback, which writes the entity state. The entity only maps the library exceptions (`OpenEMSTimeoutError`, `OpenEMSError`) to translated errors.
 

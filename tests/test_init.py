@@ -493,11 +493,13 @@ async def _setup_with_components(
     hass: HomeAssistant,
     entry: config_entries.ConfigEntry,
     components: dict[str, MagicMock],
+    manufacturer: str | None = None,
 ) -> MagicMock:
     """Run async_setup_entry with a mock backend containing the given components."""
     mock_backend = MagicMock()
     mock_backend.the_edge.hostname = "host"
     mock_backend.the_edge.components = components
+    mock_backend.the_edge.manufacturer = manufacturer
 
     conn_patch, _ = _make_conn_patches()
     with (
@@ -515,23 +517,18 @@ async def _setup_with_components(
 
 
 @pytest.mark.parametrize(
-    ("connection_type", "manufacturer"),
-    [
-        pytest.param("direct_edge", None, id="openems"),
-        pytest.param("local_fems", "FENECON", id="local_fems"),
-        pytest.param("web_fenecon", "FENECON", id="fenecon_portal"),
-    ],
+    "manufacturer",
+    [pytest.param(None, id="openems"), pytest.param("FENECON", id="fems")],
 )
 async def test_setup_entry_device_info(
-    hass: HomeAssistant, connection_type: str, manufacturer: str | None
+    hass: HomeAssistant, manufacturer: str | None
 ) -> None:
-    """FEMS edges are made by FENECON, components show their implementation."""
+    """The edge shows the manufacturer of the library, components their implementation."""
     entry = await _create_real_entry(hass)
-    hass.config_entries.async_update_entry(
-        entry, data={**entry.data, "type": connection_type}
-    )
 
-    await _setup_with_components(hass, entry, {"ess0": _make_component("ess0")})
+    await _setup_with_components(
+        hass, entry, {"ess0": _make_component("ess0")}, manufacturer
+    )
 
     device_registry = dr.async_get(hass)
     edge_device = device_registry.async_get_device_by_identifier(

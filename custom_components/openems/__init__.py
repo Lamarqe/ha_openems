@@ -4,11 +4,7 @@ import logging
 from typing import Any
 
 from openems_client.client import OpenEMSClient
-from openems_client.const import (
-    CONN_TYPE_DIRECT_EDGE,
-    CONN_TYPE_LOCAL_FEMS,
-    CONN_TYPE_WEB_FENECON,
-)
+from openems_client.const import CONN_TYPE_DIRECT_EDGE
 from openems_client.exceptions import (
     OpenEMSAuthError,
     OpenEMSConnectionError,
@@ -46,7 +42,6 @@ CONF_COMPONENTS = "components"
 
 _LOGGER = logging.getLogger(__name__)
 
-_FEMS_CONNECTION_TYPES = (CONN_TYPE_LOCAL_FEMS, CONN_TYPE_WEB_FENECON)
 
 _PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -136,10 +131,7 @@ async def async_setup_entry(
     edge_device_info = dr.DeviceInfo(
         identifiers={(c.DOMAIN, backend.the_edge.hostname)},
         name=backend.the_edge.hostname,
-        # OpenEMS edges do not report a manufacturer, FEMS are made by FENECON
-        manufacturer="FENECON"
-        if config_entry.data[CONF_TYPE] in _FEMS_CONNECTION_TYPES
-        else None,
+        manufacturer=backend.the_edge.manufacturer,
     )
     edge_device_entry: dr.DeviceEntry = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,

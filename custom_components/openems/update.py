@@ -10,6 +10,7 @@ from openems_client.openems import OpenEMSBackend, OpenEMSEdge
 from openems_client.system_update import SystemUpdateState, UpdateStatus
 
 from homeassistant.components.update import (
+    UpdateDeviceClass,
     UpdateEntity,
     UpdateEntityDescription,
     UpdateEntityFeature,
@@ -51,11 +52,11 @@ def update_unique_id(edge: OpenEMSEdge) -> str:
 
 @dataclass(frozen=True, kw_only=True)
 class OpenEMSUpdateDescription(UpdateEntityDescription):
-    """Definition of OpenEMS sensor attributes."""
+    """Definition of OpenEMS update attributes."""
 
     has_entity_name = True
+    device_class = UpdateDeviceClass.FIRMWARE
     entity_registry_enabled_default = True
-    name = "Update"
     should_poll = True
 
 
@@ -76,7 +77,13 @@ class OpenEMSUpdateEntity(UpdateEntity):
         self._attr_supported_features = (
             UpdateEntityFeature.PROGRESS | UpdateEntityFeature.INSTALL
         )
-        self._attr_release_url = "https://portal.fenecon.de/_/changelog"
+        if edge.has_release_notes:
+            self._attr_supported_features |= UpdateEntityFeature.RELEASE_NOTES
+        self._attr_release_url = edge.release_url
+
+    async def async_release_notes(self) -> str | None:
+        """Return the changes from the installed to the latest version."""
+        return await self._edge.get_release_notes(self.hass.config.language)
 
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
