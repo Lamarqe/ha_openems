@@ -171,4 +171,33 @@ async def test_multi_edge_edges_step_error_on_connection_failure(
 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "edges"
-    assert CONF_EDGES in result["errors"]
+    assert result["errors"] == {CONF_EDGES: "error_processing_edge"}
+    # the form offers the online edges again
+    edges_selector = next(
+        value for key, value in result["data_schema"].schema.items() if key == CONF_EDGES
+    )
+    assert edges_selector.config["options"] == ["edge-online-1", "edge-online-2"]
+
+
+async def test_multi_edge_without_online_edges(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A backend without online edges shows an error instead of an empty selection."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, _, components_patch = _multi_edge_patches()
+    offline_edges = {"edges": [{"id": "edge-offline-1", "isOnline": False}]}
+    with (
+        conn_patch,
+        patch.object(OpenEMSConfigReader, "read_edges", return_value=offline_edges),
+        components_patch,
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+    assert result["errors"] == {"base": "no_edges"}

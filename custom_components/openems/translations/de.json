@@ -16,7 +16,8 @@
       "invalid_url": "Ungültige URL angegeben",
       "unknown": "Unerwarter Fehler",
       "url_not_absolute": "Indiviudelle URL muss absolut sein.",
-      "invalid_host": "Ungültiger Host"
+      "invalid_host": "Ungültiger Host",
+      "no_edges": "Für dieses Konto ist kein System verfügbar"
     },
     "step": {
       "edges": {

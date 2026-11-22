@@ -171,6 +171,55 @@ async def test_form_cannot_read_edge(
     assert result["errors"] == {CONF_BASE: "cannot_read_components"}
 
 
+async def test_form_without_edges(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A backend without edges shows an error."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, _, components_patch = _success_patches()
+    with (
+        conn_patch,
+        patch.object(OpenEMSConfigReader, "read_edges", return_value={"edges": []}),
+        components_patch,
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "no_edges"}
+
+
+async def test_form_unexpected_error(
+    hass: HomeAssistant,
+    mock_setup_entry: AsyncMock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Unexpected errors are logged and shown as unknown error."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    conn_patch, _, components_patch = _success_patches()
+    with (
+        conn_patch,
+        patch.object(
+            OpenEMSConfigReader, "read_edges", side_effect=RuntimeError("broken")
+        ),
+        components_patch,
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], _USER_INPUT
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "unknown"}
+    assert "Unexpected error while reading the edges" in caplog.text
+
+
 async def test_form_invalid_host(
     hass: HomeAssistant, mock_setup_entry: AsyncMock
 ) -> None:
@@ -507,6 +556,34 @@ async def test_reauth_shows_error_and_recovers(
     # the login is validated with the stored connection data and the new credentials
     assert connection_class.call_args.args[0]["host"] == "1.1.1.1"
     assert connection_class.call_args.args[0]["password"] == "new-password"
+
+
+async def test_reauth_unexpected_error(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """Unexpected errors during the reauthentication show an unknown error."""
+    entry = MockConfigEntry(
+        domain=DOMAIN, version=6, unique_id=EDGE_HOSTNAME, data=_REAUTH_ENTRY_DATA
+    )
+    entry.add_to_hass(hass)
+    result = await entry.start_reauth_flow(hass)
+
+    with (
+        patch(
+            "openems_client.client.OpenEMSWebSocketConnection",
+            return_value=make_mock_connection(),
+        ),
+        patch.object(
+            OpenEMSConfigReader, "read_edge_config", side_effect=RuntimeError("broken")
+        ),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "test-username", CONF_PASSWORD: "new-password"},
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "unknown"}
 
 
 async def test_form_aborts_for_configured_system(

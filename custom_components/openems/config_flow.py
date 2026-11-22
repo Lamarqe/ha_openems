@@ -59,6 +59,8 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     def __init__(self) -> None:
         """Initialize."""
         self._config_data: dict[str, Any] = {}
+        # online edges of a multi edge backend, offered in the edges step
+        self._edges: list[EdgeInfo] = []
 
     def _step_user_data_schema(self, user_input=None) -> probatio.Schema:
         """Define the config flow input options."""
@@ -109,10 +111,13 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         )
         return schema
 
-    def _step_edges_data_schema(
-        self, edges: list[EdgeInfo], default_edge
-    ) -> probatio.Schema:
+    def _step_edges_data_schema(self) -> probatio.Schema:
         """Define the edges step input options."""
+        default_edge = (
+            self._get_reconfigure_entry().data[c.CONF_EDGE]
+            if self.source == SOURCE_RECONFIGURE
+            else None
+        )
         return probatio.Schema(
             {
                 probatio.Required(
@@ -120,7 +125,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                     default=default_edge,
                 ): SelectSelector(
                     SelectSelectorConfig(
-                        options=[edge.id for edge in edges if edge.online],
+                        options=[edge.id for edge in self._edges],
                         multiple=False,
                         mode=SelectSelectorMode.LIST,
                     )
@@ -152,7 +157,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             return self._show_form(user_input, errors)
 
         if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
-            if not user_input.get(CONF_URL).strip():
+            if not user_input.get(CONF_URL, "").strip():
                 errors[c.CONF_MORE_OPTIONS] = "custom_url_missing"
                 return self._show_form(user_input, errors)
 
@@ -196,27 +201,41 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
             try:
                 edges = await client.read_edges()
-                if login.multi_edge:
-                    if self.source == SOURCE_RECONFIGURE:
-                        default_edge = self._get_reconfigure_entry().data[c.CONF_EDGE]
-                    else:
-                        default_edge = None
-
-                    edges_schema = self._step_edges_data_schema(edges, default_edge)
-                    return self.async_show_form(
-                        step_id="edges",
-                        data_schema=edges_schema,
-                    )
-
-                # single edge backend, all required data has been received.
-                edge_id = edges[0].id
-                self._config_data[c.CONF_EDGE] = edge_id
-                return await self._create_or_update_entry(client, edge_id)
-
-            except OpenEMSError, KeyError:
-                _LOGGER.exception("Cannot read edge components")
+            except OpenEMSError:
                 errors[CONF_BASE] = "cannot_read_components"
                 return self._show_form(user_input, errors)
+            except Exception:
+                _LOGGER.exception("Unexpected error while reading the edges")
+                errors[CONF_BASE] = "unknown"
+                return self._show_form(user_input, errors)
+
+            if login.multi_edge:
+                self._edges = [edge for edge in edges if edge.online]
+                if not self._edges:
+                    errors[CONF_BASE] = "no_edges"
+                    return self._show_form(user_input, errors)
+                return self.async_show_form(
+                    step_id="edges", data_schema=self._step_edges_data_schema()
+                )
+
+            # single edge backend, all required data has been received
+            if not edges:
+                errors[CONF_BASE] = "no_edges"
+                return self._show_form(user_input, errors)
+            edge_id = edges[0].id
+            self._config_data[c.CONF_EDGE] = edge_id
+            try:
+                hostname = await client.read_edge_hostname(edge_id)
+            except OpenEMSError:
+                errors[CONF_BASE] = "cannot_read_components"
+                return self._show_form(user_input, errors)
+            except Exception:
+                _LOGGER.exception("Unexpected error while reading the edge")
+                errors[CONF_BASE] = "unknown"
+                return self._show_form(user_input, errors)
+            return await self._create_or_update_entry(
+                hostname, client.host, multi_edge=False
+            )
 
     def _show_form(self, user_input, errors):
         # show errors in form
@@ -226,10 +245,10 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         )
 
     async def _create_or_update_entry(
-        self, client: OpenEMSClient, edge_id: str
+        self, hostname: str, host: str | None, multi_edge: bool
     ) -> ConfigFlowResult:
-        # the hostname identifies the edge, reading it validates the edge is running
-        await self.async_set_unique_id(await client.read_edge_hostname(edge_id))
+        # the hostname identifies the edge
+        await self.async_set_unique_id(hostname)
 
         if self.source == SOURCE_RECONFIGURE:
             self._abort_if_unique_id_mismatch()
@@ -260,9 +279,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             title = self._config_data[CONF_HOST]
         elif self._config_data[CONF_TYPE] == CONN_TYPE_WEB_FENECON:
             title = "FEMS Web: " + self._config_data[CONF_USERNAME]
-        elif client.host is not None:
-            title = client.host
-        if client.login.multi_edge:
+        elif host is not None:
+            title = host
+        if multi_edge:
             title += " " + self._config_data[c.CONF_EDGE]
 
         return self.async_create_entry(
@@ -274,27 +293,27 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     ) -> ConfigFlowResult:
         """Handle edges selection by user."""
         errors: dict[str, str] = {}
-        if not self.cur_step:
-            return self.async_abort(reason="No current step found in edges step")
-
-        edges_schema = self.cur_step.get("data_schema")
         if user_input is not None:
-            self._config_data[c.CONF_EDGE] = user_input[c.CONF_EDGES]
+            edge_id = user_input[c.CONF_EDGES]
+            self._config_data[c.CONF_EDGE] = edge_id
             async with OpenEMSClient(
                 map_user_input(self._config_data), async_get_clientsession(self.hass)
             ) as client:
                 try:
                     await client.connect()
-                    return await self._create_or_update_entry(
-                        client, user_input[c.CONF_EDGES]
-                    )
+                    hostname = await client.read_edge_hostname(edge_id)
                 except OpenEMSError:
-                    _LOGGER.exception("Error during processing the selected edge")
                     errors[c.CONF_EDGES] = "error_processing_edge"
+                except Exception:
+                    _LOGGER.exception("Unexpected error while reading the edge")
+                    errors[CONF_BASE] = "unknown"
+                else:
+                    return await self._create_or_update_entry(
+                        hostname, client.host, multi_edge=True
+                    )
 
-        # show errors in form
         return self.async_show_form(
-            step_id="edges", data_schema=edges_schema, errors=errors
+            step_id="edges", data_schema=self._step_edges_data_schema(), errors=errors
         )
 
     async def async_step_reconfigure(
@@ -333,8 +352,11 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                     )
                 except OpenEMSAuthError:
                     errors[CONF_BASE] = "invalid_auth"
-                except OpenEMSError, KeyError:
+                except OpenEMSError:
                     errors[CONF_BASE] = "cannot_connect"
+                except Exception:
+                    _LOGGER.exception("Unexpected error during reauthentication")
+                    errors[CONF_BASE] = "unknown"
                 else:
                     # the credentials must belong to the system of the entry
                     await self.async_set_unique_id(hostname)

@@ -16,7 +16,8 @@
             "invalid_url": "Invalid URL provided",
             "unknown": "Unexpected error",
             "url_not_absolute": "Custom URL must be absolute",
-            "invalid_host": "Invalid host"
+            "invalid_host": "Invalid host",
+            "no_edges": "No system is available for this account"
         },
         "step": {
             "edges": {
