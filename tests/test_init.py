@@ -670,7 +670,7 @@ async def test_migrate_v1_continues_to_latest_version(
         Platform.SENSOR, DOMAIN, "fems1/edge0/ess0/Soc", config_entry=entry
     )
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert (entry.version, entry.minor_version) == (6, 5)
     assert entry.data == {
@@ -698,8 +698,22 @@ async def test_migrate_v1_without_configuration_fails(hass: HomeAssistant) -> No
     entry = MockConfigEntry(domain=DOMAIN, version=1, data=_USER_INPUT)
     entry.add_to_hass(hass)
 
-    assert not await async_migrate_entry(hass, entry)
+    with pytest.raises(ConfigEntryError) as exc_info:
+        await async_migrate_entry(hass, entry)
+    assert exc_info.value.translation_key == "migration_data_missing"
     assert entry.version == 1
+
+
+async def test_migrate_unsupported_version_fails(hass: HomeAssistant) -> None:
+    """Entries of an unknown configuration version cannot be migrated."""
+    entry = MockConfigEntry(domain=DOMAIN, version=7, data=_USER_INPUT)
+    entry.add_to_hass(hass)
+
+    with pytest.raises(ConfigEntryError) as exc_info:
+        await async_migrate_entry(hass, entry)
+    assert exc_info.value.translation_key == "migration_unsupported_version"
+    assert exc_info.value.translation_placeholders == {"version": "7.1"}
+    assert entry.version == 7
 
 
 async def test_migrate_v5_moves_components_to_store(
@@ -715,7 +729,7 @@ async def test_migrate_v5_moves_components_to_store(
     )
     entry.add_to_hass(hass)
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert (entry.version, entry.minor_version) == (6, 5)
     assert entry.data == _USER_INPUT
@@ -745,7 +759,7 @@ async def test_migrate_v6_1_sets_unique_id_from_edge_device(
         via_device_id=edge_device.id,
     )
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert (entry.version, entry.minor_version) == (6, 5)
     assert entry.unique_id == edge_identifier
@@ -763,7 +777,7 @@ async def test_migrate_v6_2_removes_refresh_configuration_button(
             Platform.BUTTON, DOMAIN, f"fems1/0/{key}", config_entry=entry
         )
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert (entry.version, entry.minor_version) == (6, 5)
     assert not entity_registry.async_get_entity_id(
@@ -783,7 +797,7 @@ async def test_migrate_v6_4_resets_device_entry_type(hass: HomeAssistant) -> Non
         entry_type=dr.DeviceEntryType.SERVICE,
     )
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert (entry.version, entry.minor_version) == (6, 5)
     assert device_registry.async_get(device.id).entry_type is None
@@ -815,7 +829,7 @@ async def test_migrate_v4_moves_component_selection_to_devices(
             via_device_id=edge_device.id,
         )
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert (entry.version, entry.minor_version) == (6, 5)
     assert entry.unique_id == "host"
@@ -847,7 +861,7 @@ async def test_migrate_v4_without_edge_device(hass: HomeAssistant) -> None:
     )
     entry.add_to_hass(hass)
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert entry.version == 6
     assert entry.options == _DEFAULT_OPTIONS
@@ -866,7 +880,7 @@ async def test_migrate_v3_continues_to_v6(hass: HomeAssistant) -> None:
     )
     entry.add_to_hass(hass)
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert entry.version == 6
     assert entry.options == _DEFAULT_OPTIONS

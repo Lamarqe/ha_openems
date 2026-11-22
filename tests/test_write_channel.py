@@ -368,7 +368,7 @@ async def test_migrate_v6_3_removes_write_only_sensors(
             Platform.SENSOR, DOMAIN, unique_id, config_entry=entry
         )
 
-    assert await async_migrate_entry(hass, entry)
+    await async_migrate_entry(hass, entry)
 
     assert (entry.version, entry.minor_version) == (6, 5)
     assert not entity_registry.async_get_entity_id(

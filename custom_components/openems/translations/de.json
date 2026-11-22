@@ -1859,6 +1859,12 @@
     "login_failed": {
       "message": "Anmeldung bei {host} fehlgeschlagen."
     },
+    "migration_data_missing": {
+      "message": "Der Konfigurationseintrag kann nicht migriert werden, die Daten der Konfigurationsversion 1 fehlen."
+    },
+    "migration_unsupported_version": {
+      "message": "Die Konfigurationsversion {version} kann nicht migriert werden."
+    },
     "cannot_read_configuration": {
       "message": "Die Konfiguration von {host} kann nicht gelesen werden."
     },

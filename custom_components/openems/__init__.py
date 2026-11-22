@@ -14,7 +14,11 @@ from openems_client.openems import CONFIG, OpenEMSBackend, OpenEMSComponent
 
 from homeassistant.const import CONF_HOST, CONF_TYPE, Platform
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    ConfigEntryError,
+    ConfigEntryNotReady,
+)
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
@@ -248,12 +252,15 @@ async def async_remove_entry(
 
 async def async_migrate_entry(
     hass: HomeAssistant, config_entry: OpenEMSConfigEntry
-) -> bool:
+) -> None:
     """Migrate old entry."""
     if config_entry.version == 1:
         store_conf: Store = Store(hass, 1, "openems_config")
         if not (config_data := await store_conf.async_load()):
-            return False
+            raise ConfigEntryError(
+                translation_domain=c.DOMAIN,
+                translation_key="migration_data_missing",
+            )
         # migrate config into entry
         edge_id = next(iter(config_data))
         components = config_data[edge_id]["components"]
@@ -284,7 +291,9 @@ async def async_migrate_entry(
         )
 
         # update entities unique ids
-        def update_unique_id(entity_entry):
+        def update_unique_id(
+            entity_entry: er.RegistryEntry,
+        ) -> dict[str, Any] | None:
             """Update unique ID of entity entry."""
             unique_id_parts = entity_entry.unique_id.split("/")
             if len(unique_id_parts) != 4:
@@ -436,9 +445,15 @@ async def async_migrate_entry(
                 config_entry.version,
                 config_entry.minor_version,
             )
-        return True
+        return
 
-    return False
+    raise ConfigEntryError(
+        translation_domain=c.DOMAIN,
+        translation_key="migration_unsupported_version",
+        translation_placeholders={
+            "version": f"{config_entry.version}.{config_entry.minor_version}"
+        },
+    )
 
 
 async def _async_remove_refresh_configuration_button(

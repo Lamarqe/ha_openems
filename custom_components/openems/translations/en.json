@@ -1766,6 +1766,12 @@
         "login_failed": {
             "message": "Login to {host} failed."
         },
+        "migration_data_missing": {
+            "message": "The configuration entry cannot be migrated, the data of configuration version 1 is missing."
+        },
+        "migration_unsupported_version": {
+            "message": "Configuration version {version} cannot be migrated."
+        },
         "cannot_read_configuration": {
             "message": "Cannot read the configuration of {host}."
         },
