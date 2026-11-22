@@ -13,11 +13,11 @@
             "error_processing_edge": "Error during processing the selected edge",
             "host_missing": "Please provide host for local connection",
             "invalid_auth": "Invalid authentication",
-            "invalid_url": "Invalid URL provided",
-            "unknown": "Unexpected error",
-            "url_not_absolute": "Custom URL must be absolute",
             "invalid_host": "Invalid host",
-            "no_edges": "No system is available for this account"
+            "invalid_url": "Invalid URL provided",
+            "no_edges": "No system is available for this account",
+            "unknown": "Unexpected error",
+            "url_not_absolute": "Custom URL must be absolute"
         },
         "step": {
             "edges": {
@@ -26,12 +26,12 @@
                 }
             },
             "reauth_confirm": {
-                "title": "Authentication expired for {name}",
-                "description": "The login to {name} was rejected. Enter the current username and password.",
                 "data": {
-                    "username": "Username",
-                    "password": "Password"
-                }
+                    "password": "Password",
+                    "username": "Username"
+                },
+                "description": "The login to {name} was rejected. Enter the current username and password.",
+                "title": "Authentication expired for {name}"
             },
             "user": {
                 "data": {
@@ -162,15 +162,15 @@
             "mode": {
                 "name": "Mode",
                 "state": {
-                    "force": "Fast",
-                    "minimum": "Minimal",
-                    "surplus": "PV",
-                    "zero": "Off",
                     "automatic": "Automatic",
+                    "force": "Fast",
                     "manual": "Manual",
-                    "off": "Off",
                     "manual_off": "Off",
-                    "manual_on": "On"
+                    "manual_on": "On",
+                    "minimum": "Minimal",
+                    "off": "Off",
+                    "surplus": "PV",
+                    "zero": "Off"
                 }
             },
             "phase_switching": {
@@ -1345,72 +1345,72 @@
             "state_machine": {
                 "name": "State machine",
                 "state": {
-                    "error": "Error",
-                    "firmware_update": "FIRMWARE_UPDATE",
-                    "go_running": "GO_RUNNING",
-                    "go_stopped": "GO_STOPPED",
-                    "running": "RUNNING",
-                    "stopped": "Stopped",
-                    "undefined": "Undefined",
                     "abovereservesoc": "AboveReserveSoc",
+                    "abovetargetsoc": "AboveTargetSoc",
                     "atreservesoc": "AtReserveSoc",
+                    "attargetsoc": "AtTargetSoc",
                     "belowreservesoc": "BelowReserveSoc",
-                    "forcechargegrid": "ForceChargeGrid",
-                    "forcechargepv": "ForceChargePv",
-                    "nolimit": "NoLimit",
+                    "belowtargetsoc": "BelowTargetSoc",
+                    "charge_disabled": "Charging disabled",
+                    "charge_paused": "Paused (low surplus)",
+                    "charge_resuming": "Waiting for EV",
+                    "charging": "Charging",
                     "check_balancing": "Checking balancing",
                     "done": "Done",
+                    "error": "Error",
                     "error_abort": "Aborted (error)",
+                    "ev_connected": "EV connected",
+                    "ev_not_connected": "EV not connected",
                     "evaluate_result": "Evaluating result",
+                    "finished_energy_session_limit": "Energy limit reached",
+                    "finished_ev_stop": "Stopped by EV",
+                    "firmware_update": "FIRMWARE_UPDATE",
+                    "forcechargegrid": "ForceChargeGrid",
+                    "forcechargepv": "ForceChargePv",
+                    "go_running": "GO_RUNNING",
+                    "go_stopped": "GO_STOPPED",
                     "idle": "Idle",
+                    "maintenance": "Maintenance",
                     "measurement_cycle_charging": "Measurement: charging",
                     "measurement_cycle_charging_wait": "Measurement: rest after charge",
                     "measurement_cycle_discharging": "Measurement: discharging",
                     "measurement_cycle_discharging_wait": "Measurement: rest after discharge",
+                    "nolimit": "NoLimit",
+                    "not_ready": "Not ready",
+                    "notstarted": "NotStarted",
+                    "phase_switch_to_single_phase": "Switching to 1-phase",
+                    "phase_switch_to_three_phase": "Switching to 3-phase",
                     "prepare": "Discharging to 0 %",
                     "prepare_precharge": "Pre-charging",
                     "reference_cycle_charging": "Reference: charging",
                     "reference_cycle_charging_wait": "Reference: rest after charge",
                     "reference_cycle_discharging": "Reference: discharging",
                     "reference_cycle_discharging_wait": "Reference: rest after discharge",
-                    "charge_disabled": "Charging disabled",
-                    "charge_paused": "Paused (low surplus)",
-                    "charge_resuming": "Waiting for EV",
-                    "charging": "Charging",
-                    "ev_connected": "EV connected",
-                    "ev_not_connected": "EV not connected",
-                    "finished_energy_session_limit": "Energy limit reached",
-                    "finished_ev_stop": "Stopped by EV",
-                    "not_ready": "Not ready",
-                    "phase_switch_to_single_phase": "Switching to 1-phase",
-                    "phase_switch_to_three_phase": "Switching to 3-phase",
-                    "abovetargetsoc": "AboveTargetSoc",
-                    "attargetsoc": "AtTargetSoc",
-                    "belowtargetsoc": "BelowTargetSoc",
-                    "notstarted": "NotStarted",
                     "referencecycle": "ReferenceCycle",
-                    "withinlowertargetsocboundaries": "WithinLowerTargetSocBoundaries",
-                    "withinuppertargetsocboundaries": "WithinUpperTargetSocBoundaries",
-                    "maintenance": "Maintenance",
+                    "running": "RUNNING",
                     "startbattery": "StartBattery",
                     "startbatteryinverter": "StartBatteryInverter",
                     "started": "Started",
                     "stopbattery": "StopBattery",
-                    "stopbatteryinverter": "StopBatteryInverter"
+                    "stopbatteryinverter": "StopBatteryInverter",
+                    "stopped": "Stopped",
+                    "undefined": "Undefined",
+                    "withinlowertargetsocboundaries": "WithinLowerTargetSocBoundaries",
+                    "withinuppertargetsocboundaries": "WithinUpperTargetSocBoundaries"
                 }
             },
             "status": {
                 "name": "Status",
                 "state": {
                     "blocks_everything_till_an_internal_maximum_time_of_default_two_hours": "Lock",
+                    "charging_with_ventilation_required_d": "Charging with ventilation required (D)",
                     "default_energy-efficient_operation": "Normal",
+                    "error_communication_problem_e": "Error \u2013 communication problem (E)",
+                    "error_serious_fault_f": "Error \u2013 serious fault (F)",
                     "force_all_possible_consumption_of_the_heat_pump": "Switch-on command",
+                    "no_vehicle_connected_a": "No vehicle connected (A)",
                     "recommendation_to_use_more_available_power": "Switch-on recommendation",
                     "undefined": "Undefined",
-                    "charging_with_ventilation_required_d": "Charging with ventilation required (D)",
-                    "error_communication_problem_e": "Error – communication problem (E)",
-                    "error_serious_fault_f": "Error – serious fault (F)",
-                    "no_vehicle_connected_a": "No vehicle connected (A)",
                     "vehicle_connected_and_charging_c": "Vehicle connected and charging (C)",
                     "vehicle_connected_not_charging_b": "Vehicle connected, not charging (B)"
                 }
@@ -1745,23 +1745,20 @@
         }
     },
     "exceptions": {
-        "invalid_property_value": {
-            "message": "Invalid value {value} for property {property} of component {component}."
-        },
-        "no_component_device": {
-            "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
-        },
-        "restart_failed": {
-            "message": "Failed to trigger the restart of edge {edge}."
-        },
-        "unknown_property": {
-            "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
-        },
         "cannot_connect": {
             "message": "Cannot connect to {host}."
         },
+        "cannot_read_configuration": {
+            "message": "Cannot read the configuration of {host}."
+        },
         "invalid_auth": {
             "message": "Wrong username or password for {host}."
+        },
+        "invalid_channel_value": {
+            "message": "The value {value} is invalid for channel {component}/{channel}."
+        },
+        "invalid_property_value": {
+            "message": "Invalid value {value} for property {property} of component {component}."
         },
         "login_failed": {
             "message": "Login to {host} failed."
@@ -1772,11 +1769,20 @@
         "migration_unsupported_version": {
             "message": "Configuration version {version} cannot be migrated."
         },
-        "cannot_read_configuration": {
-            "message": "Cannot read the configuration of {host}."
+        "no_component_device": {
+            "message": "Device {device_id} is not an OpenEMS component of a loaded edge."
         },
-        "write_failed": {
-            "message": "Failed to write the value of {entity_id}."
+        "rest_write_not_available": {
+            "message": "Edge {edge} has no REST app with write access (Controller.Api.Rest.ReadWrite)."
+        },
+        "restart_failed": {
+            "message": "Failed to trigger the restart of edge {edge}."
+        },
+        "unknown_property": {
+            "message": "Component {component} has no property {property}. Valid properties: {valid_properties}"
+        },
+        "unknown_write_only_channel": {
+            "message": "Component {component} has no write-only channel {channel}. Write-only channels: {valid_channels}"
         },
         "update_component_config_failed": {
             "message": "Failed to update the configuration of component {component}."
@@ -1787,17 +1793,11 @@
         "update_not_finished": {
             "message": "The update of edge {edge} did not finish within 15 minutes."
         },
-        "invalid_channel_value": {
-            "message": "The value {value} is invalid for channel {component}/{channel}."
-        },
-        "rest_write_not_available": {
-            "message": "Edge {edge} has no REST app with write access (Controller.Api.Rest.ReadWrite)."
-        },
-        "unknown_write_only_channel": {
-            "message": "Component {component} has no write-only channel {channel}. Write-only channels: {valid_channels}"
-        },
         "write_channel_failed": {
             "message": "Failed to write channel {component}/{channel}."
+        },
+        "write_failed": {
+            "message": "Failed to write the value of {entity_id}."
         }
     },
     "options": {
@@ -1854,15 +1854,15 @@
         },
         "mode": {
             "options": {
-                "force": "Fast",
-                "minimum": "Minimal",
-                "surplus": "PV",
-                "zero": "Off",
                 "automatic": "Automatic",
+                "force": "Fast",
                 "manual": "Manual",
-                "off": "Off",
                 "manual_off": "Off",
-                "manual_on": "On"
+                "manual_on": "On",
+                "minimum": "Minimal",
+                "off": "Off",
+                "surplus": "PV",
+                "zero": "Off"
             }
         },
         "phase_switching": {
