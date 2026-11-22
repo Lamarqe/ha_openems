@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -102,6 +103,8 @@ async def async_setup_entry(
                     # primary channels have a translated name
                     name=UNDEFINED if channel.primary else channel.name,
                     translation_key=channel.key,
+                    # text channels describe the devices, eg versions and serial numbers
+                    entity_category=EntityCategory.DIAGNOSTIC,
                 ),
                 device,
             )

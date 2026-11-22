@@ -7,6 +7,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
@@ -303,11 +304,13 @@ async def test_async_setup_entry_text_and_float_sensors(
     assert description.state_class is None
     assert description.native_unit_of_measurement is None
     assert description.translation_key == "tower0_bms_serial_number"
+    assert description.entity_category == EntityCategory.DIAGNOSTIC
     serial._channel.handle_data_update("battery0/Tower0BmsSerialNumber", "SN-0815")
     assert serial.native_value == "SN-0815"
 
     temperature = entities["CellTemperature"]
     assert temperature.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+    assert temperature.entity_description.entity_category is None
     temperature._channel.handle_data_update("battery0/CellTemperature", 21.5)
     assert temperature.native_value == 21.5
 

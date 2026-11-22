@@ -97,7 +97,7 @@ async def async_setup_entry(hass, entry: OpenEMSConfigEntry, async_add_entities)
         _create_<platform>_entities(component)
 ```
 
-- Properties (writable `_Property*` channels) use `entity_category=EntityCategory.CONFIG`.
+- Properties (writable `_Property*` channels) use `entity_category=EntityCategory.CONFIG`, text sensors (`ChannelKind.TEXT_SENSOR`, e.g. versions and serial numbers) `EntityCategory.DIAGNOSTIC`. Other channels have no entity category.
 - `OpenEMSChannelEntity` sets `_attr_should_poll = False` and combines `available` with `channel.available`, so entities are unavailable while the edge is disconnected. Entities have no extra state attributes; the channel metadata is part of the diagnostics.
 - State is read from the channel in properties (`channel.value`, `is_on`, ...). Writes go through the channel (`await self._channel.update_value(...)`) followed by `self.async_write_ha_state()`.
 - Write-only channels (`ChannelKind.WRITE_ONLY`) have no entities. They are written with the `write_channel` action and the device action of the same name (`channel.write_via_rest`).
