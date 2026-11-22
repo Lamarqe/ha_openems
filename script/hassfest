@@ -14,6 +14,15 @@ cd "$(dirname "$0")/.."
 repo_dir=$(pwd)
 
 ha_version=$(python3 -c "from homeassistant.const import __version__; print(__version__)")
+# the core checkout is cloned by version tag, which only exists for releases
+case "${ha_version}" in
+    *dev*)
+        echo "Error: $(command -v python3) has the development version ${ha_version} of Home Assistant." >&2
+        echo "hassfest needs a released version. Run it in the environment of this repository," >&2
+        echo "e.g. a .venv with requirements_test.txt installed (see script/run-in-env.sh)." >&2
+        exit 1
+        ;;
+esac
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/ha_openems/hassfest/${ha_version}"
 core_dir="${cache_dir}/core"
 deps_dir="${cache_dir}/deps"
@@ -21,29 +30,40 @@ deps_dir="${cache_dir}/deps"
 # Packages imported by hassfest itself, but not installed with homeassistant.
 # Their versions are taken from the Home Assistant core checkout.
 extra_packages=(infrared-protocols)
+# CI tooling used by hassfest plugins, pinned in requirements_test.txt of core
+test_packages=(pipdeptree tqdm)
 
-if [ ! -f "${cache_dir}/.complete" ]; then
+# marker of a complete cache, renamed when the cache layout changes
+complete_marker="${cache_dir}/.complete-v4"
+
+if [ ! -f "${complete_marker}" ]; then
     echo "Preparing hassfest for Home Assistant ${ha_version} in ${cache_dir}"
     rm -rf "${cache_dir}"
     mkdir -p "${cache_dir}"
     git -c advice.detachedHead=false clone --quiet --depth 1 --branch "${ha_version}" --filter=blob:none \
         --sparse https://github.com/home-assistant/core.git "${core_dir}"
     # root files (requirements, pyproject.toml) are part of the sparse checkout,
-    # script/ contains hassfest and modules it imports (e.g. script/translations)
-    git -C "${core_dir}" sparse-checkout set script
+    # script/ contains hassfest and modules it imports (e.g. script/translations),
+    # packages/hassfest the hassfest framework (since 2026.11, not published on PyPI)
+    git -C "${core_dir}" sparse-checkout set script packages/hassfest
 
     requirements=()
     for package in "${extra_packages[@]}"; do
         requirements+=("$(grep -i "^${package}==" "${core_dir}/requirements_all.txt")")
     done
+    for package in "${test_packages[@]}"; do
+        requirements+=("$(grep -i "^${package}==" "${core_dir}/requirements_test.txt")")
+    done
     # hassfest formats generated code with the ruff version required by core
     requirements+=("$(grep "^ruff==" "${core_dir}/requirements_test_pre_commit.txt")")
-    python3 -m pip install --quiet --target "${deps_dir}" "${requirements[@]}"
+    # constrained to the versions of the installed homeassistant, eg truststore
+    constraints=$(python3 -c "import homeassistant, pathlib; print(pathlib.Path(homeassistant.__file__).parent / 'package_constraints.txt')")
+    python3 -m pip install --quiet --target "${deps_dir}" --constraint "${constraints}" "${requirements[@]}"
 
-    touch "${cache_dir}/.complete"
+    touch "${complete_marker}"
 fi
 
 cd "${core_dir}"
-PATH="${deps_dir}/bin:${PATH}" PYTHONPATH="${deps_dir}" \
+PATH="${deps_dir}/bin:${PATH}" PYTHONPATH="${deps_dir}:${core_dir}/packages/hassfest" \
     python3 -m script.hassfest \
     --integration-path "${repo_dir}/custom_components/openems" "$@"
