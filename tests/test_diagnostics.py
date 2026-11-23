@@ -25,6 +25,7 @@ async def test_diagnostics_contain_cached_configuration(
     entry.runtime_data = MagicMock()
     entry.runtime_data.backend.the_edge.registered_channels = {}
     entry.runtime_data.backend.the_edge.current_channel_data = {}
+    entry.runtime_data.backend.the_edge.version = "2026.11.1"
     storage_key = f"{DOMAIN}.{entry.entry_id}"
     components = {"ess0": {"channels": [{"id": "Soc", "type": "INTEGER"}]}}
     hass_storage[storage_key] = {
@@ -42,6 +43,7 @@ async def test_diagnostics_contain_cached_configuration(
         CONF_USERNAME: REDACTED,
         CONF_PASSWORD: REDACTED,
     }
+    assert diagnostics["edge_version"] == "2026.11.1"
 
 
 async def test_diagnostics_map_registered_channels_to_entities(
