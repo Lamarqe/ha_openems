@@ -56,8 +56,6 @@ class OpenEMSUpdateDescription(UpdateEntityDescription):
 
     has_entity_name = True
     device_class = UpdateDeviceClass.FIRMWARE
-    entity_registry_enabled_default = True
-    should_poll = True
 
 
 class OpenEMSUpdateEntity(UpdateEntity):
