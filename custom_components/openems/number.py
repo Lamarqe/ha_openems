@@ -102,17 +102,17 @@ class OpenEMSNumberEntity(OpenEMSChannelEntity[OpenEMSNumberProperty], NumberEnt
     entity_description: OpenEMSNumberDescription
 
     @property
-    def native_min_value(self):
+    def native_min_value(self) -> float:
         """Return minimum value."""
         return self._channel.lower_limit
 
     @property
-    def native_max_value(self):
+    def native_max_value(self) -> float:
         """Return maximum value."""
         return self._channel.upper_limit
 
     @property
-    def native_step(self):
+    def native_step(self) -> float:
         """Return step size."""
         return self._channel.step
 
