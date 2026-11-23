@@ -42,12 +42,17 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
 )
 
 from . import const as c
 from .helpers_ha import OpenEMSConfigEntry, component_store, map_user_input
 
 _LOGGER = logging.getLogger(__name__)
+
+PASSWORD_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
 
 
 class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
@@ -75,9 +80,8 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                 probatio.Required(
                     CONF_USERNAME, default=user_input.get(CONF_USERNAME, "")
                 ): str,
-                probatio.Required(
-                    CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")
-                ): str,
+                # never sent back to the frontend, also not the stored one on reconfigure
+                probatio.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
                 probatio.Required(c.CONF_MORE_OPTIONS): section(
                     probatio.Schema(
                         {
@@ -372,7 +376,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                     probatio.Required(
                         CONF_USERNAME, default=reauth_entry.data[CONF_USERNAME]
                     ): str,
-                    probatio.Required(CONF_PASSWORD): str,
+                    probatio.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
                 }
             ),
             description_placeholders={"name": reauth_entry.title},
