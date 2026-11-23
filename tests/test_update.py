@@ -1,7 +1,7 @@
 """Tests for the OpenEMS update platform."""
 
 from collections.abc import Callable
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, call
 
 from openems_client.exceptions import (
     OpenEMSConnectionError,
@@ -37,6 +37,7 @@ def _make_entity(has_release_notes: bool = True) -> OpenEMSUpdateEntity:
     edge.id = "edge-1"
     edge.has_release_notes = has_release_notes
     edge.release_url = "http://192.0.2.1/_/changelog"
+    edge.available = True
     desc = OpenEMSUpdateDescription(key="host/edge-1/update")
     device_info = DeviceInfo(name="host", identifiers={("openems", "host")})
     entity = OpenEMSUpdateEntity(edge, desc, device_info)
@@ -101,6 +102,30 @@ async def test_unknown_state_keeps_update_in_progress() -> None:
 
     assert entity.available is False
     assert entity.in_progress
+
+
+@pytest.mark.parametrize(
+    ("edge_available", "refreshes"),
+    [
+        pytest.param(True, True, id="connected"),
+        pytest.param(False, False, id="disconnected"),
+    ],
+)
+async def test_edge_update_refreshes_when_connected(
+    edge_available: bool, refreshes: bool
+) -> None:
+    """Edge changes read the update state while connected, mark it unavailable otherwise."""
+    entity = _make_entity()
+    entity._edge.available = edge_available
+    entity.async_schedule_update_ha_state = MagicMock()
+
+    entity._handle_edge_update()
+
+    assert entity.available is edge_available
+    assert entity.async_schedule_update_ha_state.mock_calls == (
+        [call(force_refresh=True)] if refreshes else []
+    )
+    assert entity.async_write_ha_state.called is not refreshes
 
 
 async def test_async_setup_entry_creates_update_entity(hass: HomeAssistant) -> None:

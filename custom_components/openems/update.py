@@ -42,7 +42,7 @@ async def async_setup_entry(
     update_entity = OpenEMSUpdateEntity(
         backend.the_edge, entity_description, entry.runtime_data.edge_device.info
     )
-    async_add_entities([update_entity], update_before_add=True)
+    async_add_entities([update_entity])
 
 
 def update_unique_id(edge: OpenEMSEdge) -> str:
@@ -78,6 +78,23 @@ class OpenEMSUpdateEntity(UpdateEntity):
         if edge.has_release_notes:
             self._attr_supported_features |= UpdateEntityFeature.RELEASE_NOTES
         self._attr_release_url = edge.release_url
+
+    @property
+    def available(self) -> bool:
+        """Return True while the edge is connected and its update state is known."""
+        return super().available and self._edge.available
+
+    async def async_added_to_hass(self) -> None:
+        """Read the update state whenever the edge connects or its version changes."""
+        await super().async_added_to_hass()
+        self.async_on_remove(self._edge.add_version_listener(self._handle_edge_update))
+
+    @callback
+    def _handle_edge_update(self) -> None:
+        if self._edge.available:
+            self.async_schedule_update_ha_state(force_refresh=True)
+        else:
+            self.async_write_ha_state()
 
     async def async_release_notes(self) -> str | None:
         """Return the changes from the installed to the latest version."""
