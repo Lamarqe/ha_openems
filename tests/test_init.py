@@ -978,6 +978,35 @@ async def test_migrate_v3_continues_to_v6(hass: HomeAssistant) -> None:
     assert entry.options == _DEFAULT_OPTIONS
 
 
+async def test_migrate_v2_joins_component_device_identifiers(
+    hass: HomeAssistant, device_registry: dr.DeviceRegistry
+) -> None:
+    """3-part device identifiers are joined, valid identifiers stay unchanged."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=2,
+        minor_version=1,
+        data=_ENTRY_DATA,
+        options={"ess0": True},
+    )
+    entry.add_to_hass(hass)
+    edge_device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, "fems1")}
+    )
+    component_device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, "fems1", "ess0")},
+        via_device_id=edge_device.id,
+    )
+
+    await async_migrate_entry(hass, entry)
+
+    assert device_registry.async_get(edge_device.id).identifiers == {(DOMAIN, "fems1")}
+    assert device_registry.async_get(component_device.id).identifiers == {
+        (DOMAIN, "fems1 ess0")
+    }
+
+
 # ---------------------------------------------------------------------------
 # async_remove_config_entry_device
 # ---------------------------------------------------------------------------
