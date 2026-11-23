@@ -153,22 +153,16 @@ async def async_setup_entry(
     component_device_ids: list[str] = []
     enabled_components: list[OpenEMSComponent] = []
     for component in backend.the_edge.components.values():
-        is_new_device = (
-            device_registry.async_get_device_by_identifier(
-                component_identifier(component), config_entry.entry_id
-            )
-            is None
-        )
+        # disabled_by only applies to new devices, existing ones keep the user's choice
         component_device_entry: dr.DeviceEntry = device_registry.async_get_or_create(
             config_entry_id=config_entry.entry_id,
+            disabled_by=(
+                None
+                if component.has_primary_channels
+                else dr.DeviceEntryDisabler.INTEGRATION
+            ),
             **component_device(edge_device_entry, component),
         )
-        # disabled_by must not be passed for existing devices, it would overwrite the user's choice
-        if is_new_device and not component.has_primary_channels:
-            component_device_entry = device_registry.async_update_device(
-                component_device_entry.id,
-                disabled_by=dr.DeviceEntryDisabler.INTEGRATION,
-            )
         if not component_device_entry.disabled:
             enabled_components.append(component)
         component_device_ids.append(component_device_entry.id)
