@@ -15,7 +15,7 @@ from homeassistant.components.sensor import (
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
 from .const import CONF_ADVANCED_OPTIONS, CONF_IGNORE_DECREASING_IF_TOTAL_INCREASING
@@ -50,7 +50,7 @@ def _state_class(channel: OpenEMSDataHandler) -> SensorStateClass:
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: OpenEMSConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up OpenEMS sensor entities."""
 
