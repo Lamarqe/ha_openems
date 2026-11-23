@@ -155,6 +155,14 @@ async def test_setup_entry_success(hass: HomeAssistant) -> None:
     assert entry.runtime_data.backend is mock_backend
     mock_backend.start.assert_called_once()
 
+    # a login rejected during a reconnect starts the reauthentication
+    mock_backend.start.call_args.kwargs["auth_failed_callback"]()
+    await hass.async_block_till_done()
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    assert [flow["context"]["source"] for flow in flows] == [
+        config_entries.SOURCE_REAUTH
+    ]
+
 
 def _storage_key(entry: config_entries.ConfigEntry) -> str:
     return f"{DOMAIN}.{entry.entry_id}"

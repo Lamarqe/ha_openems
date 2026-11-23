@@ -1,5 +1,6 @@
 """The HA OpenEMS integration."""
 
+from functools import partial
 import logging
 from typing import Any
 
@@ -191,7 +192,8 @@ async def async_setup_entry(
         )
     )
 
-    backend.start()
+    # the library stops reconnecting when the login is rejected, e.g. after a password change
+    backend.start(auth_failed_callback=partial(config_entry.async_start_reauth, hass))
 
     if cached:
         config_entry.async_create_background_task(
