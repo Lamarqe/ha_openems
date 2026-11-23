@@ -172,3 +172,6 @@ cython_debug/
 
 # Node (prettier dev tooling)
 node_modules/
+
+# written by Home Assistant during the tests, eg the automation blueprints
+tests/testing_config/

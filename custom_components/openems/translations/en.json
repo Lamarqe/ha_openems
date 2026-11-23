@@ -33,7 +33,7 @@
                 "description": "The login to {name} was rejected. Enter the current username and password.",
                 "title": "Authentication expired for {name}"
             },
-            "user": {
+            "reconfigure": {
                 "data": {
                     "host": "Host",
                     "password": "Password",
@@ -44,7 +44,7 @@
                     "password": "For local monitoring, common values are \"user\" or \"owner\"",
                     "username": "The username to access the system. Use \"x\" for local monitoring access"
                 },
-                "description": "Set required parameter to connect to your FEMS / OpenEMS system",
+                "description": "Change the parameters to connect to your FEMS / OpenEMS system",
                 "sections": {
                     "more_options": {
                         "data": {
@@ -58,7 +58,7 @@
                     }
                 }
             },
-            "reconfigure": {
+            "user": {
                 "data": {
                     "host": "Host",
                     "password": "Password",
@@ -69,7 +69,7 @@
                     "password": "For local monitoring, common values are \"user\" or \"owner\"",
                     "username": "The username to access the system. Use \"x\" for local monitoring access"
                 },
-                "description": "Change the parameters to connect to your FEMS / OpenEMS system",
+                "description": "Set required parameter to connect to your FEMS / OpenEMS system",
                 "sections": {
                     "more_options": {
                         "data": {

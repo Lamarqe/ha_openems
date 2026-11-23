@@ -1,0 +1,102 @@
+# serializer version: 1
+# name: test_entities[binary_sensor.fems12345_ctrlesslimiter14a0_restriction_mode-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlEssLimiter14a0')]>,
+    'disabled_by': None,
+    'domain': 'binary_sensor',
+    'entity_category': None,
+    'entity_id': 'binary_sensor.fems12345_ctrlesslimiter14a0_restriction_mode',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Restriction mode',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Restriction mode',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'restriction_mode',
+    'unique_id': 'fems12345/0/ctrlEssLimiter14a0/RestrictionMode',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[binary_sensor.fems12345_ctrlesslimiter14a0_restriction_mode-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlEssLimiter14a0 Restriction mode',
+    }),
+    'context': <ANY>,
+    'entity_id': 'binary_sensor.fems12345_ctrlesslimiter14a0_restriction_mode',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'off',
+  })
+# ---
+# name: test_entities[binary_sensor.fems12345_ess0_runfailed-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ess0')]>,
+    'disabled_by': None,
+    'domain': 'binary_sensor',
+    'entity_category': None,
+    'entity_id': 'binary_sensor.fems12345_ess0_runfailed',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'RunFailed',
+    'options': dict({
+    }),
+    'original_device_class': <BinarySensorDeviceClass.PROBLEM: 'problem'>,
+    'original_icon': None,
+    'original_name': 'RunFailed',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'run_failed',
+    'unique_id': 'fems12345/0/ess0/RunFailed',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[binary_sensor.fems12345_ess0_runfailed-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.DEVICE_CLASS: 'device_class'>: 'problem',
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ess0 RunFailed',
+    }),
+    'context': <ANY>,
+    'entity_id': 'binary_sensor.fems12345_ess0_runfailed',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'off',
+  })
+# ---

@@ -1,0 +1,241 @@
+# serializer version: 1
+# name: test_entities[select.fems12345_ctrlevcs0_charge_mode-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'force_charge',
+        'excess_power',
+      ]),
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlEvcs0')]>,
+    'disabled_by': None,
+    'domain': 'select',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'select.fems12345_ctrlevcs0_charge_mode',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Charge mode',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Charge mode',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'charge_mode',
+    'unique_id': 'fems12345/0/ctrlEvcs0/_PropertyChargeMode',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[select.fems12345_ctrlevcs0_charge_mode-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlEvcs0 Charge mode',
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'force_charge',
+        'excess_power',
+      ]),
+    }),
+    'context': <ANY>,
+    'entity_id': 'select.fems12345_ctrlevcs0_charge_mode',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'force_charge',
+  })
+# ---
+# name: test_entities[select.fems12345_ctrlevcs0_priority-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'car',
+        'storage',
+      ]),
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlEvcs0')]>,
+    'disabled_by': None,
+    'domain': 'select',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'select.fems12345_ctrlevcs0_priority',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Priority',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Priority',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'priority',
+    'unique_id': 'fems12345/0/ctrlEvcs0/_PropertyPriority',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[select.fems12345_ctrlevcs0_priority-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlEvcs0 Priority',
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'car',
+        'storage',
+      ]),
+    }),
+    'context': <ANY>,
+    'entity_id': 'select.fems12345_ctrlevcs0_priority',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'car',
+  })
+# ---
+# name: test_entities[select.fems12345_ctrlgridoptimizedcharge0_delay_charge_risk_level-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'low',
+        'medium',
+        'high',
+      ]),
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlGridOptimizedCharge0')]>,
+    'disabled_by': None,
+    'domain': 'select',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'select.fems12345_ctrlgridoptimizedcharge0_delay_charge_risk_level',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Delay charge risk level',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Delay charge risk level',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'delay_charge_risk_level',
+    'unique_id': 'fems12345/0/ctrlGridOptimizedCharge0/_PropertyDelayChargeRiskLevel',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[select.fems12345_ctrlgridoptimizedcharge0_delay_charge_risk_level-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlGridOptimizedCharge0 Delay charge risk level',
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'low',
+        'medium',
+        'high',
+      ]),
+    }),
+    'context': <ANY>,
+    'entity_id': 'select.fems12345_ctrlgridoptimizedcharge0_delay_charge_risk_level',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'high',
+  })
+# ---
+# name: test_entities[select.fems12345_ctrlgridoptimizedcharge0_mode-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'off',
+        'manual',
+        'automatic',
+      ]),
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlGridOptimizedCharge0')]>,
+    'disabled_by': None,
+    'domain': 'select',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'select.fems12345_ctrlgridoptimizedcharge0_mode',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Mode',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Mode',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'mode',
+    'unique_id': 'fems12345/0/ctrlGridOptimizedCharge0/_PropertyMode',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[select.fems12345_ctrlgridoptimizedcharge0_mode-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlGridOptimizedCharge0 Mode',
+      <SelectEntityCapabilityAttribute.OPTIONS: 'options'>: list([
+        'off',
+        'manual',
+        'automatic',
+      ]),
+    }),
+    'context': <ANY>,
+    'entity_id': 'select.fems12345_ctrlgridoptimizedcharge0_mode',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'off',
+  })
+# ---

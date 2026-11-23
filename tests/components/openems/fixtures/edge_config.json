@@ -1,0 +1,511 @@
+{
+  "_host": {
+    "alias": "Core.Host",
+    "factoryId": "Core.Host",
+    "Hostname": "fems12345",
+    "properties": {},
+    "channels": []
+  },
+  "_meta": {
+    "alias": "Core.Meta",
+    "factoryId": "Core.Meta",
+    "properties": {
+      "isEssChargeFromGridAllowed": false
+    },
+    "channels": [
+      {
+        "id": "Version",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "STRING",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyIsEssChargeFromGridAllowed",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "BOOLEAN",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "_sum": {
+    "alias": "Core.Sum",
+    "factoryId": "Core.Sum",
+    "properties": {},
+    "channels": [
+      {
+        "id": "EssSoc",
+        "accessMode": "RO",
+        "persistencePriority": "VERY_HIGH",
+        "text": "Range 0..100",
+        "type": "INTEGER",
+        "unit": "%",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "GridActivePower",
+        "accessMode": "RO",
+        "persistencePriority": "VERY_HIGH",
+        "text": "Grid exchange power. Negative values for sell-to-grid; positive for buy-from-grid",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "GridBuyActiveEnergy",
+        "accessMode": "RO",
+        "persistencePriority": "VERY_HIGH",
+        "text": "Accumulated electrical energy of grid consumption",
+        "type": "LONG",
+        "unit": "Wh_Σ",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "ProductionActivePower",
+        "accessMode": "RO",
+        "persistencePriority": "VERY_HIGH",
+        "text": "Total production; always positive",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "State",
+        "accessMode": "RO",
+        "persistencePriority": "VERY_HIGH",
+        "text": "0:Ok, 1:Info, 2:Warning, 3:Fault",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "ENUM",
+        "options": {
+          "Ok": 0,
+          "Info": 1,
+          "Warning": 2,
+          "Fault": 3
+        }
+      },
+      {
+        "id": "GridMode",
+        "accessMode": "RO",
+        "persistencePriority": "VERY_HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "ENUM",
+        "options": {
+          "Undefined": -1,
+          "On-Grid": 1,
+          "Off-Grid": 2,
+          "Off-Grid Genset": 3
+        }
+      }
+    ]
+  },
+  "ess0": {
+    "alias": "Speichersystem",
+    "factoryId": "Ess.Generic.ManagedSymmetric",
+    "_PropertyAlias": "Speichersystem",
+    "properties": {
+      "alias": "Speichersystem",
+      "enabled": true
+    },
+    "channels": [
+      {
+        "id": "Soc",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "State of Charge of the energy storage system",
+        "type": "INTEGER",
+        "unit": "%",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "Capacity",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "Wh",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "RunFailed",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "Running the Logic failed",
+        "type": "BOOLEAN",
+        "unit": "",
+        "category": "STATE",
+        "level": "FAULT"
+      },
+      {
+        "id": "SetActivePowerEquals",
+        "accessMode": "WO",
+        "persistencePriority": "LOW",
+        "text": "Write command for a charge power (-) or discharge power (+). Range e.g. [-5000 to 5000]",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "evcs0": {
+    "alias": "eCharge Hardy Barth Ladestation",
+    "factoryId": "Evcs.HardyBarth",
+    "_PropertyAlias": "eCharge Hardy Barth Ladestation",
+    "properties": {
+      "alias": "eCharge Hardy Barth Ladestation",
+      "enabled": "true"
+    },
+    "channels": [
+      {
+        "id": "ActivePower",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "MinimumHardwarePower",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "MaximumHardwarePower",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "Phases",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "ENUM",
+        "options": {
+          "One Phase": 1,
+          "Two Phase": 2,
+          "Three Phase": 3
+        }
+      },
+      {
+        "id": "State",
+        "accessMode": "RO",
+        "persistencePriority": "VERY_HIGH",
+        "text": "0:Ok, 1:Info, 2:Warning, 3:Fault",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "ENUM",
+        "options": {
+          "Ok": 0,
+          "Info": 1,
+          "Warning": 2,
+          "Fault": 3
+        }
+      },
+      {
+        "id": "Status",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "ENUM",
+        "options": {
+          "Undefined": -1,
+          "Starting": 0,
+          "Not ready for Charging": 1,
+          "Ready for Charging": 2,
+          "Charging": 3,
+          "Error": 4,
+          "Charging rejected": 5,
+          "The charging limit reached": 6
+        }
+      },
+      {
+        "id": "EnergySession",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "Wh",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "ctrlEvcs0": {
+    "alias": "eCharge Hardy Barth Ladestation",
+    "factoryId": "Controller.Evcs",
+    "_PropertyAlias": "eCharge Hardy Barth Ladestation",
+    "properties": {
+      "alias": "eCharge Hardy Barth Ladestation",
+      "chargeMode": "FORCE_CHARGE",
+      "defaultChargeMinPower": 0.0,
+      "enabled": "true",
+      "enabledCharging": true,
+      "energySessionLimit": 28000.0,
+      "evcs.id": "evcs0",
+      "forceChargeMinPower": 3666.6667,
+      "priority": "CAR"
+    },
+    "channels": [
+      {
+        "id": "_PropertyEnabledCharging",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "BOOLEAN",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyChargeMode",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "STRING",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyPriority",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "STRING",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyForceChargeMinPower",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyEnergySessionLimit",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyDefaultChargeMinPower",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyEnabled",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "BOOLEAN",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "ctrlGridOptimizedCharge0": {
+    "alias": "Netzdienliche Beladung",
+    "factoryId": "Controller.Ess.GridOptimizedCharge",
+    "_PropertyAlias": "Netzdienliche Beladung",
+    "properties": {
+      "alias": "Netzdienliche Beladung",
+      "delayChargeRiskLevel": "HIGH",
+      "enabled": true,
+      "ess.id": "ess0",
+      "manualTargetTime": "13:30",
+      "meter.id": "meter0",
+      "mode": "OFF"
+    },
+    "channels": [
+      {
+        "id": "_PropertyManualTargetTime",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "STRING",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyMode",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "STRING",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyDelayChargeRiskLevel",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "STRING",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "DelayChargeState",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "Current state of the delayed charge function.",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "ENUM",
+        "options": {
+          "Undefined": -1,
+          "Active limit": 0,
+          "No remaining time": 1,
+          "No remaining capacity": 2,
+          "Target minute not calculated": 3,
+          "Limit cannot be adapted because of other constraints with higher priority": 4,
+          "No active limitation": 5,
+          "Delay charge part is disabled": 6,
+          "Delay charge was not started because there is no production or to less production": 7,
+          "Avoid charging with low power for more efficiency": 8,
+          "Not active. The controller has no flexibility left to delay charge, because the limitation is nearly zero.": 9
+        }
+      }
+    ]
+  },
+  "ctrlEmergencyCapacityReserve0": {
+    "alias": "Ansteuerung der Notstromreserve",
+    "factoryId": "Controller.Ess.EmergencyCapacityReserve",
+    "_PropertyAlias": "Ansteuerung der Notstromreserve",
+    "properties": {
+      "alias": "Ansteuerung der Notstromreserve",
+      "enabled": true,
+      "ess.id": "ess0",
+      "isReserveSocEnabled": false,
+      "reserveSoc": 50.0
+    },
+    "channels": [
+      {
+        "id": "_PropertyReserveSoc",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "_PropertyIsReserveSocEnabled",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "BOOLEAN",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "ctrlEssLimiter14a0": {
+    "alias": "ESS Limiter für §14a",
+    "factoryId": "Controller.Ess.Limiter14a",
+    "_PropertyAlias": "ESS Limiter für §14a",
+    "properties": {
+      "alias": "ESS Limiter für §14a",
+      "enabled": true,
+      "ess.id": "ess0"
+    },
+    "channels": [
+      {
+        "id": "RestrictionMode",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "BOOLEAN",
+        "unit": "",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "meter0": {
+    "alias": "Netzzähler",
+    "factoryId": "GoodWe.Grid-Meter",
+    "_PropertyAlias": "Netzzähler",
+    "properties": {
+      "alias": "Netzzähler",
+      "enabled": true
+    },
+    "channels": [
+      {
+        "id": "ActivePower",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "charger0": {
+    "alias": "Hausdach ",
+    "factoryId": "GoodWe.Charger-PV1",
+    "_PropertyAlias": "Hausdach ",
+    "properties": {
+      "alias": "Hausdach ",
+      "enabled": true
+    },
+    "channels": [
+      {
+        "id": "ActualPower",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "INTEGER",
+        "unit": "W",
+        "category": "OPENEMS_TYPE"
+      },
+      {
+        "id": "ActualEnergy",
+        "accessMode": "RO",
+        "persistencePriority": "HIGH",
+        "text": "",
+        "type": "LONG",
+        "unit": "Wh_Σ",
+        "category": "OPENEMS_TYPE"
+      }
+    ]
+  },
+  "ctrlApiRest0": {
+    "alias": "REST/JSON lesend",
+    "factoryId": "Controller.Api.Rest.ReadOnly",
+    "_PropertyAlias": "REST/JSON lesend",
+    "properties": {
+      "alias": "REST/JSON lesend",
+      "enabled": "true",
+      "port": "8084"
+    },
+    "channels": []
+  }
+}

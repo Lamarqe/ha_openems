@@ -1,0 +1,212 @@
+# serializer version: 1
+# name: test_action_capabilities[time_property]
+  dict({
+    'extra_fields': list([
+      dict({
+        'name': 'delayChargeRiskLevel',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'select': dict({
+            'custom_value': False,
+            'mode': 'dropdown',
+            'multiple': False,
+            'options': list([
+              'low',
+              'medium',
+              'high',
+            ]),
+            'sort': False,
+            'translation_key': 'delay_charge_risk_level',
+          }),
+        }),
+      }),
+      dict({
+        'name': 'manualTargetTime',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'time': dict({
+          }),
+        }),
+      }),
+      dict({
+        'name': 'mode',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'select': dict({
+            'custom_value': False,
+            'mode': 'dropdown',
+            'multiple': False,
+            'options': list([
+              'off',
+              'manual',
+              'automatic',
+            ]),
+            'sort': False,
+            'translation_key': 'mode',
+          }),
+        }),
+      }),
+    ]),
+  })
+# ---
+# name: test_action_capabilities[update_component_config]
+  dict({
+    'extra_fields': list([
+      dict({
+        'name': '_PropertyEnabled',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'boolean': dict({
+          }),
+        }),
+      }),
+      dict({
+        'name': 'chargeMode',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'select': dict({
+            'custom_value': False,
+            'mode': 'dropdown',
+            'multiple': False,
+            'options': list([
+              'force_charge',
+              'excess_power',
+            ]),
+            'sort': False,
+            'translation_key': 'charge_mode',
+          }),
+        }),
+      }),
+      dict({
+        'name': 'defaultChargeMinPower',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'number': dict({
+            'max': 22100.0,
+            'min': 4200.0,
+            'mode': 'box',
+            'step': 100.0,
+          }),
+        }),
+      }),
+      dict({
+        'name': 'enabledCharging',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'boolean': dict({
+          }),
+        }),
+      }),
+      dict({
+        'name': 'energySessionLimit',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'number': dict({
+            'max': 100000.0,
+            'min': 0.0,
+            'mode': 'box',
+            'step': 1000.0,
+          }),
+        }),
+      }),
+      dict({
+        'name': 'forceChargeMinPower',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'number': dict({
+            'max': 22100.0,
+            'min': 4200.0,
+            'mode': 'box',
+            'step': 100.0,
+          }),
+        }),
+      }),
+      dict({
+        'name': 'priority',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'select': dict({
+            'custom_value': False,
+            'mode': 'dropdown',
+            'multiple': False,
+            'options': list([
+              'car',
+              'storage',
+            ]),
+            'sort': False,
+            'translation_key': 'priority',
+          }),
+        }),
+      }),
+    ]),
+  })
+# ---
+# name: test_action_capabilities[write_channel]
+  dict({
+    'extra_fields': list([
+      dict({
+        'name': 'channel',
+        'required': True,
+        'selector': dict({
+          'select': dict({
+            'custom_value': False,
+            'mode': 'dropdown',
+            'multiple': False,
+            'options': list([
+              'SetActivePowerEquals',
+            ]),
+            'sort': False,
+          }),
+        }),
+      }),
+      dict({
+        'name': 'value',
+        'required': True,
+        'selector': dict({
+          'text': dict({
+            'multiline': False,
+            'multiple': False,
+          }),
+        }),
+      }),
+      dict({
+        'default': 0,
+        'name': 'update_cycle',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'number': dict({
+            'min': 0.0,
+            'mode': 'box',
+            'step': 1.0,
+            'unit_of_measurement': 's',
+          }),
+        }),
+      }),
+      dict({
+        'default': 0,
+        'name': 'timeout',
+        'optional': True,
+        'required': False,
+        'selector': dict({
+          'number': dict({
+            'min': 0.0,
+            'mode': 'box',
+            'step': 1.0,
+            'unit_of_measurement': 's',
+          }),
+        }),
+      }),
+    ]),
+  })
+# ---

@@ -143,10 +143,13 @@ class OpenEMS<Name>Entity(<Platform>Entity):
 
 ## Tests
 
-- One test module per platform: `tests/test_<platform>.py`. Use `pytest-homeassistant-custom_component` (`asyncio_mode = auto`).
-- Unit tests build the entity directly from a description and a `MagicMock` channel or edge, e.g. `OpenEMSSwitchEntity(channel, OpenEMSSwitchDescription(key=..., name=...), device_info)`.
-- Setup tests call `<platform>.async_setup_entry(hass, mock_entry, added.extend)` with a `MagicMock` entry whose `runtime_data` is populated.
-- `tests/helpers_component.py` (`setup_evcs_component`) provides a real edge/component with registered config entry and devices for integration-style tests.
+Tests follow the style of HA core and are laid out like there: `tests/components/openems/`, one module per platform (`test_<platform>.py`), using `pytest-homeassistant`.
+
+- Test through Home Assistant: set up the entry with the `init_integration` fixture or `setup_integration()`, call services and read states. Do not build entities or call `async_setup_entry` directly.
+- `mock_openems_client` (`conftest.py`) mocks `OpenEMSClient`. Its backends are real `OpenEMSBackend`s with a fake connection, so entities come from the library classification. Edge data is sent with `rpc_server.push_current_data(...)`, requests are checked with `rpc_server.component_updates()` and `request_methods()`, edge answers are set in `rpc_server.results`.
+- The edge configuration and channel data are JSON fixtures (`fixtures/edge_config.json`, `channel_data.json`): a reduced, anonymised extract of a real FEMS. Vary them with `pytest.mark.parametrize(..., indirect=True)` on `edge_config`, `channel_data`, `mock_config_entry` (advanced options) or `multi_edge`.
+- Entities, devices, diagnostics and action capabilities are covered by snapshots (`snapshot_platform`, `--snapshot-update`); set the `platforms` fixture to one platform.
+- Tests of library behaviour belong to the library.
 
 ## Tooling
 

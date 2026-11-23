@@ -1,0 +1,237 @@
+# serializer version: 1
+# name: test_entities[number.fems12345_ctrlemergencycapacityreserve0_reserve_soc-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 100.0,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 5.0,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 1.0,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlEmergencyCapacityReserve0')]>,
+    'disabled_by': None,
+    'domain': 'number',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'number.fems12345_ctrlemergencycapacityreserve0_reserve_soc',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Reserve SoC',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Reserve SoC',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'reserve_soc',
+    'unique_id': 'fems12345/0/ctrlEmergencyCapacityReserve0/_PropertyReserveSoc',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[number.fems12345_ctrlemergencycapacityreserve0_reserve_soc-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlEmergencyCapacityReserve0 Reserve SoC',
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 100.0,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 5.0,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 1.0,
+    }),
+    'context': <ANY>,
+    'entity_id': 'number.fems12345_ctrlemergencycapacityreserve0_reserve_soc',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '50.0',
+  })
+# ---
+# name: test_entities[number.fems12345_ctrlevcs0_default_charge_min_power-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 22100,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 4200,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 100,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlEvcs0')]>,
+    'disabled_by': None,
+    'domain': 'number',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'number.fems12345_ctrlevcs0_default_charge_min_power',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Default charge min power',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Default charge min power',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'default_charge_min_power',
+    'unique_id': 'fems12345/0/ctrlEvcs0/_PropertyDefaultChargeMinPower',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[number.fems12345_ctrlevcs0_default_charge_min_power-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlEvcs0 Default charge min power',
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 22100,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 4200,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 100,
+    }),
+    'context': <ANY>,
+    'entity_id': 'number.fems12345_ctrlevcs0_default_charge_min_power',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '0.0',
+  })
+# ---
+# name: test_entities[number.fems12345_ctrlevcs0_energy_session_limit-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 100000,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 0,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 1000,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlEvcs0')]>,
+    'disabled_by': None,
+    'domain': 'number',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'number.fems12345_ctrlevcs0_energy_session_limit',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Energy session limit',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Energy session limit',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'energy_session_limit',
+    'unique_id': 'fems12345/0/ctrlEvcs0/_PropertyEnergySessionLimit',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[number.fems12345_ctrlevcs0_energy_session_limit-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlEvcs0 Energy session limit',
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 100000,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 0,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 1000,
+    }),
+    'context': <ANY>,
+    'entity_id': 'number.fems12345_ctrlevcs0_energy_session_limit',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '28000.0',
+  })
+# ---
+# name: test_entities[number.fems12345_ctrlevcs0_force_charge_min_power-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 22100,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 4200,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 100,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlEvcs0')]>,
+    'disabled_by': None,
+    'domain': 'number',
+    'entity_category': <EntityCategory.CONFIG: 'config'>,
+    'entity_id': 'number.fems12345_ctrlevcs0_force_charge_min_power',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Force charge min power',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Force charge min power',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'force_charge_min_power',
+    'unique_id': 'fems12345/0/ctrlEvcs0/_PropertyForceChargeMinPower',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[number.fems12345_ctrlevcs0_force_charge_min_power-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlEvcs0 Force charge min power',
+      <NumberEntityCapabilityAttribute.MAX: 'max'>: 22100,
+      <NumberEntityCapabilityAttribute.MIN: 'min'>: 4200,
+      <NumberEntityCapabilityAttribute.MODE: 'mode'>: <NumberMode.AUTO: 'auto'>,
+      <NumberEntityCapabilityAttribute.STEP: 'step'>: 100,
+    }),
+    'context': <ANY>,
+    'entity_id': 'number.fems12345_ctrlevcs0_force_charge_min_power',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '10998.0',
+  })
+# ---

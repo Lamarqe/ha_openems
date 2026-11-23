@@ -1,0 +1,391 @@
+# serializer version: 1
+# name: test_devices[fems12345 _host]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': <DeviceEntryDisabler.INTEGRATION: 'integration'>,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 _host',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': None,
+    'model_id': 'Core.Host',
+    'name': 'fems12345 _host',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 _meta]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 _meta',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': None,
+    'model_id': 'Core.Meta',
+    'name': 'fems12345 _meta',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 _sum]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 _sum',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': None,
+    'model_id': 'Core.Sum',
+    'name': 'fems12345 _sum',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 charger0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 charger0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'Hausdach ',
+    'model_id': 'GoodWe.Charger-PV1',
+    'name': 'fems12345 charger0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 ctrlApiRest0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': <DeviceEntryDisabler.INTEGRATION: 'integration'>,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 ctrlApiRest0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'REST/JSON lesend',
+    'model_id': 'Controller.Api.Rest.ReadOnly',
+    'name': 'fems12345 ctrlApiRest0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 ctrlEmergencyCapacityReserve0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 ctrlEmergencyCapacityReserve0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'Ansteuerung der Notstromreserve',
+    'model_id': 'Controller.Ess.EmergencyCapacityReserve',
+    'name': 'fems12345 ctrlEmergencyCapacityReserve0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 ctrlEssLimiter14a0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 ctrlEssLimiter14a0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'ESS Limiter für §14a',
+    'model_id': 'Controller.Ess.Limiter14a',
+    'name': 'fems12345 ctrlEssLimiter14a0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 ctrlEvcs0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 ctrlEvcs0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'eCharge Hardy Barth Ladestation',
+    'model_id': 'Controller.Evcs',
+    'name': 'fems12345 ctrlEvcs0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 ctrlGridOptimizedCharge0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 ctrlGridOptimizedCharge0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'Netzdienliche Beladung',
+    'model_id': 'Controller.Ess.GridOptimizedCharge',
+    'name': 'fems12345 ctrlGridOptimizedCharge0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 ess0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 ess0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'Speichersystem',
+    'model_id': 'Ess.Generic.ManagedSymmetric',
+    'name': 'fems12345 ess0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 evcs0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 evcs0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'eCharge Hardy Barth Ladestation',
+    'model_id': 'Evcs.HardyBarth',
+    'name': 'fems12345 evcs0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345 meter0]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345 meter0',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': None,
+    'model': 'Netzzähler',
+    'model_id': 'GoodWe.Grid-Meter',
+    'name': 'fems12345 meter0',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': None,
+    'via_device_id': <DeviceEntry identifiers=[('openems', 'fems12345')]>,
+  })
+# ---
+# name: test_devices[fems12345]
+  DeviceRegistryEntrySnapshot({
+    'area_id': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'configuration_url': None,
+    'connections': set({
+    }),
+    'disabled_by': None,
+    'entry_type': None,
+    'hw_version': None,
+    'id': <ANY>,
+    'identifiers': set({
+      tuple(
+        'openems',
+        'fems12345',
+      ),
+    }),
+    'labels': set({
+    }),
+    'manufacturer': 'FENECON',
+    'model': None,
+    'model_id': None,
+    'name': 'fems12345',
+    'name_by_user': None,
+    'serial_number': None,
+    'sw_version': '2026.11.1',
+    'via_device_id': None,
+  })
+# ---
