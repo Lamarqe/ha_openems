@@ -57,6 +57,31 @@
                         "name": "More options"
                     }
                 }
+            },
+            "reconfigure": {
+                "data": {
+                    "host": "Host",
+                    "password": "Password",
+                    "username": "Username"
+                },
+                "data_description": {
+                    "host": "The hostname or IP address of your Fenecon or OpenEMS system",
+                    "password": "For local monitoring, common values are \"user\" or \"owner\"",
+                    "username": "The username to access the system. Use \"x\" for local monitoring access"
+                },
+                "description": "Change the parameters to connect to your FEMS / OpenEMS system",
+                "sections": {
+                    "more_options": {
+                        "data": {
+                            "type": "Connection type",
+                            "url": "Custom URL"
+                        },
+                        "data_description": {
+                            "url": "Custom Websocket URL, eg: ws://192.168.1.100:8888/websocket"
+                        },
+                        "name": "More options"
+                    }
+                }
             }
         }
     },

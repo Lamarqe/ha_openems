@@ -33,6 +33,31 @@
         "description": "The login to {name} was rejected. Enter the current username and password.",
         "title": "[%key:common::config_flow::title::reauth%]"
       },
+      "reconfigure": {
+        "data": {
+          "host": "[%key:component::openems::config::step::user::data::host%]",
+          "password": "[%key:component::openems::config::step::user::data::password%]",
+          "username": "[%key:component::openems::config::step::user::data::username%]"
+        },
+        "data_description": {
+          "host": "[%key:component::openems::config::step::user::data_description::host%]",
+          "password": "[%key:component::openems::config::step::user::data_description::password%]",
+          "username": "[%key:component::openems::config::step::user::data_description::username%]"
+        },
+        "description": "Change the parameters to connect to your FEMS / OpenEMS system",
+        "sections": {
+          "more_options": {
+            "data": {
+              "type": "[%key:component::openems::config::step::user::sections::more_options::data::type%]",
+              "url": "[%key:component::openems::config::step::user::sections::more_options::data::url%]"
+            },
+            "data_description": {
+              "url": "[%key:component::openems::config::step::user::sections::more_options::data_description::url%]"
+            },
+            "name": "[%key:component::openems::config::step::user::sections::more_options::name%]"
+          }
+        }
+      },
       "user": {
         "data": {
           "host": "[%key:common::config_flow::data::host%]",

@@ -141,10 +141,27 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle the initial step."""
-        errors: dict[str, str] = {}
-
         if user_input is None:
-            return self._show_form(user_input=None, errors=errors)
+            return self._show_form("user", user_input=None, errors={})
+        return await self._async_validate_connection("user", user_input)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the connection of the entry."""
+        if user_input is None:
+            return self._show_form(
+                "reconfigure",
+                user_input=dict(self._get_reconfigure_entry().data),
+                errors={},
+            )
+        return await self._async_validate_connection("reconfigure", user_input)
+
+    async def _async_validate_connection(
+        self, step_id: str, user_input: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Validate the connection data, create or update the entry."""
+        errors: dict[str, str] = {}
         more_options = user_input.pop(c.CONF_MORE_OPTIONS, {})
         user_input.update(more_options)
 
@@ -158,22 +175,22 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             and not user_input.get(CONF_HOST, "").strip()
         ):
             errors[CONF_HOST] = "host_missing"
-            return self._show_form(user_input, errors)
+            return self._show_form(step_id, user_input, errors)
 
         if user_input[CONF_TYPE] == CONN_TYPE_CUSTOM_URL:
             if not user_input.get(CONF_URL, "").strip():
                 errors[c.CONF_MORE_OPTIONS] = "custom_url_missing"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
 
             try:
                 conn_url = URL(user_input[CONF_URL])
             except ValueError:
                 errors[c.CONF_MORE_OPTIONS] = "invalid_url"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
 
             if not conn_url.absolute:
                 errors[c.CONF_MORE_OPTIONS] = "url_not_absolute"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
 
         # avoid storing inactive config options in the config entry
         if user_input[CONF_TYPE] != CONN_TYPE_CUSTOM_URL and user_input.get(CONF_URL):
@@ -190,7 +207,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             )
         except ValueError:
             errors[CONF_HOST] = "invalid_host"
-            return self._show_form(user_input, errors)
+            return self._show_form(step_id, user_input, errors)
 
         self._config_data = user_input
         async with client:
@@ -198,26 +215,26 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                 login = await client.connect()
             except OpenEMSAuthError:
                 errors[CONF_BASE] = "invalid_auth"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
             except OpenEMSError:
                 errors[CONF_BASE] = "cannot_connect"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
 
             try:
                 edges = await client.read_edges()
             except OpenEMSError:
                 errors[CONF_BASE] = "cannot_read_components"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
             except Exception:
                 _LOGGER.exception("Unexpected error while reading the edges")
                 errors[CONF_BASE] = "unknown"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
 
             if login.multi_edge:
                 self._edges = [edge for edge in edges if edge.online]
                 if not self._edges:
                     errors[CONF_BASE] = "no_edges"
-                    return self._show_form(user_input, errors)
+                    return self._show_form(step_id, user_input, errors)
                 return self.async_show_form(
                     step_id="edges", data_schema=self._step_edges_data_schema()
                 )
@@ -225,27 +242,28 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             # single edge backend, all required data has been received
             if not edges:
                 errors[CONF_BASE] = "no_edges"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
             edge_id = edges[0].id
             self._config_data[c.CONF_EDGE] = edge_id
             try:
                 hostname = await client.read_edge_hostname(edge_id)
             except OpenEMSError:
                 errors[CONF_BASE] = "cannot_read_components"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
             except Exception:
                 _LOGGER.exception("Unexpected error while reading the edge")
                 errors[CONF_BASE] = "unknown"
-                return self._show_form(user_input, errors)
+                return self._show_form(step_id, user_input, errors)
             return await self._create_or_update_entry(
                 hostname, client.host, multi_edge=False
             )
 
-    def _show_form(self, user_input, errors):
-        # show errors in form
+    def _show_form(
+        self, step_id: str, user_input: dict[str, Any] | None, errors: dict[str, str]
+    ) -> ConfigFlowResult:
         data_schema = self._step_user_data_schema(user_input)
         return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
+            step_id=step_id, data_schema=data_schema, errors=errors
         )
 
     async def _create_or_update_entry(
@@ -318,18 +336,6 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
         return self.async_show_form(
             step_id="edges", data_schema=self._step_edges_data_schema(), errors=errors
-        )
-
-    async def async_step_reconfigure(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Perform a reconfiguration."""
-        return self.async_show_form(
-            step_id="user",
-            data_schema=self._step_user_data_schema(
-                dict(self._get_reconfigure_entry().data)
-            ),
-            errors=None,
         )
 
     async def async_step_reauth(
