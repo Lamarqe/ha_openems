@@ -98,6 +98,8 @@ async def async_setup_entry(
             translation_key="login_failed",
             translation_placeholders=placeholders,
         ) from ex
+    # also called when the setup fails, a no-op once the backend took over the connection
+    config_entry.async_on_unload(client.close)
 
     # Read the edge configuration only if there is no cached one yet,
     # a cached one is checked in the background after the setup.
@@ -108,7 +110,6 @@ async def async_setup_entry(
         try:
             components = await client.read_edge_config(edge_id)
         except OpenEMSError as ex:
-            await client.close()
             raise ConfigEntryNotReady(
                 translation_domain=c.DOMAIN,
                 translation_key="cannot_read_configuration",
@@ -117,6 +118,8 @@ async def async_setup_entry(
         await store.async_save(components)
 
     backend = client.create_backend(edge_id, components)
+    # also called when the setup fails, after unloading the platforms otherwise
+    config_entry.async_on_unload(backend.stop)
 
     backend.the_edge.set_forward_interval(
         config_entry.options[c.CONF_ADVANCED_OPTIONS][c.CONF_FORWARD_INTERVAL]
@@ -242,7 +245,6 @@ async def async_unload_entry(
 ) -> None:
     """Unload a config entry."""
     await hass.config_entries.async_unload_platforms_or_raise(config_entry, _PLATFORMS)
-    await config_entry.runtime_data.backend.stop()
 
 
 async def async_remove_entry(

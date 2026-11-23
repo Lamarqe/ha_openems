@@ -453,16 +453,100 @@ async def _prepare_unload(
     return entry, calls
 
 
+def _add_current_entry(hass: HomeAssistant) -> MockConfigEntry:
+    """Add an entry of the current configuration version, without cached configuration."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=6,
+        minor_version=5,
+        unique_id="host",
+        data=_USER_INPUT,
+        options=_DEFAULT_OPTIONS,
+    )
+    entry.add_to_hass(hass)
+    return entry
+
+
+def _make_lifecycle_backend(stop: AsyncMock) -> MagicMock:
+    """Return a mock OpenEMSBackend for set up and unload through Home Assistant."""
+    backend = MagicMock(stop=stop)
+    backend.the_edge.hostname = "host"
+    backend.the_edge.components = {}
+    backend.the_edge.add_version_listener.return_value = MagicMock(return_value=None)
+    return backend
+
+
 async def test_unload_entry_stops_backend_after_platforms(hass: HomeAssistant) -> None:
     """The backend is stopped after all platforms are unloaded."""
-    entry, calls = await _prepare_unload(hass, unload_ok=True)
+    entry = _add_current_entry(hass)
+    calls = MagicMock()
+    calls.unload_platforms = AsyncMock(return_value=True)
+    calls.stop = AsyncMock()
 
-    with patch.object(
-        hass.config_entries, "async_unload_platforms", new=calls.unload_platforms
+    conn_patch, _ = _make_conn_patches()
+    with (
+        conn_patch,
+        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
+        patch(
+            "openems_client.client.OpenEMSBackend",
+            return_value=_make_lifecycle_backend(calls.stop),
+        ),
+        patch.object(hass.config_entries, "async_forward_entry_setups", new=AsyncMock()),
+        patch.object(
+            hass.config_entries, "async_unload_platforms", new=calls.unload_platforms
+        ),
     ):
-        await async_unload_entry(hass, entry)
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        assert await hass.config_entries.async_unload(entry.entry_id)
 
     assert [name for name, _, _ in calls.mock_calls] == ["unload_platforms", "stop"]
+
+
+async def test_setup_entry_failure_stops_backend(hass: HomeAssistant) -> None:
+    """A setup failing after the backend took over the connection stops the backend."""
+    entry = _add_current_entry(hass)
+    stop = AsyncMock()
+
+    conn_patch, _ = _make_conn_patches()
+    with (
+        conn_patch,
+        patch.object(OpenEMSConfigReader, "read_edge_components", return_value={}),
+        patch(
+            "openems_client.client.OpenEMSBackend",
+            return_value=_make_lifecycle_backend(stop),
+        ),
+        patch.object(
+            hass.config_entries,
+            "async_forward_entry_setups",
+            new=AsyncMock(side_effect=HomeAssistantError("platform setup failed")),
+        ),
+    ):
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+
+    assert entry.state is config_entries.ConfigEntryState.SETUP_ERROR
+    stop.assert_awaited_once()
+
+
+async def test_setup_entry_configuration_error_closes_connection(
+    hass: HomeAssistant,
+) -> None:
+    """A configuration that cannot be read closes the connection, setup is retried."""
+    entry = _add_current_entry(hass)
+
+    conn_patch, mock_conn = _make_conn_patches()
+    with (
+        conn_patch,
+        patch.object(
+            OpenEMSConfigReader,
+            "read_edge_components",
+            side_effect=OpenEMSError("Internal server error"),
+        ),
+    ):
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+
+    assert entry.state is config_entries.ConfigEntryState.SETUP_RETRY
+    assert entry.error_reason_translation_key == "cannot_read_configuration"
+    mock_conn.stop.assert_awaited_once()
 
 
 async def test_unload_entry_failure_keeps_backend_running(hass: HomeAssistant) -> None:
