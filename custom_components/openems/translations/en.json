@@ -2,6 +2,7 @@
     "config": {
         "abort": {
             "already_configured": "Device is already configured",
+            "hostname_in_use": "A system with the hostname {hostname} is already configured ({title}). If this is another OpenEMS edge, give each edge its own hostname.",
             "reauth_successful": "Re-authentication was successful",
             "reconfigure_successful": "Reconfiguration was successful",
             "unique_id_mismatch": "The connection leads to a different system than the one of this entry."

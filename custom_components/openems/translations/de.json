@@ -2,6 +2,7 @@
   "config": {
     "abort": {
       "already_configured": "Gerät bereits konfiguriert",
+      "hostname_in_use": "Ein System mit dem Hostnamen {hostname} ist bereits eingerichtet ({title}). Falls es sich um ein anderes OpenEMS-Edge handelt, vergib jedem Edge einen eigenen Hostnamen.",
       "reauth_successful": "Die erneute Authentifizierung war erfolgreich",
       "reconfigure_successful": "Die Neukonfiguration war erfolgreich",
       "unique_id_mismatch": "Die Verbindung führt zu einem anderen System als dem dieses Eintrags."

@@ -13,6 +13,7 @@ from openems_client.const import (
     CONN_TYPE_WEB_FENECON,
 )
 from openems_client.exceptions import OpenEMSAuthError, OpenEMSError
+from openems_client.fems import is_fems
 import probatio
 from yarl import URL
 
@@ -31,7 +32,7 @@ from homeassistant.const import (
     CONF_USERNAME,
 )
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import SectionConfig, section
+from homeassistant.data_entry_flow import AbortFlow, SectionConfig, section
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     BooleanSelector,
@@ -53,6 +54,11 @@ from .helpers_ha import OpenEMSConfigEntry, component_store, map_user_input
 _LOGGER = logging.getLogger(__name__)
 
 PASSWORD_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
+
+
+def _address(data: Mapping[str, Any]) -> str | None:
+    """Return the address the connection data points to."""
+    return data.get(CONF_HOST) or data.get(CONF_URL)
 
 
 class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
@@ -263,6 +269,25 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             step_id=step_id, data_schema=data_schema, errors=errors
         )
 
+    def _abort_if_hostname_in_use(self, hostname: str) -> None:
+        """Abort with a hint if an entry with another address has the same hostname.
+
+        Plain OpenEMS edges may keep a default hostname, so the hostname can belong to
+        another system. A FEMS is named by its unique FEMS number.
+        """
+        entry = self.hass.config_entries.async_entry_for_domain_unique_id(
+            c.DOMAIN, hostname
+        )
+        if entry is None or is_fems(
+            self._config_data[CONF_TYPE], hostname.split(" ", 1)[0], {}
+        ):
+            return
+        if _address(entry.data) != _address(self._config_data):
+            raise AbortFlow(
+                "hostname_in_use",
+                description_placeholders={"hostname": hostname, "title": entry.title},
+            )
+
     async def _create_or_update_entry(
         self, hostname: str, host: str | None, multi_edge: bool
     ) -> ConfigFlowResult:
@@ -279,6 +304,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             )
 
         # no reconfigure. Create new entry instead
+        self._abort_if_hostname_in_use(hostname)
         self._abort_if_unique_id_configured()
         # initialize options with default settings
         options = {

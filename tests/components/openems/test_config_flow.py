@@ -278,12 +278,38 @@ async def test_user_flow_custom_url(
     }
 
 
-@pytest.mark.usefixtures("mock_openems_client")
+@pytest.mark.parametrize(
+    ("hostname", "existing_host", "reason", "placeholders"),
+    [
+        pytest.param(
+            HOSTNAME, "192.0.2.9", "already_configured", None, id="fems_number"
+        ),
+        pytest.param("openems", HOST, "already_configured", None, id="same_address"),
+        pytest.param(
+            "openems",
+            "192.0.2.9",
+            "hostname_in_use",
+            {"hostname": "openems", "title": "192.0.2.9"},
+            id="other_address",
+        ),
+    ],
+)
 async def test_user_flow_already_configured(
-    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+    hass: HomeAssistant,
+    mock_openems_client: MagicMock,
+    hostname: str,
+    existing_host: str,
+    reason: str,
+    placeholders: dict[str, str] | None,
 ) -> None:
-    """The same system cannot be added twice."""
-    mock_config_entry.add_to_hass(hass)
+    """A system cannot be added twice, a hostname at another address gets a hint."""
+    MockConfigEntry(
+        domain=DOMAIN,
+        title=existing_host,
+        unique_id=hostname,
+        data={**ENTRY_DATA, CONF_HOST: existing_host},
+    ).add_to_hass(hass)
+    mock_openems_client.read_edge_hostname.return_value = hostname
     result = await _start_user_flow(hass)
 
     result = await hass.config_entries.flow.async_configure(
@@ -291,7 +317,8 @@ async def test_user_flow_already_configured(
     )
 
     assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "already_configured"
+    assert result["reason"] == reason
+    assert result["description_placeholders"] == placeholders
 
 
 @pytest.mark.parametrize("multi_edge", [True])
