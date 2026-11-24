@@ -37,9 +37,22 @@ async def test_entities(
     await snapshot_platform(hass, entity_registry, snapshot, mock_config_entry.entry_id)
 
 
+@pytest.mark.parametrize(
+    ("phases", "sent"),
+    [
+        pytest.param(3, 4000.0, id="three_phases"),
+        pytest.param(0, 12000.0, id="no_phases"),
+    ],
+)
 @pytest.mark.usefixtures("init_integration")
-async def test_set_value(hass: HomeAssistant, mock_openems_client: MagicMock) -> None:
+async def test_set_value(
+    hass: HomeAssistant, mock_openems_client: MagicMock, phases: int, sent: float
+) -> None:
     """Setting a value sends it unscaled, the force charge power is per phase."""
+    rpc_server = mock_openems_client.backend.connection.rpc_server
+    rpc_server.push_current_data({"evcs0/Phases": phases})
+    await hass.async_block_till_done()
+
     await hass.services.async_call(
         NUMBER_DOMAIN,
         SERVICE_SET_VALUE,
@@ -47,8 +60,8 @@ async def test_set_value(hass: HomeAssistant, mock_openems_client: MagicMock) ->
         blocking=True,
     )
 
-    assert mock_openems_client.backend.connection.rpc_server.component_updates() == [
-        ("ctrlEvcs0", {"forceChargeMinPower": 4000.0})
+    assert rpc_server.component_updates() == [
+        ("ctrlEvcs0", {"forceChargeMinPower": sent})
     ]
 
 

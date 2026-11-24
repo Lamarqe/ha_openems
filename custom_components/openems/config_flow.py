@@ -192,14 +192,11 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
                 errors[c.CONF_MORE_OPTIONS] = "url_not_absolute"
                 return self._show_form(step_id, user_input, errors)
 
-        # avoid storing inactive config options in the config entry
-        if user_input[CONF_TYPE] != CONN_TYPE_CUSTOM_URL and user_input.get(CONF_URL):
-            del user_input[CONF_URL]
-        if user_input.get(CONF_TYPE) in (
-            CONN_TYPE_WEB_FENECON,
-            CONN_TYPE_CUSTOM_URL,
-        ) and user_input.get(CONF_HOST):
-            del user_input[CONF_HOST]
+        # avoid storing inactive config options in the config entry, also empty ones
+        if user_input[CONF_TYPE] != CONN_TYPE_CUSTOM_URL:
+            user_input.pop(CONF_URL, None)
+        if user_input[CONF_TYPE] in (CONN_TYPE_WEB_FENECON, CONN_TYPE_CUSTOM_URL):
+            user_input.pop(CONF_HOST, None)
 
         try:
             client = OpenEMSClient(

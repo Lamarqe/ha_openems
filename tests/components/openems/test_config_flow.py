@@ -76,7 +76,7 @@ async def test_user_flow(hass: HomeAssistant, mock_setup_entry: AsyncMock) -> No
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == HOST
     assert result["result"].unique_id == HOSTNAME
-    assert result["data"] == {**ENTRY_DATA, CONF_URL: ""}
+    assert result["data"] == ENTRY_DATA
     assert result["options"] == ENTRY_OPTIONS
     assert len(mock_setup_entry.mock_calls) == 1
 
@@ -329,11 +329,9 @@ async def test_multi_edge_flow(
     assert result["title"] == "FEMS Web: user@example.com 2"
     assert result["result"].unique_id == f"{HOSTNAME} 2"
     assert result["data"] == {
-        CONF_HOST: "",
         CONF_USERNAME: "user@example.com",
         CONF_PASSWORD: "password",
         CONF_TYPE: "web_fenecon",
-        CONF_URL: "",
         CONF_EDGE: "2",
     }
 
