@@ -1,0 +1,162 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "ctrl_is_blocking_ess": {
+        "default": "mdi:battery-lock"
+      },
+      "ctrl_is_charging_ess": {
+        "default": "mdi:battery-charging"
+      },
+      "ctrl_is_discharging_ess": {
+        "default": "mdi:battery-arrow-down"
+      },
+      "restriction_mode": {
+        "default": "mdi:transmission-tower",
+        "state": {
+          "on": "mdi:transmission-tower-off"
+        }
+      }
+    },
+    "number": {
+      "automatic_force_on_soc": {
+        "default": "mdi:battery-arrow-up"
+      },
+      "automatic_force_on_surplus_power": {
+        "default": "mdi:solar-power"
+      },
+      "automatic_lock_grid_buy_power": {
+        "default": "mdi:transmission-tower-import"
+      },
+      "automatic_lock_soc": {
+        "default": "mdi:battery-lock"
+      },
+      "automatic_recommendation_surplus_power": {
+        "default": "mdi:solar-power-variant"
+      },
+      "default_charge_min_power": {
+        "default": "mdi:ev-station"
+      },
+      "energy_session_limit": {
+        "default": "mdi:counter"
+      },
+      "force_charge_min_power": {
+        "default": "mdi:ev-station"
+      },
+      "manual_energy_session_limit": {
+        "default": "mdi:counter"
+      },
+      "minimum_switching_time": {
+        "default": "mdi:timer-outline"
+      },
+      "reserve_soc": {
+        "default": "mdi:home-battery"
+      }
+    },
+    "select": {
+      "charge_mode": {
+        "default": "mdi:ev-station"
+      },
+      "default_level": {
+        "default": "mdi:radiator"
+      },
+      "delay_charge_risk_level": {
+        "default": "mdi:gauge"
+      },
+      "manual_state": {
+        "default": "mdi:heat-pump"
+      },
+      "mode": {
+        "default": "mdi:cog"
+      },
+      "phase_switching": {
+        "default": "mdi:sine-wave"
+      },
+      "priority": {
+        "default": "mdi:sort"
+      },
+      "work_mode": {
+        "default": "mdi:radiator"
+      }
+    },
+    "sensor": {
+      "actual_mode": {
+        "default": "mdi:cog"
+      },
+      "charge_mode": {
+        "default": "mdi:ev-station"
+      },
+      "delay_charge_state": {
+        "default": "mdi:timer-sand"
+      },
+      "grid_mode": {
+        "default": "mdi:transmission-tower",
+        "state": {
+          "off-grid": "mdi:transmission-tower-off",
+          "off-grid_genset": "mdi:transmission-tower-off"
+        }
+      },
+      "phases": {
+        "default": "mdi:sine-wave"
+      },
+      "sell_to_grid_limit_state": {
+        "default": "mdi:transmission-tower-export"
+      },
+      "state": {
+        "default": "mdi:check-circle-outline",
+        "state": {
+          "fault": "mdi:alert-circle",
+          "info": "mdi:information-outline",
+          "warning": "mdi:alert-outline"
+        }
+      },
+      "state_machine": {
+        "default": "mdi:state-machine"
+      },
+      "status": {
+        "default": "mdi:information-outline"
+      },
+      "target_minute": {
+        "default": "mdi:clock-outline"
+      }
+    },
+    "switch": {
+      "automatic_force_on_ctrl_enabled": {
+        "default": "mdi:power-plug"
+      },
+      "automatic_lock_ctrl_enabled": {
+        "default": "mdi:lock"
+      },
+      "automatic_recommendation_ctrl_enabled": {
+        "default": "mdi:lightbulb-on-outline"
+      },
+      "enabled_charging": {
+        "default": "mdi:ev-station"
+      },
+      "is_ess_charge_from_grid_allowed": {
+        "default": "mdi:transmission-tower-import"
+      },
+      "is_reserve_soc_enabled": {
+        "default": "mdi:home-battery"
+      },
+      "is_running": {
+        "default": "mdi:play-circle-outline"
+      },
+      "target_time_specified": {
+        "default": "mdi:clock-check-outline"
+      }
+    },
+    "time": {
+      "manual_target_time": {
+        "default": "mdi:clock-end"
+      }
+    }
+  },
+  "services": {
+    "update_component_config": {
+      "service": "mdi:cog-transfer"
+    },
+    "write_channel": {
+      "service": "mdi:pencil"
+    }
+  }
+}
