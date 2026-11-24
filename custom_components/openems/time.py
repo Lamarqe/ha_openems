@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import time
 import logging
 
-from openems_client.model import PROPERTY_PREFIX, ChannelKind
+from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSComponent, OpenEMSTimeProperty
 
 from homeassistant.components.time import TimeEntity, TimeEntityDescription
@@ -41,11 +41,8 @@ async def async_setup_entry(
                 key=channel.unique_id,
                 entity_category=EntityCategory.CONFIG,
                 entity_registry_enabled_default=entity_enabled,
-                # primary channels have a translated name, others
-                # use the channel name without "_Property" prefix
-                name=UNDEFINED
-                if entity_enabled
-                else channel.name.removeprefix(PROPERTY_PREFIX),
+                # primary channels have a translated name, others a generated one
+                name=UNDEFINED if entity_enabled else channel.display_name,
                 translation_key=channel.key,
             )
             entities.append(

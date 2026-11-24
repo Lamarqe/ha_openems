@@ -42,8 +42,8 @@ async def async_setup_entry(
             entity_description = OpenEMSBinarySensorDescription(
                 key=channel.unique_id,
                 entity_registry_enabled_default=channel.primary,
-                # primary channels have a translated name
-                name=UNDEFINED if channel.primary else channel.name,
+                # primary channels have a translated name, others a generated one
+                name=UNDEFINED if channel.primary else channel.display_name,
                 # state channels with a level signal a problem of the component
                 device_class=BinarySensorDeviceClass.PROBLEM
                 if channel.severity

@@ -49,7 +49,7 @@
     'state': 'off',
   })
 # ---
-# name: test_entities[binary_sensor.fems12345_ess0_runfailed-entry]
+# name: test_entities[binary_sensor.fems12345_ess0_run_failed-entry]
   EntityRegistryEntrySnapshot({
     'aliases': list([
       None,
@@ -63,7 +63,7 @@
     'disabled_by': None,
     'domain': 'binary_sensor',
     'entity_category': None,
-    'entity_id': 'binary_sensor.fems12345_ess0_runfailed',
+    'entity_id': 'binary_sensor.fems12345_ess0_run_failed',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -71,12 +71,12 @@
     'labels': set({
     }),
     'name': None,
-    'object_id_base': 'RunFailed',
+    'object_id_base': 'Run failed',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.PROBLEM: 'problem'>,
     'original_icon': None,
-    'original_name': 'RunFailed',
+    'original_name': 'Run failed',
     'platform': 'openems',
     'previous_unique_id': None,
     'suggested_object_id': None,
@@ -86,14 +86,14 @@
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entities[binary_sensor.fems12345_ess0_runfailed-state]
+# name: test_entities[binary_sensor.fems12345_ess0_run_failed-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       <EntityStateAttribute.DEVICE_CLASS: 'device_class'>: 'problem',
-      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ess0 RunFailed',
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ess0 Run failed',
     }),
     'context': <ANY>,
-    'entity_id': 'binary_sensor.fems12345_ess0_runfailed',
+    'entity_id': 'binary_sensor.fems12345_ess0_run_failed',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,

@@ -64,8 +64,8 @@ async def async_setup_entry(
                 OpenEMSSensorDescription(
                     key=channel.unique_id,
                     entity_registry_enabled_default=channel.primary,
-                    # primary channels have a translated name
-                    name=UNDEFINED if channel.primary else channel.name,
+                    # primary channels have a translated name, others a generated one
+                    name=UNDEFINED if channel.primary else channel.display_name,
                     device_class=SensorDeviceClass.ENUM,
                     options=channel.option_keys,
                     translation_key=channel.key,
@@ -80,8 +80,8 @@ async def async_setup_entry(
                 OpenEMSSensorDescription(
                     key=channel.unique_id,
                     entity_registry_enabled_default=channel.primary,
-                    # primary channels have a translated name
-                    name=UNDEFINED if channel.primary else channel.name,
+                    # primary channels have a translated name, others a generated one
+                    name=UNDEFINED if channel.primary else channel.display_name,
                     device_class=DEVICE_CLASSES.get(channel.quantity)
                     if channel.quantity
                     else None,
@@ -100,8 +100,8 @@ async def async_setup_entry(
                 OpenEMSSensorDescription(
                     key=channel.unique_id,
                     entity_registry_enabled_default=channel.primary,
-                    # primary channels have a translated name
-                    name=UNDEFINED if channel.primary else channel.name,
+                    # primary channels have a translated name, others a generated one
+                    name=UNDEFINED if channel.primary else channel.display_name,
                     translation_key=channel.key,
                     # text channels describe the devices, eg versions and serial numbers
                     entity_category=EntityCategory.DIAGNOSTIC,
