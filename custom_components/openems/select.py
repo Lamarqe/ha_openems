@@ -17,6 +17,9 @@ from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_error
 
 _LOGGER = logging.getLogger(__name__)
 
+# writes of update groups also send the current values of other properties
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant,

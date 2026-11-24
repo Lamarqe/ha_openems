@@ -24,6 +24,8 @@ from .helpers_ha import OpenEMSConfigEntry, component_device
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 DEVICE_CLASSES: dict[Quantity, SensorDeviceClass] = {
     Quantity.APPARENT_POWER: SensorDeviceClass.APPARENT_POWER,
     Quantity.CURRENT: SensorDeviceClass.CURRENT,
