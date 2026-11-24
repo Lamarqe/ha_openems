@@ -24,12 +24,19 @@
             "edges": {
                 "data": {
                     "edges": "OpenEMS Edge to be integrated"
+                },
+                "data_description": {
+                    "edges": "The edge of the account to set up. Only edges which are online are offered."
                 }
             },
             "reauth_confirm": {
                 "data": {
                     "password": "Password",
                     "username": "Username"
+                },
+                "data_description": {
+                    "password": "For local monitoring, common values are \"user\" or \"owner\"",
+                    "username": "The username to access the system. Use \"x\" for local monitoring access"
                 },
                 "description": "The login to {name} was rejected. Enter the current username and password.",
                 "title": "Authentication expired for {name}"
@@ -53,7 +60,8 @@
                             "url": "Custom URL"
                         },
                         "data_description": {
-                            "url": "Custom Websocket URL, eg: ws://192.168.1.100:8888/websocket"
+                            "url": "Custom Websocket URL, eg: ws://192.168.1.100:8888/websocket",
+                            "type": "How Home Assistant connects to the system: directly to the edge, via the local monitoring, via the FENECON portal or via a custom websocket URL"
                         },
                         "name": "More options"
                     }
@@ -78,7 +86,8 @@
                             "url": "Custom URL"
                         },
                         "data_description": {
-                            "url": "Custom Websocket URL, eg: ws://192.168.1.100:8888/websocket"
+                            "url": "Custom Websocket URL, eg: ws://192.168.1.100:8888/websocket",
+                            "type": "How Home Assistant connects to the system: directly to the edge, via the local monitoring, via the FENECON portal or via a custom websocket URL"
                         },
                         "name": "More options"
                     }
@@ -1834,7 +1843,8 @@
                     "ignore_decreasing_if_total_increasing": "Ignore decreasing if total increasing"
                 },
                 "data_description": {
-                    "forward_interval": "Interval in seconds to publish channel data. Set to 0 to disable rate limits."
+                    "forward_interval": "Interval in seconds to publish channel data. Set to 0 to disable rate limits.",
+                    "ignore_decreasing_if_total_increasing": "Keep the last value of energy counters which only increase, if the system reports a smaller value."
                 },
                 "title": "Advanced options"
             }

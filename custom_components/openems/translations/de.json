@@ -24,6 +24,9 @@
       "edges": {
         "data": {
           "edges": "OpenEMS Edge zur Integration auswählen"
+        },
+        "data_description": {
+          "edges": "Das Edge des Kontos, das eingerichtet werden soll. Es werden nur Edges angeboten, die online sind."
         }
       },
       "reauth_confirm": {
@@ -32,6 +35,10 @@
         "data": {
           "username": "Benutzername",
           "password": "Passwort"
+        },
+        "data_description": {
+          "password": "Standardwerte für das lokale Monitoring: \"user\" oder \"owner\"",
+          "username": "Der Benutzername um auf das System zuzugreifen. Verwende \"x\" für das lokale Monitoring."
         }
       },
       "user": {
@@ -53,7 +60,8 @@
               "url": "Individuelle URL"
             },
             "data_description": {
-              "url": "Individuelle WebSocket URL, z.B.: ws://192.168.1.100:8888/websocket"
+              "url": "Individuelle WebSocket URL, z.B.: ws://192.168.1.100:8888/websocket",
+              "type": "Wie Home Assistant sich mit dem System verbindet: direkt mit dem Edge, über das lokale Monitoring, über das FENECON Portal oder über eine individuelle WebSocket URL"
             },
             "name": "Erweiterte Optionen"
           }
@@ -78,7 +86,8 @@
               "url": "Individuelle URL"
             },
             "data_description": {
-              "url": "Individuelle WebSocket URL, z.B.: ws://192.168.1.100:8888/websocket"
+              "url": "Individuelle WebSocket URL, z.B.: ws://192.168.1.100:8888/websocket",
+              "type": "Wie Home Assistant sich mit dem System verbindet: direkt mit dem Edge, über das lokale Monitoring, über das FENECON Portal oder über eine individuelle WebSocket URL"
             },
             "name": "Erweiterte Optionen"
           }
@@ -1774,7 +1783,8 @@
           "forward_interval": "Updatefrequenz begrenzen (Sekunden)"
         },
         "data_description": {
-          "forward_interval": "Intervall in Sekunden für die Veröffentlichung von Kanaldaten. 0 deaktiviert die Begrenzung."
+          "forward_interval": "Intervall in Sekunden für die Veröffentlichung von Kanaldaten. 0 deaktiviert die Begrenzung.",
+          "ignore_decreasing_if_total_increasing": "Behält den letzten Wert von Energiezählern, die nur steigen, falls das System einen kleineren Wert meldet."
         }
       }
     }

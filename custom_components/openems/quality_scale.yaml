@@ -13,11 +13,7 @@ rules:
       integrations need them in core_integrations/openems.
   common-modules: done
   config-flow-test-coverage: done
-  config-flow:
-    status: todo
-    comment: |
-      data_description missing for the connection type, the edge selection, the
-      reauthentication fields and the option ignore_decreasing_if_total_increasing.
+  config-flow: done
   dependency-transparency: done
   docs-actions:
     status: todo

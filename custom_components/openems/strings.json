@@ -24,12 +24,19 @@
       "edges": {
         "data": {
           "edges": "OpenEMS Edge to be integrated"
+        },
+        "data_description": {
+          "edges": "The edge of the account to set up. Only edges which are online are offered."
         }
       },
       "reauth_confirm": {
         "data": {
           "password": "[%key:common::config_flow::data::password%]",
           "username": "[%key:common::config_flow::data::username%]"
+        },
+        "data_description": {
+          "password": "[%key:component::openems::config::step::user::data_description::password%]",
+          "username": "[%key:component::openems::config::step::user::data_description::username%]"
         },
         "description": "The login to {name} was rejected. Enter the current username and password.",
         "title": "[%key:common::config_flow::title::reauth%]"
@@ -53,6 +60,7 @@
               "url": "[%key:component::openems::config::step::user::sections::more_options::data::url%]"
             },
             "data_description": {
+              "type": "[%key:component::openems::config::step::user::sections::more_options::data_description::type%]",
               "url": "[%key:component::openems::config::step::user::sections::more_options::data_description::url%]"
             },
             "name": "[%key:component::openems::config::step::user::sections::more_options::name%]"
@@ -78,6 +86,7 @@
               "url": "Custom URL"
             },
             "data_description": {
+              "type": "How Home Assistant connects to the system: directly to the edge, via the local monitoring, via the FENECON portal or via a custom websocket URL",
               "url": "Custom Websocket URL, eg: ws://192.168.1.100:8888/websocket"
             },
             "name": "More options"
@@ -1837,7 +1846,8 @@
           "ignore_decreasing_if_total_increasing": "Ignore decreasing if total increasing"
         },
         "data_description": {
-          "forward_interval": "Interval in seconds to publish channel data. Set to 0 to disable rate limits."
+          "forward_interval": "Interval in seconds to publish channel data. Set to 0 to disable rate limits.",
+          "ignore_decreasing_if_total_increasing": "Keep the last value of energy counters which only increase, if the system reports a smaller value."
         },
         "title": "Advanced options"
       }
