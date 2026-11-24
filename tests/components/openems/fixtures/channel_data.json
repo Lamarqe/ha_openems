@@ -28,6 +28,7 @@
   "ctrlGridOptimizedCharge0/_PropertyMode": "OFF",
   "ctrlGridOptimizedCharge0/_PropertyDelayChargeRiskLevel": "HIGH",
   "ctrlGridOptimizedCharge0/DelayChargeState": 6,
+  "ctrlGridOptimizedCharge0/TargetMinute": 810,
   "ctrlEmergencyCapacityReserve0/_PropertyReserveSoc": 50,
   "ctrlEmergencyCapacityReserve0/_PropertyIsReserveSocEnabled": 0,
   "ctrlEssLimiter14a0/RestrictionMode": 0,

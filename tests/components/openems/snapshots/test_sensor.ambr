@@ -193,6 +193,56 @@
     'state': 'delay_charge_part_is_disabled',
   })
 # ---
+# name: test_entities[sensor.fems12345_ctrlgridoptimizedcharge0_target_minute-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': None,
+    'device_class': None,
+    'device_id': <DeviceEntry identifiers=[('openems', 'fems12345 ctrlGridOptimizedCharge0')]>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': None,
+    'entity_id': 'sensor.fems12345_ctrlgridoptimizedcharge0_target_minute',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Target minute',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Target minute',
+    'platform': 'openems',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'target_minute',
+    'unique_id': 'fems12345/0/ctrlGridOptimizedCharge0/TargetMinute',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[sensor.fems12345_ctrlgridoptimizedcharge0_target_minute-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'fems12345 ctrlGridOptimizedCharge0 Target minute',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.fems12345_ctrlgridoptimizedcharge0_target_minute',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '810',
+  })
+# ---
 # name: test_entities[sensor.fems12345_ess0_capacity-entry]
   EntityRegistryEntrySnapshot({
     'aliases': list([

@@ -39,12 +39,15 @@ DEVICE_CLASSES: dict[Quantity, SensorDeviceClass] = {
 }
 
 
-def _state_class(channel: OpenEMSDataHandler) -> SensorStateClass:
+def _state_class(channel: OpenEMSDataHandler) -> SensorStateClass | None:
     if channel.cumulative:
         return SensorStateClass.TOTAL_INCREASING
     if channel.quantity is Quantity.ENERGY:
         return SensorStateClass.TOTAL
-    return SensorStateClass.MEASUREMENT
+    if channel.measurement:
+        return SensorStateClass.MEASUREMENT
+    # codes, IDs and settings have no statistics
+    return None
 
 
 async def async_setup_entry(
