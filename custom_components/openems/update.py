@@ -80,11 +80,12 @@ class OpenEMSUpdateEntity(UpdateEntity):
         if edge.has_release_notes:
             self._attr_supported_features |= UpdateEntityFeature.RELEASE_NOTES
         self._attr_release_url = edge.release_url
+        self._status_unknown = False
 
     @property
     def available(self) -> bool:
         """Return True while the edge is connected and its update state is known."""
-        return super().available and self._edge.available
+        return super().available and self._edge.available and not self._status_unknown
 
     async def async_added_to_hass(self) -> None:
         """Read the update state whenever the edge connects or its version changes."""
@@ -138,17 +139,17 @@ class OpenEMSUpdateEntity(UpdateEntity):
     def _apply_state(self, state: SystemUpdateState) -> None:
         match state.status:
             case UpdateStatus.RUNNING:
-                self._attr_available = True
+                self._status_unknown = False
                 self._attr_in_progress = True
                 self._attr_update_percentage = state.percent_completed
             case UpdateStatus.UNKNOWN:
                 # eg while the edge restarts during an update, which stays in progress
-                self._attr_available = False
+                self._status_unknown = True
                 self._attr_installed_version = None
                 self._attr_latest_version = None
                 self._attr_update_percentage = None
             case _:
-                self._attr_available = True
+                self._status_unknown = False
                 self._attr_installed_version = state.installed_version
                 self._attr_latest_version = state.latest_version
                 self._attr_in_progress = False
