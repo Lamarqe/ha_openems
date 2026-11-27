@@ -17,7 +17,9 @@ from .helpers_ha import component_from_device, write_only_channels
 
 UPDATE_COMPONENT_CONFIG_SCHEMA = probatio.Schema(
     {
-        probatio.Required(ATTR_DEVICE_ID): probatio.All(cv.ensure_list, [cv.string]),
+        probatio.Required(ATTR_DEVICE_ID): probatio.All(
+            probatio.EnsureList(), [cv.string]
+        ),
         probatio.Required(OpenEMSServiceArgument.PROPERTIES): probatio.Schema(
             {cv.string: object}
         ),
