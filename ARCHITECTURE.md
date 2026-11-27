@@ -31,7 +31,7 @@ This document describes how the OpenEMS integration (`custom_components/openems`
 ### Unique IDs
 
 - Channel based entities: `channel.unique_id()` → `<hostname>/<edge id>/<component>/<channel>`.
-- Edge level entities: `<hostname>/<edge id>/<key>` (e.g. `.../update`, `.../check_update`).
+- Edge level entities: `<hostname>/<edge id>/<key>` (e.g. `.../update`, `.../restart`).
 - Unique IDs are persisted in the entity registry. Never change an existing one without a migration in `async_migrate_entry`.
 
 ## Platform implementation style

@@ -54,9 +54,6 @@
     },
     "entity": {
         "button": {
-            "check_update": {
-                "name": "Check for update"
-            },
             "restart": {
                 "name": "Restart"
             }

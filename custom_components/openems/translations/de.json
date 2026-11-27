@@ -49,9 +49,6 @@
   },
   "entity": {
     "button": {
-      "check_update": {
-        "name": "Nach Update suchen"
-      },
       "restart": {
         "name": "Neustart"
       }
