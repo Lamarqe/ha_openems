@@ -1,7 +1,6 @@
 """Component providing support for OpenEMS switch entities."""
 
 from dataclasses import dataclass
-import logging
 from typing import Any
 
 from openems_client.model import ChannelKind
@@ -15,8 +14,6 @@ from homeassistant.helpers.typing import UNDEFINED
 
 from .entity import OpenEMSChannelEntity
 from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
-
-_LOGGER = logging.getLogger(__name__)
 
 # writes of update groups also send the current values of other properties
 PARALLEL_UPDATES = 1

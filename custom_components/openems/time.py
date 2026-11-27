@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from datetime import time
-import logging
 
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSComponent, OpenEMSTimeProperty
@@ -15,8 +14,6 @@ from homeassistant.helpers.typing import UNDEFINED
 
 from .entity import OpenEMSChannelEntity
 from .helpers_ha import OpenEMSConfigEntry, component_device, handle_write_errors
-
-_LOGGER = logging.getLogger(__name__)
 
 # writes of update groups also send the current values of other properties
 PARALLEL_UPDATES = 1

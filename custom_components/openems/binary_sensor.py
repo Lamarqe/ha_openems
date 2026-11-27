@@ -1,7 +1,6 @@
 """Component providing support for OpenEMS binary sensors."""
 
 from dataclasses import dataclass
-import logging
 
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSChannel, OpenEMSComponent
@@ -17,8 +16,6 @@ from homeassistant.helpers.typing import UNDEFINED
 
 from .entity import OpenEMSChannelEntity
 from .helpers_ha import OpenEMSConfigEntry, component_device
-
-_LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 0
 
