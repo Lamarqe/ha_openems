@@ -357,7 +357,7 @@ async def test_remove_device_multi_edge(
     )
 
 
-V5_DATA = {"user_input": ENTRY_DATA, "components": {"ess0": {"channels": []}}}
+V4_DATA = {"user_input": ENTRY_DATA, "components": {"ess0": {"channels": []}}}
 
 
 async def _migrate(hass: HomeAssistant, entry: MockConfigEntry) -> None:
@@ -392,7 +392,7 @@ async def test_migrate_v1(
     await _migrate(hass, entry)
 
     assert entry.state is ConfigEntryState.LOADED
-    assert (entry.version, entry.minor_version) == (6, 5)
+    assert (entry.version, entry.minor_version) == (5, 1)
     assert entry.data == {**ENTRY_DATA, CONF_EDGE: "0", CONF_TYPE: "direct_edge"}
     assert entry.options == ENTRY_OPTIONS
     assert _cached(hass_storage, entry) == {"ess0": {"channels": []}}
@@ -429,7 +429,7 @@ async def test_migrate_v2_joins_component_device_identifiers(
 ) -> None:
     """3-part device identifiers are joined, valid identifiers stay unchanged."""
     entry = MockConfigEntry(
-        domain=DOMAIN, version=2, data=V5_DATA, options={"ess0": True}
+        domain=DOMAIN, version=2, data=V4_DATA, options={"ess0": True}
     )
     entry.add_to_hass(hass)
     edge_device = device_registry.async_get_or_create(
@@ -443,7 +443,7 @@ async def test_migrate_v2_joins_component_device_identifiers(
 
     await _migrate(hass, entry)
 
-    assert entry.version == 6
+    assert entry.version == 5
     assert device_registry.async_get(edge_device.id).identifiers == {(DOMAIN, HOSTNAME)}
     assert device_registry.async_get(component_device.id).identifiers == {
         (DOMAIN, f"{HOSTNAME} ess0")
@@ -454,12 +454,12 @@ async def test_migrate_v2_joins_component_device_identifiers(
 async def test_migrate_v3(hass: HomeAssistant) -> None:
     """The component selection of version 3 becomes part of the options."""
     entry = MockConfigEntry(
-        domain=DOMAIN, version=3, data=V5_DATA, options={"ctrlDebugLog0": False}
+        domain=DOMAIN, version=3, data=V4_DATA, options={"ctrlDebugLog0": False}
     )
 
     await _migrate(hass, entry)
 
-    assert entry.version == 6
+    assert entry.version == 5
     assert entry.options == ENTRY_OPTIONS
 
 
@@ -471,7 +471,7 @@ async def test_migrate_v4_moves_component_selection_to_devices(
     entry = MockConfigEntry(
         domain=DOMAIN,
         version=4,
-        data=V5_DATA,
+        data=V4_DATA,
         options={
             "components": {"ess0": True, "meter0": False, "ctrlDebugLog0": False},
             **ENTRY_OPTIONS,
@@ -512,29 +512,32 @@ async def test_migrate_v4_without_edge_device(
     entry = MockConfigEntry(
         domain=DOMAIN,
         version=4,
-        data=V5_DATA,
+        data=V4_DATA,
         options={"components": {"ctrlDebugLog0": False}, **ENTRY_OPTIONS},
     )
 
     await _migrate(hass, entry)
 
-    assert entry.version == 6
+    assert entry.version == 5
     assert entry.options == ENTRY_OPTIONS
     assert not dr.async_entries_for_config_entry(device_registry, entry.entry_id)
 
 
 @pytest.mark.usefixtures("mock_setup_entry")
-async def test_migrate_v5_moves_configuration_to_store(
+async def test_migrate_v4_moves_configuration_to_store(
     hass: HomeAssistant, hass_storage: dict[str, Any]
 ) -> None:
     """The edge configuration moves to the store, the connection data is flattened."""
     entry = MockConfigEntry(
-        domain=DOMAIN, version=5, data=V5_DATA, options=ENTRY_OPTIONS
+        domain=DOMAIN,
+        version=4,
+        data=V4_DATA,
+        options={"components": {}, **ENTRY_OPTIONS},
     )
 
     await _migrate(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 5)
+    assert (entry.version, entry.minor_version) == (5, 1)
     assert entry.data == ENTRY_DATA
     assert _cached(hass_storage, entry) == {"ess0": {"channels": []}}
 
@@ -547,11 +550,16 @@ async def test_migrate_v5_moves_configuration_to_store(
     ],
 )
 @pytest.mark.usefixtures("mock_setup_entry")
-async def test_migrate_v6_1_sets_unique_id_from_edge_device(
+async def test_migrate_v4_sets_unique_id_from_edge_device(
     hass: HomeAssistant, device_registry: dr.DeviceRegistry, edge_identifier: str
 ) -> None:
     """The unique ID is taken from the identifier of the edge device."""
-    entry = MockConfigEntry(domain=DOMAIN, version=6, minor_version=1, data=ENTRY_DATA)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=4,
+        data=V4_DATA,
+        options={"components": {}, **ENTRY_OPTIONS},
+    )
     entry.add_to_hass(hass)
     edge_device = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id, identifiers={(DOMAIN, edge_identifier)}
@@ -564,16 +572,21 @@ async def test_migrate_v6_1_sets_unique_id_from_edge_device(
 
     await _migrate(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 5)
+    assert (entry.version, entry.minor_version) == (5, 1)
     assert entry.unique_id == edge_identifier
 
 
 @pytest.mark.usefixtures("mock_setup_entry")
-async def test_migrate_v6_2_removes_refresh_configuration_button(
+async def test_migrate_v4_removes_refresh_configuration_button(
     hass: HomeAssistant, entity_registry: er.EntityRegistry
 ) -> None:
     """The entity of the removed refresh configuration button is removed."""
-    entry = MockConfigEntry(domain=DOMAIN, version=6, minor_version=2, data=ENTRY_DATA)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=4,
+        data=V4_DATA,
+        options={"components": {}, **ENTRY_OPTIONS},
+    )
     entry.add_to_hass(hass)
     for key in ("refresh_configuration", "restart"):
         entity_registry.async_get_or_create(
@@ -591,16 +604,19 @@ async def test_migrate_v6_2_removes_refresh_configuration_button(
 
 
 @pytest.mark.usefixtures("mock_setup_entry")
-async def test_migrate_v6_3_removes_write_only_sensors(
+async def test_migrate_v4_removes_write_only_sensors(
     hass: HomeAssistant,
-    hass_storage: dict[str, Any],
     entity_registry: er.EntityRegistry,
     edge_config: dict[str, Any],
 ) -> None:
     """The sensor entities of write-only channels are removed."""
-    entry = MockConfigEntry(domain=DOMAIN, version=6, minor_version=3, data=ENTRY_DATA)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=4,
+        data={"user_input": ENTRY_DATA, "components": edge_config},
+        options={"components": {}, **ENTRY_OPTIONS},
+    )
     entry.add_to_hass(hass)
-    store_edge_config(hass_storage, entry, edge_config)
     for channel in ("SetActivePowerEquals", "Soc"):
         entity_registry.async_get_or_create(
             Platform.SENSOR, DOMAIN, f"{HOSTNAME}/0/ess0/{channel}", config_entry=entry
@@ -617,11 +633,16 @@ async def test_migrate_v6_3_removes_write_only_sensors(
 
 
 @pytest.mark.usefixtures("mock_setup_entry")
-async def test_migrate_v6_4_resets_device_entry_type(
+async def test_migrate_v4_resets_device_entry_type(
     hass: HomeAssistant, device_registry: dr.DeviceRegistry
 ) -> None:
     """The edge and its components are no web services."""
-    entry = MockConfigEntry(domain=DOMAIN, version=6, minor_version=4, data=ENTRY_DATA)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=4,
+        data=V4_DATA,
+        options={"components": {}, **ENTRY_OPTIONS},
+    )
     entry.add_to_hass(hass)
     device = device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
@@ -631,5 +652,5 @@ async def test_migrate_v6_4_resets_device_entry_type(
 
     await _migrate(hass, entry)
 
-    assert (entry.version, entry.minor_version) == (6, 5)
+    assert (entry.version, entry.minor_version) == (5, 1)
     assert device_registry.async_get(device.id).entry_type is None

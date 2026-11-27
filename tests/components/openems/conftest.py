@@ -143,8 +143,8 @@ def mock_config_entry(
     return MockConfigEntry(
         domain=DOMAIN,
         title=HOST,
-        version=6,
-        minor_version=5,
+        version=5,
+        minor_version=1,
         unique_id=f"{HOSTNAME} {EDGE_ID}" if multi_edge else HOSTNAME,
         data=ENTRY_DATA,
         options={

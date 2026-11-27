@@ -348,99 +348,12 @@ async def async_migrate_entry(
         )
 
     if config_entry.version == 4:
-        # component selection moved from the options to the device registry
-        remaining_options = dict(config_entry.options)
-        components_options: dict[str, bool] = remaining_options.pop(CONF_COMPONENTS, {})
-        device_registry = dr.async_get(hass)
-        edge_device = next(
-            (
-                device
-                for device in dr.async_entries_for_config_entry(
-                    device_registry, config_entry.entry_id
-                )
-                if device.via_device_id is None
-            ),
-            None,
-        )
-        if edge_device is not None:
-            hostname = next(iter(edge_device.identifiers))[1]
-            for component_name, enabled in components_options.items():
-                device = device_registry.async_get_or_create(
-                    config_entry_id=config_entry.entry_id,
-                    identifiers={(c.DOMAIN, hostname + " " + component_name)},
-                    via_device_id=edge_device.id,
-                )
-                if not enabled and not device.disabled:
-                    device_registry.async_update_device(
-                        device.id, disabled_by=dr.DeviceEntryDisabler.USER
-                    )
-        hass.config_entries.async_update_entry(
-            config_entry, options=remaining_options, version=5, minor_version=1
-        )
+        await _async_migrate_v4(hass, config_entry)
         _LOGGER.debug(
             "Migration to configuration version %s.%s successful",
             config_entry.version,
             config_entry.minor_version,
         )
-
-    if config_entry.version == 5:
-        # edge configuration moved from the entry data to a store, connection data flattened
-        await component_store(hass, config_entry.entry_id).async_save(
-            config_entry.data["components"]
-        )
-        hass.config_entries.async_update_entry(
-            config_entry,
-            data=dict(config_entry.data["user_input"]),
-            version=6,
-            minor_version=1,
-        )
-        _LOGGER.debug(
-            "Migration to configuration version %s.%s successful",
-            config_entry.version,
-            config_entry.minor_version,
-        )
-
-    if config_entry.version == 6 and config_entry.minor_version == 1:
-        # the edge hostname became the unique ID, take it from the edge device identifier
-        device_registry = dr.async_get(hass)
-        edge_device = next(
-            (
-                device
-                for device in dr.async_entries_for_config_entry(
-                    device_registry, config_entry.entry_id
-                )
-                if device.via_device_id is None
-            ),
-            None,
-        )
-        hass.config_entries.async_update_entry(
-            config_entry,
-            unique_id=(next(iter(edge_device.identifiers))[1] if edge_device else None),
-            minor_version=2,
-        )
-        _LOGGER.debug(
-            "Migration to configuration version %s.%s successful",
-            config_entry.version,
-            config_entry.minor_version,
-        )
-
-    # minor versions of version 6, each step migrates to the next minor version
-    steps = {
-        2: _async_remove_refresh_configuration_button,
-        3: _async_remove_write_only_sensors,
-        4: _async_reset_device_entry_type,
-    }
-    if config_entry.version == 6 and config_entry.minor_version in steps:
-        for minor_version in range(config_entry.minor_version, max(steps) + 1):
-            await steps[minor_version](hass, config_entry)
-            hass.config_entries.async_update_entry(
-                config_entry, minor_version=minor_version + 1
-            )
-            _LOGGER.debug(
-                "Migration to configuration version %s.%s successful",
-                config_entry.version,
-                config_entry.minor_version,
-            )
         return
 
     raise ConfigEntryError(
@@ -452,55 +365,81 @@ async def async_migrate_entry(
     )
 
 
-async def _async_remove_refresh_configuration_button(
+async def _async_migrate_v4(
     hass: HomeAssistant, config_entry: OpenEMSConfigEntry
 ) -> None:
-    """Remove the button replaced by the configuration check during the setup."""
+    """Migrate a version 4 entry to version 5.
+
+    The component selection moves from the options to the device registry and the
+    edge configuration from the entry data to a store. The edge hostname becomes the
+    unique ID. Entities of the removed refresh configuration button and of write-only
+    channels are removed, and the devices are no web services anymore.
+    """
+    device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
-    for entity in er.async_entries_for_config_entry(
-        entity_registry, config_entry.entry_id
-    ):
-        if entity.domain == Platform.BUTTON and entity.unique_id.endswith(
-            "/refresh_configuration"
-        ):
-            entity_registry.async_remove(entity.entity_id)
 
+    options = dict(config_entry.options)
+    components_options: dict[str, bool] = options.pop(CONF_COMPONENTS, {})
+    edge_device = next(
+        (
+            device
+            for device in dr.async_entries_for_config_entry(
+                device_registry, config_entry.entry_id
+            )
+            if device.via_device_id is None
+        ),
+        None,
+    )
+    hostname: str | None = None
+    if edge_device is not None:
+        hostname = next(iter(edge_device.identifiers))[1]
+        for component_name, enabled in components_options.items():
+            device = device_registry.async_get_or_create(
+                config_entry_id=config_entry.entry_id,
+                identifiers={(c.DOMAIN, hostname + " " + component_name)},
+                via_device_id=edge_device.id,
+            )
+            if not enabled and not device.disabled:
+                device_registry.async_update_device(
+                    device.id, disabled_by=dr.DeviceEntryDisabler.USER
+                )
 
-async def _async_remove_write_only_sensors(
-    hass: HomeAssistant, config_entry: OpenEMSConfigEntry
-) -> None:
-    """Remove the sensors of write-only channels, written by the write_channel action."""
-    components = await component_store(hass, config_entry.entry_id).async_load()
+    components: dict[str, Any] = config_entry.data["components"]
+    await component_store(hass, config_entry.entry_id).async_save(components)
+
     write_only_suffixes = tuple(
         f"/{component_name}/{channel['id']}"
-        for component_name, component in (components or {}).items()
+        for component_name, component in components.items()
         for channel in component.get("channels", [])
         if channel.get("accessMode") == "WO"
         and not channel["id"].startswith("_Property")
     )
-    if not write_only_suffixes:
-        return
-    entity_registry = er.async_get(hass)
     for entity in er.async_entries_for_config_entry(
         entity_registry, config_entry.entry_id
     ):
-        if entity.domain in (
-            Platform.SENSOR,
-            Platform.BINARY_SENSOR,
-        ) and entity.unique_id.endswith(write_only_suffixes):
+        if (
+            entity.domain == Platform.BUTTON
+            and entity.unique_id.endswith("/refresh_configuration")
+        ) or (
+            entity.domain in (Platform.SENSOR, Platform.BINARY_SENSOR)
+            and entity.unique_id.endswith(write_only_suffixes)
+        ):
             entity_registry.async_remove(entity.entity_id)
 
-
-async def _async_reset_device_entry_type(
-    hass: HomeAssistant, config_entry: OpenEMSConfigEntry
-) -> None:
-    """Reset the service entry type, the edge and its components are no web services."""
-    device_registry = dr.async_get(hass)
     for device in dr.async_entries_for_config_entry(
         device_registry, config_entry.entry_id
     ):
         if device.entry_type is not None:
             device_registry.async_update_device(device.id, entry_type=None)
+
+    hass.config_entries.async_update_entry(
+        config_entry,
+        data=dict(config_entry.data["user_input"]),
+        options=options,
+        unique_id=hostname,
+        version=5,
+        minor_version=1,
+    )
 
 
 async def async_remove_config_entry_device(

@@ -64,8 +64,8 @@ def _address(data: Mapping[str, Any]) -> str | None:
 class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
     """Handle a config flow for HA OpenEMS."""
 
-    VERSION = 6
-    MINOR_VERSION = 5
+    VERSION = 5
+    MINOR_VERSION = 1
 
     def __init__(self) -> None:
         """Initialize."""

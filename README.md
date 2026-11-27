@@ -20,7 +20,6 @@ Home Assistant integration that interfaces Fenecon FEMS and OpenEMS systems.
 - Advanced configuration options to support non-standard connection types.
 - FEMS update discovery and installation option
 - Restart option
-- Button to refresh the cached list of components and channels after changes in the backend
 - Access to REST write App (if installed)
 
 ## Table of contents
