@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping
 import logging
-from typing import Any
+from typing import Any, override
 
 from openems_client.client import EdgeInfo, OpenEMSClient
 from openems_client.const import (
@@ -73,7 +73,9 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
         # online edges of a multi edge backend, offered in the edges step
         self._edges: list[EdgeInfo] = []
 
-    def _step_user_data_schema(self, user_input=None) -> probatio.Schema:
+    def _step_user_data_schema(
+        self, user_input: dict[str, Any] | None = None
+    ) -> probatio.Schema:
         """Define the config flow input options."""
         if not user_input:
             user_input = {}
@@ -143,6 +145,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
             }
         )
 
+    @override
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -414,6 +417,7 @@ class OpenEMSConfigFlow(ConfigFlow, domain=c.DOMAIN):
 
     @staticmethod
     @callback
+    @override
     def async_get_options_flow(
         config_entry: OpenEMSConfigEntry,
     ) -> OpenEMSOptionsFlow:

@@ -1,6 +1,7 @@
 """Component providing support for OpenEMS number entities."""
 
 from dataclasses import dataclass
+from typing import override
 
 from openems_client.model import ChannelKind, Quantity
 from openems_client.openems import OpenEMSComponent, OpenEMSNumberProperty
@@ -99,26 +100,31 @@ class OpenEMSNumberEntity(OpenEMSChannelEntity[OpenEMSNumberProperty], NumberEnt
     entity_description: OpenEMSNumberDescription
 
     @property
+    @override
     def native_min_value(self) -> float:
         """Return minimum value."""
         return self._channel.lower_limit
 
     @property
+    @override
     def native_max_value(self) -> float:
         """Return maximum value."""
         return self._channel.upper_limit
 
     @property
+    @override
     def native_step(self) -> float:
         """Return step size."""
         return self._channel.step
 
     @property
+    @override
     def native_value(self) -> float | None:
         """Return the value of the number entity."""
         return self._channel.value
 
     @handle_write_errors
+    @override
     async def async_set_native_value(self, value: float) -> None:
         """Change the current value."""
         await self._channel.update_value(value)

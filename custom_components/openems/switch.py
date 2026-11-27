@@ -1,7 +1,7 @@
 """Component providing support for OpenEMS switch entities."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, override
 
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSBooleanProperty, OpenEMSComponent
@@ -72,17 +72,20 @@ class OpenEMSSwitchEntity(OpenEMSChannelEntity[OpenEMSBooleanProperty], SwitchEn
     entity_description: OpenEMSSwitchDescription
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return true if switch is on."""
         return self._channel.is_on
 
     @handle_write_errors
+    @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         await self._channel.update_value(True)
         self.async_write_ha_state()
 
     @handle_write_errors
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
         await self._channel.update_value(False)

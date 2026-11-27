@@ -1,6 +1,7 @@
 """Component providing support for OpenEMS binary sensors."""
 
 from dataclasses import dataclass
+from typing import override
 
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSChannel, OpenEMSComponent
@@ -78,6 +79,7 @@ class OpenEMSBinarySensorEntity(
     entity_description: OpenEMSBinarySensorDescription
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return the binary state of the sensor."""
         return self._channel.is_on

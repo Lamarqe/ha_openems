@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import time
+from typing import override
 
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSComponent, OpenEMSTimeProperty
@@ -72,11 +73,13 @@ class OpenEMSTimeEntity(OpenEMSChannelEntity[OpenEMSTimeProperty], TimeEntity):
     entity_description: OpenEMSTimeDescription
 
     @property
+    @override
     def native_value(self) -> time | None:
         """Return the current time."""
         return self._channel.value
 
     @handle_write_errors
+    @override
     async def async_set_value(self, value: time) -> None:
         """Update the selected time."""
         await self._channel.update_value(value)

@@ -115,6 +115,4 @@ rules:
   # Platinum
   async-dependency: done
   inject-websession: done
-  strict-typing:
-    status: todo
-    comment: The client library is typed and checked with mypy strict, the integration is not checked yet.
+  strict-typing: done

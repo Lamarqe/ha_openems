@@ -349,8 +349,8 @@ async def async_migrate_entry(
 
     if config_entry.version == 4:
         # component selection moved from the options to the device registry
-        options = dict(config_entry.options)
-        components_options: dict[str, bool] = options.pop(CONF_COMPONENTS, {})
+        remaining_options = dict(config_entry.options)
+        components_options: dict[str, bool] = remaining_options.pop(CONF_COMPONENTS, {})
         device_registry = dr.async_get(hass)
         edge_device = next(
             (
@@ -375,7 +375,7 @@ async def async_migrate_entry(
                         device.id, disabled_by=dr.DeviceEntryDisabler.USER
                     )
         hass.config_entries.async_update_entry(
-            config_entry, options=options, version=5, minor_version=1
+            config_entry, options=remaining_options, version=5, minor_version=1
         )
         _LOGGER.debug(
             "Migration to configuration version %s.%s successful",

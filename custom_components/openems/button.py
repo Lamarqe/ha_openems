@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import logging
+from typing import override
 
 from openems_client.exceptions import OpenEMSError
 from openems_client.openems import OpenEMSBackend, OpenEMSEdge
@@ -32,11 +33,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up OpenEMS button entities."""
     backend: OpenEMSBackend = entry.runtime_data.backend
-    entity_description = OpenEMSRestartButtonDescription(
+    restart_description = OpenEMSRestartButtonDescription(
         key=backend.the_edge.hostname + "/" + backend.the_edge.id + "/restart"
     )
     restart_entity = OpenEMSRestartButtonEntity(
-        backend.the_edge, entity_description, entry.runtime_data.edge_device.info
+        backend.the_edge, restart_description, entry.runtime_data.edge_device.info
     )
     async_add_entities([restart_entity])
 
@@ -69,6 +70,7 @@ class OpenEMSRestartButtonEntity(ButtonEntity):
         self._attr_unique_id = entity_description.key
         self._attr_device_info = device_info
 
+    @override
     async def async_press(self) -> None:
         """Trigger a hard restart of the edge."""
         try:

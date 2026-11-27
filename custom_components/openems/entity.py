@@ -1,5 +1,7 @@
 """Base entity of the channel based OpenEMS platforms."""
 
+from typing import override
+
 from openems_client.openems import OpenEMSDataHandler
 
 from homeassistant.core import callback
@@ -25,6 +27,7 @@ class OpenEMSChannelEntity[ChannelT: OpenEMSDataHandler](Entity):
         self._attr_device_info = device_info
 
     @property
+    @override
     def available(self) -> bool:
         """Return True while the edge is connected and sends channel data."""
         return super().available and self._channel.available
@@ -34,6 +37,7 @@ class OpenEMSChannelEntity[ChannelT: OpenEMSDataHandler](Entity):
         """Write the state after a value or availability change of the channel."""
         self.async_schedule_update_ha_state()
 
+    @override
     async def async_added_to_hass(self) -> None:
         """Listen to the channel, which subscribes it at the edge."""
         self.async_on_remove(self._channel.add_listener(self._handle_channel_update))

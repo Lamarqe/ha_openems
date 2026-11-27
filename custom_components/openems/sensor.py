@@ -1,7 +1,9 @@
 """Component providing support for OpenEMS sensors."""
 
 from dataclasses import dataclass
+from datetime import time
 import logging
+from typing import TYPE_CHECKING, override
 
 from openems_client.model import ChannelKind, Quantity
 from openems_client.openems import OpenEMSComponent, OpenEMSDataHandler
@@ -150,13 +152,15 @@ class OpenEMSSensorEntity(OpenEMSChannelEntity[OpenEMSDataHandler], SensorEntity
         self.previous_increasing_value_not_null: float | None = None
 
     @property
+    @override
     def native_value(self) -> str | float | int | None:
         """Return the value of the sensor."""
         val = self._channel.value
-        if val is None or isinstance(val, str):
-            return val
-        if self._ignore_decrease(val):
+        if isinstance(val, int | float) and self._ignore_decrease(val):
             return self.previous_increasing_value_not_null
+        if TYPE_CHECKING:
+            # time values only come from time properties, not from sensor channels
+            assert not isinstance(val, time)
         return val
 
     def _ignore_decrease(self, val: float) -> bool:
@@ -169,13 +173,13 @@ class OpenEMSSensorEntity(OpenEMSChannelEntity[OpenEMSDataHandler], SensorEntity
         )
 
     @callback
+    @override
     def _handle_channel_update(self) -> None:
         """Remember the last accepted value of total increasing sensors, write the state."""
         val = self._channel.value
         if (
             self.entity_description.state_class == SensorStateClass.TOTAL_INCREASING
-            and val is not None
-            and not isinstance(val, str)
+            and isinstance(val, int | float)
         ):
             if self._ignore_decrease(val):
                 _LOGGER.debug(

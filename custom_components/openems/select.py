@@ -1,6 +1,7 @@
 """Component providing support for OpenEMS select entities."""
 
 from dataclasses import dataclass
+from typing import override
 
 from openems_client.model import ChannelKind
 from openems_client.openems import OpenEMSComponent, OpenEMSEnumProperty
@@ -72,11 +73,13 @@ class OpenEMSSelectEntity(OpenEMSChannelEntity[OpenEMSEnumProperty], SelectEntit
     entity_description: OpenEMSSelectDescription
 
     @property
+    @override
     def current_option(self) -> str | None:
         """Return the current option."""
         return self._channel.value
 
     @handle_write_errors
+    @override
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         await self._channel.update_value(option)

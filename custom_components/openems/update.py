@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
-from typing import Any
+from typing import Any, override
 
 from openems_client.exceptions import OpenEMSError, OpenEMSTimeoutError
 from openems_client.openems import OpenEMSBackend, OpenEMSEdge
@@ -83,10 +83,12 @@ class OpenEMSUpdateEntity(UpdateEntity):
         self._status_unknown = False
 
     @property
+    @override
     def available(self) -> bool:
         """Return True while the edge is connected and its update state is known."""
         return super().available and self._edge.available and not self._status_unknown
 
+    @override
     async def async_added_to_hass(self) -> None:
         """Read the update state whenever the edge connects or its version changes."""
         await super().async_added_to_hass()
@@ -99,10 +101,12 @@ class OpenEMSUpdateEntity(UpdateEntity):
         else:
             self.async_write_ha_state()
 
+    @override
     async def async_release_notes(self) -> str | None:
         """Return the changes from the installed to the latest version."""
         return await self._edge.get_release_notes(self.hass.config.language)
 
+    @override
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
