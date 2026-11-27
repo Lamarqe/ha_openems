@@ -29,7 +29,7 @@ async def async_setup_entry(
     """Set up OpenEMS select entities."""
 
     def _create_select_entities(component: OpenEMSComponent) -> None:
-        """Create Sensor Entities from channel list."""
+        """Create select entities from channel list."""
         device = component_device(entry.runtime_data.edge_device.entry, component)
 
         entities: list[OpenEMSSelectEntity] = []
@@ -64,7 +64,7 @@ async def async_setup_entry(
 
 @dataclass(frozen=True, kw_only=True)
 class OpenEMSSelectDescription(SelectEntityDescription):
-    """Definition of OpenEMS sensor attributes."""
+    """Definition of OpenEMS select attributes."""
 
     has_entity_name = True
 

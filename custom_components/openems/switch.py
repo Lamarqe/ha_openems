@@ -1,4 +1,4 @@
-"""Component providing support for OpenEMS number entities."""
+"""Component providing support for OpenEMS switch entities."""
 
 from dataclasses import dataclass
 import logging
@@ -30,7 +30,7 @@ async def async_setup_entry(
     """Set up OpenEMS switch entities."""
 
     def _create_switch_entities(component: OpenEMSComponent) -> None:
-        """Create Sensor Entities from channel list."""
+        """Create switch entities from channel list."""
         device = component_device(entry.runtime_data.edge_device.entry, component)
 
         entities: list[OpenEMSSwitchEntity] = []
@@ -64,13 +64,13 @@ async def async_setup_entry(
 
 @dataclass(frozen=True, kw_only=True)
 class OpenEMSSwitchDescription(SwitchEntityDescription):
-    """Definition of OpenEMS sensor attributes."""
+    """Definition of OpenEMS switch attributes."""
 
     has_entity_name = True
 
 
 class OpenEMSSwitchEntity(OpenEMSChannelEntity[OpenEMSBooleanProperty], SwitchEntity):
-    """Number entity class for OpenEMS channels."""
+    """Switch entity class for OpenEMS channels."""
 
     entity_description: OpenEMSSwitchDescription
 

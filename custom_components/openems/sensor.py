@@ -60,7 +60,7 @@ async def async_setup_entry(
     """Set up OpenEMS sensor entities."""
 
     def _create_sensor_entities(component: OpenEMSComponent) -> None:
-        """Create Sensor Entities from channel list."""
+        """Create sensor entities from channel list."""
         device = component_device(entry.runtime_data.edge_device.entry, component)
 
         entities: list[OpenEMSSensorEntity] = [

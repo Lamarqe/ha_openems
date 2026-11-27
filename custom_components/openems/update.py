@@ -69,7 +69,7 @@ class OpenEMSUpdateEntity(UpdateEntity):
         entity_description: OpenEMSUpdateDescription,
         device_info: DeviceInfo,
     ) -> None:
-        """Initialize the sensor."""
+        """Initialize the update entity."""
         self._edge: OpenEMSEdge = edge
         self.entity_description = entity_description
         self._attr_unique_id = entity_description.key

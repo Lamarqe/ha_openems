@@ -30,7 +30,7 @@ async def async_setup_entry(
     """Set up OpenEMS time entities."""
 
     def _create_time_entities(component: OpenEMSComponent) -> None:
-        """Create Sensor Entities from channel list."""
+        """Create time entities from channel list."""
         device = component_device(entry.runtime_data.edge_device.entry, component)
 
         entities: list[OpenEMSTimeEntity] = []
@@ -64,7 +64,7 @@ async def async_setup_entry(
 
 @dataclass(frozen=True, kw_only=True)
 class OpenEMSTimeDescription(TimeEntityDescription):
-    """Definition of OpenEMS sensor attributes."""
+    """Definition of OpenEMS time attributes."""
 
     has_entity_name = True
 
